@@ -1,4 +1,4 @@
-# gyeoltu Frontend
+# KB 프로젝트 - 꼬비
 
 Vue 3 기반의 프론트엔드 프로젝트입니다.
 
