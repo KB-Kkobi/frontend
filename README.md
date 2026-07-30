@@ -1,16 +1,22 @@
 # KB 프로젝트 - 꼬비
 
-Vue 3 사용한 프론트엔드 프로젝트입니다.
+HEAD
+Vue 3 기반 프론트엔드 프로젝트입니다.
+
+결에 맞는 투자 '결투' 프론트엔드 프로젝트입니다.
+d29e39607d16627ebeb12a77b73e272eecadc7fb
 
 ## 기술 스택
 
 ### Core
+
 - **[Vue 3](https://vuejs.org/)** - `<script setup>` 방식의 SFC(Single File Component)를 사용하는 프론트엔드 프레임워크
 - **[Vite](https://vite.dev/)** - 개발 서버 및 번들러
 - **[Vue Router](https://router.vuejs.org/)** - SPA 클라이언트 사이드 라우팅
 - **[Pinia](https://pinia.vuejs.org/)** - 상태 관리 라이브러리
 
 ### 개발 도구
+
 - **[@vitejs/plugin-vue](https://github.com/vitejs/vite-plugin-vue)** - Vite에서 Vue SFC(`.vue`)를 처리하기 위한 플러그인
 - **[vite-plugin-vue-devtools](https://devtools-next.vuejs.org/)** - 개발 중 컴포넌트/상태/라우터를 확인할 수 있는 Vue Devtools 통합
 - **jsconfig.json + `@` alias** - `src/` 경로를 `@`로 임포트할 수 있도록 설정 (`vite.config.js`에서 정의)
