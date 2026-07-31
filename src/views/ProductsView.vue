@@ -1,5 +1,6 @@
 <script setup>
-import PageContainer from '@/components/common/PageContainer.vue'
+import BottomButton from "@/components/common/BottomButton.vue";
+import PageContainer from "@/components/common/PageContainer.vue";
 </script>
 
 <template>
