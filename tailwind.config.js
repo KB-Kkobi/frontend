@@ -64,6 +64,11 @@ export default {
         page: "linear-gradient(180deg, #FDFAE9 0%,  #FFFFFF 100%)",
       },
 
+      spacing: {
+        "pill-y": "4px",
+        "pill-x": "8px",
+      },
+
       boxShadow: {
         // BaseCard(color="white") 전용 크림 톤 elevation
         card: "0 10px 26px 0 rgba(214, 180, 90, 0.16)",
