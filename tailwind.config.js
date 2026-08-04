@@ -41,6 +41,11 @@ export default {
     },
 
     extend: {
+      spacing: {
+        "pill-y": "8px",
+        "pill-x": "16px",
+      },
+
       fontFamily: {
         sans: ["Pretendard", "system-ui", "-apple-system", "sans-serif"],
       },
