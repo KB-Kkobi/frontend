@@ -6,6 +6,7 @@ import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
+import GameView from '@/views/GameView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,12 @@ const router = createRouter({
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
     { path: '/my', name: 'my', component: MyPageView },
     { path: '/securities/:pk', name: 'security-detail', component: SecurityDetailView },
+    {
+      path: '/game',
+      name: 'game',
+      component: GameView,
+      meta: { hideBottomTabBar: true },
+    },
   ],
 })
 
