@@ -65,8 +65,9 @@ export default {
       },
 
       spacing: {
-        "pill-y": "4px",
-        "pill-x": "8px",
+        "pill-y": "6px",
+        "pill-x": "12px",
+        "segment-p": "4px",
       },
 
       boxShadow: {
