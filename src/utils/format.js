@@ -55,3 +55,24 @@ export function formatKoreanShortAmount(value) {
   if (cheon > 0) return `${cheon}천원`;
   return `${rounded}원`;
 }
+
+/**
+ * 금리 포맷 (소수 둘째자리 %).
+ * null → '—'
+ * ex) 3 → "3.00%", 3.25 → "3.25%"
+ */
+export function formatInterestRate(value) {
+  if (value === null || value === undefined) return "—";
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "—";
+  return `${numericValue.toFixed(2)}%`;
+}
+
+/**
+ * 비어 있는 문자열을 공통 빈 값 기호로 표시.
+ */
+export function formatNullableText(value) {
+  if (value === null || value === undefined) return "—";
+  const text = String(value).trim();
+  return text || "—";
+}
