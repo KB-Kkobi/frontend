@@ -27,7 +27,7 @@ const COLOR_CLASSES = {
     :disabled="disabled"
     :class="[
       COLOR_CLASSES[color],
-      'w-full rounded-2xl px-4 py-5 text-button active:opacity-90 disabled:opacity-50',
+      'w-full rounded-2xl px-4 py-3 text-button active:opacity-90 disabled:opacity-50',
     ]"
   >
     <slot />
