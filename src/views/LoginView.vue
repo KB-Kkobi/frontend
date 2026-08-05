@@ -37,6 +37,7 @@ async function handleLogin() {
 
     // 실제 API 연동 시 아래 대기 코드를 login API 호출로 교체합니다.
     await new Promise((resolve) => setTimeout(resolve, 1000));
+    await router.replace({ name: "home" });
   } catch (error) {
     if (error.response?.status === 400 && error.response.data?.fieldErrors) {
       emailError.value = error.response.data.fieldErrors.email ?? "";

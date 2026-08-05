@@ -46,6 +46,10 @@ defineProps({
     type: String,
     default: "",
   },
+  showCalendarChevron: {
+    type: Boolean,
+    default: true,
+  },
   icon: {
     type: String,
     default: "",
@@ -151,7 +155,7 @@ function handlePasswordVisibility() {
       </button>
 
       <svg
-        v-else-if="icon === 'calendar'"
+        v-else-if="icon === 'calendar' && showCalendarChevron"
         class="h-6 w-6 shrink-0 text-muted"
         viewBox="0 0 24 24"
         fill="none"

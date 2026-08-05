@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import kkobiSignupImage from "@/assets/images/kkobiSignup.svg";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
@@ -87,22 +88,29 @@ async function handleResetPassword() {
 
 <template>
   <PageContainer>
-    <div class="flex flex-col gap-6 py-6">
+    <form class="flex flex-col gap-4 py-6" @submit.prevent="handleResetPassword">
       <header class="flex flex-col gap-4">
         <div>
           <BackButton />
         </div>
-        <div class="flex flex-col gap-2">
-          <h1 class="text-h1 text-ink">비밀번호 찾기</h1>
-          <p class="text-body text-ink">
-            가입하신 이메일로 인증 후<br />
-            새 비밀번호를 설정할 수 있어요
-          </p>
+        <div class="relative">
+          <img
+            :src="kkobiSignupImage"
+            alt="연필과 투자 기록판을 든 꼬비"
+            class="absolute bottom-0 right-0 w-2/5 translate-y-4"
+          />
+          <div class="relative flex flex-col gap-2">
+            <h1 class="text-amount text-ink">비밀번호 찾기</h1>
+            <p class="text-body text-ink">
+              가입하신 <strong class="font-semibold text-pink">이메일로 인증</strong> 후<br />
+              새 비밀번호를 설정할 수 있어요
+            </p>
+          </div>
         </div>
       </header>
 
       <BaseCard color="white">
-        <form class="flex flex-col gap-6" @submit.prevent="handleResetPassword">
+        <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-4">
             <BaseTextField
               id="reset-email"
@@ -112,6 +120,7 @@ async function handleResetPassword() {
               placeholder="가입하신 이메일을 입력해주세요"
               autocomplete="email"
               inputmode="email"
+              icon="email"
               :error-message="emailError"
             />
 
@@ -133,6 +142,7 @@ async function handleResetPassword() {
             :maxlength="6"
             :trailing-text="verificationTime"
             hint="인증코드는 3분 동안 유효합니다"
+            icon="email"
             :error-message="verificationCodeError"
           />
 
@@ -144,6 +154,7 @@ async function handleResetPassword() {
               type="password"
               placeholder="새 비밀번호를 입력해주세요"
               autocomplete="new-password"
+              icon="password"
               :error-message="newPasswordError"
             />
 
@@ -155,6 +166,7 @@ async function handleResetPassword() {
               placeholder="새 비밀번호를 다시 입력해주세요"
               autocomplete="new-password"
               hint="영문, 숫자, 특수문자 조합 8~20자"
+              icon="password"
               :error-message="passwordConfirmationError"
             />
           </div>
@@ -166,8 +178,8 @@ async function handleResetPassword() {
           <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
             {{ isSubmitting ? "비밀번호 변경 중" : "비밀번호 변경하기" }}
           </BottomButton>
-        </form>
+        </div>
       </BaseCard>
-    </div>
+    </form>
   </PageContainer>
 </template>

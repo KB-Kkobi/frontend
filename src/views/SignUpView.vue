@@ -143,7 +143,6 @@ async function handleSignup() {
             v-model="nickname"
             label="닉네임"
             placeholder="닉네임을 입력해주세요"
-            hint="다른 사용자에게 표시될 이름이에요"
             autocomplete="nickname"
             icon="user"
             :error-message="nicknameError"
@@ -158,6 +157,7 @@ async function handleSignup() {
             :maxlength="10"
             autocomplete="bday"
             icon="calendar"
+            :show-calendar-chevron="false"
             :error-message="birthDateError"
           />
 
