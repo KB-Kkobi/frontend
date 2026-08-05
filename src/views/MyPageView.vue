@@ -18,6 +18,15 @@ const SUPPORT_ITEMS = [
   { id: "policies", label: "약관 · 개인정보처리방침", icon: "policy" },
 ];
 
+const APP_INFO_ITEMS = [
+  {
+    id: "version",
+    label: "앱 버전 정보",
+    icon: "version",
+    trailingText: "v1.0.0",
+  },
+];
+
 function handleProfile() {
   console.log("프로필 정보");
 }
@@ -36,19 +45,17 @@ function handleLogout() {
     <div class="flex flex-col gap-6 py-6">
       <h1 class="text-h1 text-ink">마이페이지</h1>
 
-      <section class="flex flex-col gap-4">
-        <h2 class="text-h2 text-muted">프로필 정보</h2>
-
-        <BaseCard color="white">
+      <section>
+        <BaseCard color="pink">
           <button
             type="button"
             class="flex w-full items-center gap-4 text-left"
             @click="handleProfile"
           >
-            <span class="rounded-full bg-yellow-soft p-4 text-yellow" aria-hidden="true">
+            <span class="rounded-full bg-white p-4 text-muted" aria-hidden="true">
               <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.75" />
-                <path d="M5 21C5 17.1 8.1 14 12 14C15.9 14 19 17.1 19 21" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                <circle cx="12" cy="8" r="4" fill="currentColor" />
+                <path d="M5 21C5 17.1 8.1 14 12 14C15.9 14 19 17.1 19 21V21H5Z" fill="currentColor" />
               </svg>
             </span>
 
@@ -79,18 +86,9 @@ function handleLogout() {
         <MyPageMenuCard :items="SUPPORT_ITEMS" @select="handleMenuSelect" />
       </section>
 
-      <div class="flex items-center gap-4 px-4">
-        <span class="rounded-2xl bg-white p-4 text-yellow" aria-hidden="true">
-          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
-            <path d="M4 17L10 11L14 15L21 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M15 7H21V13" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-        <strong class="min-w-0 flex-1 text-body font-semibold text-ink">앱 버전 정보</strong>
-        <span class="text-caption text-muted tabular-nums">v1.0.0</span>
-      </div>
+      <MyPageMenuCard :items="APP_INFO_ITEMS" @select="handleMenuSelect" />
 
-      <BottomButton color="yellow" @click="handleLogout">
+      <BottomButton color="danger" @click="handleLogout">
         로그아웃
       </BottomButton>
     </div>
