@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import kkobiSignupImage from "@/assets/images/kkobiSignup.svg";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
@@ -67,12 +68,26 @@ async function handleSignup() {
 
 <template>
   <PageContainer>
-    <form class="flex flex-col gap-6 py-6" @submit.prevent="handleSignup">
-      <header class="flex flex-col gap-6">
+    <form class="flex flex-col gap-4 py-6" @submit.prevent="handleSignup">
+      <header class="flex flex-col gap-4">
         <div>
           <BackButton />
         </div>
-        <h1 class="text-h1 text-ink">회원가입</h1>
+
+        <div class="relative">
+          <img
+            :src="kkobiSignupImage"
+            alt="연필과 투자 기록판을 든 꼬비"
+            class="absolute bottom-0 right-0 w-2/5 translate-y-4"
+          />
+          <div class="relative flex flex-col gap-2">
+            <h1 class="text-amount text-ink">회원가입</h1>
+            <p class="text-body text-ink">
+              함께 <strong class="font-semibold text-pink">투자 여정</strong>을 시작해요!<br />
+              나에게 맞는 투자를 찾아볼까요?
+            </p>
+          </div>
+        </div>
       </header>
 
       <BaseCard color="white">
@@ -85,6 +100,7 @@ async function handleSignup() {
             placeholder="이메일을 입력해주세요"
             autocomplete="email"
             inputmode="email"
+            icon="email"
             :error-message="emailError"
           />
 
@@ -96,6 +112,7 @@ async function handleSignup() {
             placeholder="비밀번호를 입력해주세요"
             hint="영문, 숫자, 특수문자 포함 8자 이상 입력해주세요"
             autocomplete="new-password"
+            icon="password"
             :error-message="passwordError"
           />
 
@@ -106,6 +123,7 @@ async function handleSignup() {
             placeholder="닉네임을 입력해주세요"
             hint="다른 사용자에게 표시될 이름이에요"
             autocomplete="nickname"
+            icon="user"
             :error-message="nicknameError"
           />
 
@@ -113,18 +131,25 @@ async function handleSignup() {
             id="signup-birth-date"
             v-model="birthDate"
             label="생년월일"
-            type="date"
-            hint="정확한 투자 정보를 제공받기 위해 필요해요"
+            placeholder="YYYY.MM.DD"
+            inputmode="numeric"
             autocomplete="bday"
+            icon="calendar"
             :error-message="birthDateError"
           />
+
+          <p class="text-caption text-muted">
+            회원가입 시 서비스 <span class="text-pink">이용약관</span> 및
+            <span class="text-pink">개인정보 처리방침</span>에<br />
+            동의한 것으로 간주됩니다.
+          </p>
 
           <p v-if="formError" class="text-caption text-error" role="alert">
             {{ formError }}
           </p>
 
           <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
-            {{ isSubmitting ? "회원가입 처리 중" : "회원가입 완료" }}
+            {{ isSubmitting ? "회원가입 처리 중" : "회원가입" }}
           </BottomButton>
         </div>
       </BaseCard>
