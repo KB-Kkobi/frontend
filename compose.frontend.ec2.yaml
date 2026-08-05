@@ -1,0 +1,7 @@
+services:
+  frontend:
+    image: ghcr.io/kb-kkobi/frontend:latest
+    container_name: kkobi-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
