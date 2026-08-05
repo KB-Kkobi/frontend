@@ -17,7 +17,7 @@ function handleSelect(item) {
 
 <template>
   <BaseCard color="white">
-    <ul>
+    <ul class="flex flex-col gap-2">
       <li
         v-for="(item, index) in items"
         :key="item.id"
