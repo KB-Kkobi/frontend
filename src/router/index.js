@@ -12,6 +12,8 @@ import MyPageView from '@/views/MyPageView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameView from '@/views/GameView.vue'
 import SignUpView from '@/views/SignUpView.vue'
+import LoginView from '@/views/LoginView.vue'
+import PasswordResetView from '@/views/PasswordResetView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +55,18 @@ const router = createRouter({
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
     { path: '/my', name: 'my', component: MyPageView },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
+      meta: { hideBottomTabBar: true },
+    },
+    {
+      path: '/password-reset',
+      name: 'password-reset',
+      component: PasswordResetView,
+      meta: { hideBottomTabBar: true },
+    },
     {
       path: '/signup',
       name: 'signup',

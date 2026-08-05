@@ -1,11 +1,14 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import kkobiSignupImage from "@/assets/images/kkobiSignup.svg";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+
+const router = useRouter();
 
 const email = ref("");
 const password = ref("");
@@ -18,6 +21,24 @@ const nicknameError = ref("");
 const birthDateError = ref("");
 const formError = ref("");
 const isSubmitting = ref(false);
+
+const formattedBirthDate = computed({
+  get: () => birthDate.value,
+  set: (value) => {
+    birthDate.value = formatBirthDate(value);
+  },
+});
+
+function formatBirthDate(value) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  const dateParts = [
+    digits.slice(0, 4),
+    digits.slice(4, 6),
+    digits.slice(6, 8),
+  ];
+
+  return dateParts.filter(Boolean).join(".");
+}
 
 function clearErrors() {
   emailError.value = "";
@@ -52,6 +73,7 @@ async function handleSignup() {
 
     // 실제 API 연동 시 아래 대기 코드를 signup API 호출로 교체 예정
     await new Promise((resolve) => setTimeout(resolve, 1000));
+    await router.replace({ name: "login" });
   } catch (error) {
     if (error.response?.status === 400 && error.response.data?.fieldErrors) {
       applyFieldErrors(error.response.data.fieldErrors);
@@ -129,10 +151,11 @@ async function handleSignup() {
 
           <BaseTextField
             id="signup-birth-date"
-            v-model="birthDate"
+            v-model="formattedBirthDate"
             label="생년월일"
-            placeholder="YYYY.MM.DD"
+            placeholder="2000.01.01"
             inputmode="numeric"
+            :maxlength="10"
             autocomplete="bday"
             icon="calendar"
             :error-message="birthDateError"

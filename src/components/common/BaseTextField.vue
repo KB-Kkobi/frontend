@@ -38,6 +38,14 @@ defineProps({
     type: String,
     default: undefined,
   },
+  maxlength: {
+    type: Number,
+    default: undefined,
+  },
+  trailingText: {
+    type: String,
+    default: "",
+  },
   icon: {
     type: String,
     default: "",
@@ -121,6 +129,7 @@ function handlePasswordVisibility() {
         :placeholder="placeholder"
         :autocomplete="autocomplete"
         :inputmode="inputmode"
+        :maxlength="maxlength"
         :aria-describedby="hint || errorMessage ? `${id}-message` : undefined"
         :aria-invalid="Boolean(errorMessage)"
         class="min-w-0 flex-1 bg-white py-3 text-body text-ink outline-none placeholder:text-muted"
@@ -150,6 +159,10 @@ function handlePasswordVisibility() {
       >
         <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
+
+      <span v-else-if="trailingText" class="shrink-0 text-caption text-pink tabular-nums">
+        {{ trailingText }}
+      </span>
     </div>
 
     <p
