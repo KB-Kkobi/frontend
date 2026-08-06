@@ -5,5 +5,7 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - /opt/kkobi/certbot/www:/var/www/certbot:ro
+      - /opt/kkobi/certbot/conf:/etc/letsencrypt:ro
