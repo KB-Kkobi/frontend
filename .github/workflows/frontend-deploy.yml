@@ -95,10 +95,7 @@ jobs:
               "test -f /opt/kkobi/certbot/conf/live/kkobi.site/privkey.pem",
               "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml pull frontend",
               "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml up -d --no-deps frontend",
-              "for attempt in echo 'Frontend health check passed.'; exit 0; fi; echo \"Waiting for frontend... (\$attempt/30)\"; sleep 5; done",
-              "echo 'Frontend HTTPS health check failed.'",
-              "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml logs --tail=100 frontend",
-              "exit 1"
+             "if curl -fsS --retry 30 --retry-delay 5 --retry-connrefused --connect-timeout 5 --max-time 10 --resolve kkobi.site:443:127.0.0.1 https://kkobi.site/ > /dev/null && curl -fsS --retry 30 --retry-delay 5 --retry-connrefused --connect-timeout 5 --max-time 10 --resolve kkobi.site:443:127.0.0.1 https://kkobi.site/api/health; then echo; echo 'Frontend HTTPS health check passed.'; else echo 'Frontend HTTPS health check failed.'; docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml logs --tail=100 frontend; exit 1; fi"
             ]
           }
           EOF
