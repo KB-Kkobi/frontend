@@ -41,6 +41,11 @@ export default {
     },
 
     extend: {
+      spacing: {
+        "pill-y": "8px",
+        "pill-x": "16px",
+      },
+
       fontFamily: {
         sans: ["Pretendard", "system-ui", "-apple-system", "sans-serif"],
       },
@@ -62,6 +67,12 @@ export default {
       backgroundImage: {
         // 페이지 배경 그라데이션 (흰색 → 크림)
         page: "linear-gradient(180deg, #FDFAE9 0%,  #FFFFFF 100%)",
+      },
+
+      spacing: {
+        "pill-y": "6px",
+        "pill-x": "12px",
+        "segment-p": "4px",
       },
 
       boxShadow: {

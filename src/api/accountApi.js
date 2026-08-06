@@ -1,9 +1,9 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-export class ApiError extends Error {
+export class AccountApiError extends Error {
   constructor(message, status) {
     super(message);
-    this.name = "ApiError";
+    this.name = "AccountApiError";
     this.status = status;
   }
 }
@@ -18,10 +18,11 @@ async function parseResponse(response) {
   return text || null;
 }
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+export async function createAccount({ seedMoney, monthlyInvestAmount }) {
+  const response = await fetch(`${API_BASE_URL}/api/accounts`, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    ...options,
+    body: JSON.stringify({ seedMoney, monthlyInvestAmount }),
   });
   const data = await parseResponse(response);
 
@@ -30,12 +31,8 @@ async function request(path, options = {}) {
       typeof data === "object" && data?.message
         ? data.message
         : "요청을 처리하지 못했습니다.";
-    throw new ApiError(message, response.status);
+    throw new AccountApiError(message, response.status);
   }
 
   return data;
-}
-
-export function get(path) {
-  return request(path, { method: "GET" });
 }

@@ -3,7 +3,7 @@ defineProps({
   color: {
     type: String,
     default: "pink",
-    validator: (v) => ["pink", "blue", "green", "yellow", "white"].includes(v),
+    validator: (v) => ["pink", "blue", "green", "yellow", "white", "danger"].includes(v),
   },
   type: {
     type: String,
@@ -18,6 +18,7 @@ const COLOR_CLASSES = {
   green: "bg-green text-white",
   yellow: "bg-yellow text-ink",
   white: "bg-surface text-ink border border-line",
+  danger: "bg-white text-error border border-line",
 };
 </script>
 

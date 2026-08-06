@@ -37,7 +37,3 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
-
-#AI AGENT
-CLAUDE.md
-AGENTS.md

@@ -1,0 +1,1 @@
+export const INSIGHT_BASE_AMOUNT = 1_000_000;
