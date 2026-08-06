@@ -1,3 +1,5 @@
+import { getAuthorizationHeader } from "@/utils/authStorage";
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 export class AccountApiError extends Error {
@@ -19,9 +21,13 @@ async function parseResponse(response) {
 }
 
 export async function createAccount({ seedMoney, monthlyInvestAmount }) {
+  const authorization = getAuthorizationHeader();
+  const headers = { "Content-Type": "application/json" };
+  if (authorization) headers.Authorization = authorization;
+
   const response = await fetch(`${API_BASE_URL}/api/accounts`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ seedMoney, monthlyInvestAmount }),
   });
   const data = await parseResponse(response);
