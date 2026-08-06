@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
 
-    # AWS 설정과 최초 GHCR 이미지 준비 전에는 배포를 건너뛴다.
+    # 배포 활성화 변수가 true인 경우에만 EC2 배포를 실행한다.
     if: vars.ENABLE_EC2_DEPLOY == 'true'
 
     permissions:
@@ -90,12 +90,12 @@ jobs:
               "set -eu",
               "printf '%s' '$COMPOSE_BASE64' | base64 -d > /opt/kkobi/compose.frontend.ec2.yaml",
               "cd /opt/kkobi",
+              "mkdir -p /opt/kkobi/certbot/www",
+              "test -f /opt/kkobi/certbot/conf/live/kkobi.site/fullchain.pem",
+              "test -f /opt/kkobi/certbot/conf/live/kkobi.site/privkey.pem",
               "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml pull frontend",
               "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml up -d --no-deps frontend",
-              "for attempt in \$(seq 1 30); do if curl -fsS http://127.0.0.1/ > /dev/null && curl -fsS http://127.0.0.1/api/health; then echo; echo 'Frontend health check passed.'; exit 0; fi; echo \"Waiting for frontend... (\$attempt/30)\"; sleep 5; done",
-              "echo 'Frontend health check failed.'",
-              "docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml logs --tail=100 frontend",
-              "exit 1"
+             "if curl -fsS --retry 30 --retry-delay 5 --retry-all-errors --retry-connrefused --retry-max-time 180 --connect-timeout 5 --max-time 10 --resolve kkobi.site:443:127.0.0.1 https://kkobi.site/ > /dev/null && curl -fsS --retry 30 --retry-delay 5 --retry-all-errors --retry-connrefused --retry-max-time 180 --connect-timeout 5 --max-time 10 --resolve kkobi.site:443:127.0.0.1 https://kkobi.site/api/health; then echo; echo 'Frontend HTTPS health check passed.'; else echo 'Frontend HTTPS health check failed.'; docker compose -f compose.ec2.yaml -f compose.frontend.ec2.yaml logs --tail=100 frontend; exit 1; fi"
             ]
           }
           EOF
@@ -114,7 +114,7 @@ jobs:
 
           echo "SSM command ID: $COMMAND_ID"
 
-          # 배포 명령이 끝날 때까지 상태를 반복 확인한다.
+          # EC2 배포 명령이 끝날 때까지 상태를 반복 확인한다.
           for attempt in $(seq 1 60); do
             STATUS="$(
               aws ssm get-command-invocation \

@@ -94,6 +94,17 @@ function handleLogout() {
       <BottomButton color="danger" @click="handleLogout">
         로그아웃
       </BottomButton>
+
+      <footer class="flex justify-center">
+        <a
+          href="https://www.tradingview.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-caption text-muted"
+        >
+          Charts by TradingView
+        </a>
+      </footer>
     </div>
   </PageContainer>
 </template>

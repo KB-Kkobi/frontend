@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
+    "lightweight-charts": "^5.2.0",
     "pinia": "^4.0.2",
     "vue": "rc",
     "vue-router": "^5.2.0"
