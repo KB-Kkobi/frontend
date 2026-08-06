@@ -3,6 +3,7 @@ import {
   PRODUCT_TYPES,
   normalizeProductType,
 } from "@/constants/product";
+import { getAuthorizationHeader } from "@/utils/authStorage";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -55,10 +56,13 @@ function getErrorCode(status) {
 
 async function requestProduct(path) {
   let response;
+  const authorization = getAuthorizationHeader();
+  const headers = { Accept: "application/json" };
+  if (authorization) headers.Authorization = authorization;
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { Accept: "application/json" },
+      headers,
     });
   } catch {
     throw new ProductApiError(
