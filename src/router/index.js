@@ -42,13 +42,12 @@ const router = createRouter({
           name: 'virtual-history',
           component: VirtualHistoryView,
         },
-        {
-          path: 'start',
-          name: 'virtual-start',
-          component: VirtualInvestStartView,
-          meta: { hideBottomTabBar: true },
-        },
       ],
+    },
+    {
+      path: '/virtual/start',
+      name: 'virtual-start',
+      component: VirtualInvestStartView,
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
     { path: '/my', name: 'my', component: MyPageView },
