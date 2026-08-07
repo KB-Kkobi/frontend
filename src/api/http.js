@@ -15,10 +15,18 @@ async function parseResponse(response) {
   if (response.status === 204) return null;
 
   const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) return response.json();
-
   const text = await response.text();
-  return text || null;
+  if (!text) return null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
+  return text;
 }
 
 async function request(path, options = {}, { skipAuth = false } = {}) {
