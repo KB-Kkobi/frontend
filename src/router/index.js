@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import ProductsView from '@/views/ProductsView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
+import ProductHoldingsView from '@/views/ProductHoldingsView.vue'
+import ProductSubscriptionView from '@/views/ProductSubscriptionView.vue'
 import VirtualInvestView from '@/views/VirtualInvestView.vue'
 import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
 import VirtualProductsView from '@/views/VirtualProductsView.vue'
@@ -20,6 +22,16 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/products', name: 'products', component: ProductsView },
+    {
+      path: '/products/holdings',
+      name: 'product-holdings',
+      component: ProductHoldingsView,
+    },
+    {
+      path: '/products/:productType/:productId/subscribe',
+      name: 'product-subscribe',
+      component: ProductSubscriptionView,
+    },
     {
       path: '/products/:productType/:productId',
       name: 'product-detail',

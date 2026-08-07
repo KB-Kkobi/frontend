@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import {
   PRODUCT_API_ERROR_CODES,
   ProductApiError,
@@ -15,6 +15,7 @@ import { getProductTypeLabel } from "@/constants/product";
 import { formatCurrency, formatNullableText } from "@/utils/format";
 
 const route = useRoute();
+const router = useRouter();
 
 const product = ref(null);
 const isLoading = ref(false);
@@ -56,7 +57,7 @@ function getErrorState(error) {
   if (error.code === PRODUCT_API_ERROR_CODES.UNAUTHORIZED) {
     return {
       title: "상품 정보를 조회할 수 없어요",
-      description: "현재 백엔드 인증 연결이 필요합니다.",
+      description: "로그인 정보가 만료되었습니다. 다시 로그인해 주세요.",
     };
   }
 
@@ -81,6 +82,16 @@ async function loadProductDetail() {
   } finally {
     isLoading.value = false;
   }
+}
+
+function handleSubscribe() {
+  router.push({
+    name: "product-subscribe",
+    params: {
+      productType: route.params.productType,
+      productId: route.params.productId,
+    },
+  });
 }
 
 watch(
@@ -210,6 +221,13 @@ watch(
             </div>
           </BaseCard>
         </section>
+
+        <BottomButton
+          :disabled="!productOptions.length"
+          @click="handleSubscribe"
+        >
+          이 상품 가입하기
+        </BottomButton>
       </template>
     </div>
   </PageContainer>
