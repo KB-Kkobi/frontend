@@ -35,6 +35,11 @@ export const PRODUCT_PAYMENT_DAYS = Object.freeze(
   Array.from({ length: 28 }, (_, index) => index + 1),
 );
 
+export const PRODUCT_AMOUNT_OPTIONS = Object.freeze({
+  [PRODUCT_TYPES.DEPOSIT]: Object.freeze([500000, 1000000, 2000000]),
+  [PRODUCT_TYPES.SAVING]: Object.freeze([100000, 200000, 300000, 500000]),
+});
+
 export const PRODUCT_HOLDING_STATUSES = Object.freeze({
   ACTIVE: "ACTIVE",
   MATURED: "MATURED",

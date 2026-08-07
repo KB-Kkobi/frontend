@@ -13,7 +13,11 @@ const tabs = [
   { key: 'virtual-history', label: '내역' },
 ]
 
-const activeTab = computed(() => route.name)
+const activeTab = computed(() =>
+  ['product-holdings', 'product-holding-detail'].includes(route.name)
+    ? 'virtual-assets'
+    : route.name,
+)
 
 function handleTabChange(key) {
   router.push({ name: key })

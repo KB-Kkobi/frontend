@@ -17,6 +17,7 @@ import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import ProductSubscriptionOptionCard from "@/components/product/ProductSubscriptionOptionCard.vue";
 import {
+  PRODUCT_AMOUNT_OPTIONS,
   PRODUCT_PAYMENT_DAYS,
   PRODUCT_TYPES,
   getProductTypeLabel,
@@ -27,8 +28,11 @@ import {
   formatCurrency,
   formatCurrencyInput,
   formatInterestRate,
+  formatKoreanShortAmount,
+  formatNullableText,
   parseCurrencyInput,
 } from "@/utils/format";
+import { calculateExpectedProductAmounts } from "@/utils/product";
 
 const route = useRoute();
 const router = useRouter();
@@ -49,33 +53,54 @@ const isConfirmationOpen = ref(false);
 const productType = computed(() =>
   normalizeProductType(product.value?.productType ?? route.params.productType),
 );
-
 const isSaving = computed(() => productType.value === PRODUCT_TYPES.SAVING);
 const productTypeLabel = computed(() => getProductTypeLabel(productType.value));
+const pageTitle = computed(() => `${productTypeLabel.value} 가입`);
 const productOptions = computed(() =>
   Array.isArray(product.value?.options) ? product.value.options : [],
 );
-
 const selectedOption = computed(() =>
   productOptions.value.find(
     (option) => option.productOptionId === selectedOptionId.value,
   ),
 );
-
 const joinAmount = computed(() => parseCurrencyInput(joinAmountInput.value));
 const amountLabel = computed(() =>
   isSaving.value ? "월 납입 금액" : "가입 금액",
 );
 const amountHint = computed(() =>
   product.value?.maxLimit
-    ? `최고 가입 한도 ${formatCurrency(product.value.maxLimit)}`
+    ? `가입 가능 금액은 최대 ${formatCurrency(product.value.maxLimit)}이에요.`
     : "원 단위로 입력해 주세요.",
 );
 
+const minimumInterestRate = computed(() => {
+  const rates = productOptions.value
+    .map((option) => Number(option.interestRate))
+    .filter(Number.isFinite);
+  return rates.length ? Math.min(...rates) : null;
+});
+
+const maximumInterestRate = computed(() => {
+  const rates = productOptions.value
+    .map((option) => Number(option.maximumInterestRate))
+    .filter(Number.isFinite);
+  return rates.length ? Math.max(...rates) : null;
+});
+
 const hasPreferentialRate = computed(
-  () => selectedOption.value?.maximumInterestRate !== null &&
+  () =>
+    selectedOption.value?.maximumInterestRate !== null &&
     selectedOption.value?.maximumInterestRate !== undefined,
 );
+
+const preferentialRateDifference = computed(() => {
+  if (!selectedOption.value) return null;
+  const difference =
+    Number(selectedOption.value.maximumInterestRate) -
+    Number(selectedOption.value.interestRate);
+  return Number.isFinite(difference) && difference > 0 ? difference : 0;
+});
 
 const appliedRate = computed(() => {
   if (!selectedOption.value) return null;
@@ -87,6 +112,26 @@ const appliedRate = computed(() => {
 const expectedMaturityDate = computed(() =>
   calculateMaturityDate(selectedOption.value?.savingTerm),
 );
+
+const expectedAmounts = computed(() =>
+  calculateExpectedProductAmounts({
+    productType: productType.value,
+    joinAmount: joinAmount.value,
+    appliedRate: appliedRate.value,
+    savingTerm: selectedOption.value?.savingTerm,
+    paymentDay: paymentDay.value,
+  }),
+);
+
+const amountOptions = computed(() => {
+  const options = PRODUCT_AMOUNT_OPTIONS[productType.value] ?? [];
+  const maximumLimitValue = product.value?.maxLimit;
+  if (maximumLimitValue === null || maximumLimitValue === undefined) return options;
+
+  const maximumLimit = Number(maximumLimitValue);
+  if (!Number.isFinite(maximumLimit)) return options;
+  return options.filter((amount) => amount <= maximumLimit);
+});
 
 const confirmationMessage = computed(() => {
   if (!product.value || !selectedOption.value || !joinAmount.value) return "";
@@ -123,6 +168,10 @@ function handleAmountInput(value) {
   joinAmountInput.value = formatCurrencyInput(value);
   amountErrorMessage.value = "";
   formErrorMessage.value = "";
+}
+
+function handleSelectAmount(amount) {
+  handleAmountInput(String(amount));
 }
 
 function handlePreferentialRate(value) {
@@ -177,7 +226,6 @@ async function handleSubscribe() {
     joinAmount: joinAmount.value,
     preferentialRateApplied: preferentialRateApplied.value,
   };
-
   if (isSaving.value) request.paymentDay = Number(paymentDay.value);
 
   try {
@@ -204,6 +252,10 @@ async function loadProduct() {
       route.params.productType,
       route.params.productId,
     );
+    const defaultOption =
+      product.value?.options?.find((option) => option.savingTerm === 12) ??
+      product.value?.options?.[0];
+    selectedOptionId.value = defaultOption?.productOptionId ?? null;
   } catch (error) {
     loadErrorMessage.value = getLoadErrorMessage(error);
   } finally {
@@ -220,10 +272,10 @@ watch(
 
 <template>
   <PageContainer>
-    <div class="flex flex-col gap-6 py-6">
+    <div class="flex flex-col gap-4 py-6">
       <header class="flex items-center gap-2">
         <BackButton />
-        <h1 class="text-h1 text-ink">예적금 가입</h1>
+        <h1 class="text-h1 text-ink">{{ pageTitle }}</h1>
       </header>
 
       <BaseCard v-if="isLoading" color="blue">
@@ -239,35 +291,64 @@ watch(
             <h2 class="text-h2 text-ink">상품 정보를 불러오지 못했어요</h2>
             <p class="text-caption text-muted">{{ loadErrorMessage }}</p>
           </div>
-          <BottomButton color="white" @click="loadProduct">
-            다시 시도하기
-          </BottomButton>
+          <BottomButton color="white" @click="loadProduct">다시 시도하기</BottomButton>
         </div>
       </BaseCard>
 
       <template v-else-if="product">
-        <BaseCard color="yellow">
-          <div class="flex flex-col gap-2">
-            <p class="text-caption font-semibold text-pink">
-              {{ productTypeLabel }}
-            </p>
-            <p class="text-caption text-muted">
-              {{ product.financialCompanyName }}
-            </p>
-            <h2 class="text-h1 text-ink">{{ product.productName }}</h2>
+        <BaseCard color="white">
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-4">
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-soft text-h2 text-pink"
+              >
+                {{ product.financialCompanyName?.charAt(0) || "금" }}
+              </span>
+              <div class="flex flex-col gap-2">
+                <h2 class="text-h2 text-ink">{{ product.productName }}</h2>
+                <p class="text-caption text-muted">
+                  {{ formatNullableText(product.financialCompanyName) }}
+                </p>
+              </div>
+            </div>
+
+            <dl class="grid grid-cols-2 gap-4 border-t border-line pt-4">
+              <div class="flex flex-col gap-2">
+                <dt class="text-caption text-muted">기본 금리</dt>
+                <dd class="text-h1 text-ink tabular-nums">
+                  {{ formatInterestRate(minimumInterestRate) }}
+                </dd>
+              </div>
+              <div class="flex flex-col gap-2">
+                <dt class="text-caption text-muted">최고 금리</dt>
+                <dd class="text-h1 text-profit tabular-nums">
+                  {{ formatInterestRate(maximumInterestRate) }}
+                </dd>
+              </div>
+            </dl>
+
+            <div class="flex flex-wrap gap-2">
+              <BasePill
+                :label="formatNullableText(selectedOption?.interestRateTypeName)"
+                color="blue"
+              />
+              <BasePill
+                v-if="isSaving && selectedOption?.reserveTypeName"
+                :label="selectedOption.reserveTypeName"
+                color="green"
+              />
+            </div>
           </div>
         </BaseCard>
 
         <section class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-ink">금리 옵션 선택</h2>
-            <p class="text-caption text-muted">
-              가입 기간과 금리를 확인한 뒤 하나를 선택해 주세요.
-            </p>
+            <h2 class="text-h2 text-ink">가입 기간 고르기</h2>
+            <p class="text-caption text-muted">기간에 따라 금리가 달라져요.</p>
           </div>
 
           <div
-            v-if="productOptions.length"
+            v-if="isSaving"
             class="flex flex-col gap-4"
             role="radiogroup"
             aria-label="가입 금리 옵션"
@@ -281,13 +362,25 @@ watch(
             />
           </div>
 
-          <BaseCard v-else color="blue">
-            <p class="text-body text-ink">가입할 수 있는 금리 옵션이 없어요.</p>
+          <BaseCard v-else color="white">
+            <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="가입 기간">
+              <BasePill
+                v-for="option in productOptions"
+                :key="option.productOptionId"
+                as="button"
+                type="button"
+                :label="`${option.savingTerm}개월`"
+                color="yellow"
+                :variant="selectedOptionId === option.productOptionId ? 'filled' : 'ghost'"
+                :aria-pressed="selectedOptionId === option.productOptionId"
+                @click="handleSelectOption(option)"
+              />
+            </div>
           </BaseCard>
         </section>
 
         <BaseCard color="white">
-          <div class="flex flex-col gap-6">
+          <div class="flex flex-col gap-4">
             <BaseTextField
               id="join-amount"
               :model-value="joinAmountInput"
@@ -300,9 +393,22 @@ watch(
               @update:model-value="handleAmountInput"
             />
 
+            <div class="flex flex-wrap gap-2" aria-label="추천 가입 금액">
+              <BasePill
+                v-for="amount in amountOptions"
+                :key="amount"
+                as="button"
+                type="button"
+                :label="formatKoreanShortAmount(amount)"
+                color="yellow"
+                :variant="joinAmount === amount ? 'filled' : 'ghost'"
+                @click="handleSelectAmount(amount)"
+              />
+            </div>
+
             <div v-if="isSaving" class="flex flex-col gap-2">
               <label for="payment-day" class="text-body font-semibold text-ink">
-                월 납입일
+                납입일
               </label>
               <div class="rounded-2xl border border-line bg-white px-4">
                 <select
@@ -312,7 +418,7 @@ watch(
                   :aria-invalid="Boolean(paymentDayErrorMessage)"
                   @change="paymentDayErrorMessage = ''"
                 >
-                  <option value="">납입일을 선택해 주세요</option>
+                  <option value="">월 납입일을 선택해 주세요</option>
                   <option v-for="day in PRODUCT_PAYMENT_DAYS" :key="day" :value="day">
                     매월 {{ day }}일
                   </option>
@@ -326,64 +432,88 @@ watch(
                 {{ paymentDayErrorMessage }}
               </p>
             </div>
+          </div>
+        </BaseCard>
 
+        <BaseCard color="white">
+          <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
-              <p class="text-body font-semibold text-ink">우대 금리 적용 여부</p>
-              <div class="flex gap-2">
-                <BasePill
-                  as="button"
-                  type="button"
-                  label="기본 금리 적용"
-                  color="pink"
-                  :variant="preferentialRateApplied ? 'ghost' : 'filled'"
-                  @click="handlePreferentialRate(false)"
-                />
-                <BasePill
-                  as="button"
-                  type="button"
-                  label="우대 금리 적용"
-                  color="pink"
-                  :variant="preferentialRateApplied ? 'filled' : 'ghost'"
-                  :disabled="!hasPreferentialRate"
-                  @click="handlePreferentialRate(true)"
-                />
-              </div>
-              <p class="text-caption text-muted">
-                실제 우대 조건 충족 여부는 상품 안내를 확인해 주세요.
+              <h2 class="text-h2 text-ink">받을 수 있는 우대조건</h2>
+              <p class="whitespace-pre-line text-caption text-muted">
+                {{ formatNullableText(product.preferentialConditions) }}
               </p>
+            </div>
+
+            <div class="flex items-center justify-between gap-4 border-t border-line pt-4">
+              <div class="flex flex-col gap-2">
+                <p class="text-body font-semibold text-ink">우대 조건 충족</p>
+                <p class="text-caption text-muted">충족 여부에 따라 적용 금리가 달라져요.</p>
+              </div>
+              <BasePill
+                as="button"
+                type="button"
+                :label="preferentialRateApplied ? '적용 중' : '적용 안 함'"
+                color="pink"
+                :variant="preferentialRateApplied ? 'filled' : 'ghost'"
+                :disabled="!hasPreferentialRate"
+                :aria-pressed="preferentialRateApplied"
+                @click="handlePreferentialRate(!preferentialRateApplied)"
+              />
             </div>
           </div>
         </BaseCard>
 
         <BaseCard v-if="selectedOption" color="blue">
           <div class="flex flex-col gap-4">
-            <h2 class="text-h2 text-ink">가입 조건 확인</h2>
-            <dl class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col gap-2">
+            <h2 class="text-h2 text-ink">내 예상 수령액</h2>
+            <dl class="flex flex-col gap-2">
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-caption text-muted">기본 금리</dt>
+                <dd class="text-body text-ink tabular-nums">
+                  {{ formatInterestRate(selectedOption.interestRate) }}
+                </dd>
+              </div>
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-caption text-muted">우대 금리</dt>
+                <dd class="text-body text-profit tabular-nums">
+                  +{{ formatInterestRate(preferentialRateDifference) }}
+                </dd>
+              </div>
+              <div class="flex items-center justify-between gap-4">
                 <dt class="text-caption text-muted">적용 금리</dt>
                 <dd class="text-h2 text-profit tabular-nums">
                   {{ formatInterestRate(appliedRate) }}
                 </dd>
               </div>
-              <div class="flex flex-col gap-2">
-                <dt class="text-caption text-muted">가입 기간</dt>
-                <dd class="text-h2 text-ink tabular-nums">
-                  {{ selectedOption.savingTerm }}개월
+            </dl>
+
+            <dl class="flex flex-col gap-2 border-t border-line pt-4">
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-caption text-muted">예상 원금</dt>
+                <dd class="text-body text-ink tabular-nums">
+                  {{ formatCurrency(expectedAmounts.expectedPrincipal) }}
                 </dd>
               </div>
-              <div class="flex flex-col gap-2">
-                <dt class="text-caption text-muted">예상 만기일</dt>
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-caption text-muted">세전 이자</dt>
                 <dd class="text-body text-ink tabular-nums">
-                  {{ formatLocalDate(expectedMaturityDate) }}
+                  {{ formatCurrency(expectedAmounts.expectedInterest) }}
                 </dd>
               </div>
-              <div class="flex flex-col gap-2">
-                <dt class="text-caption text-muted">{{ amountLabel }}</dt>
-                <dd class="text-body text-ink tabular-nums">
-                  {{ formatCurrency(joinAmount) }}
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-body font-semibold text-ink">만기 수령액</dt>
+                <dd class="text-amount text-profit tabular-nums">
+                  {{ formatCurrency(expectedAmounts.expectedAmount) }}
                 </dd>
               </div>
             </dl>
+
+            <BaseCard color="green">
+              <p class="text-caption text-muted">
+                만기일은 {{ formatLocalDate(expectedMaturityDate) }}이며, 실제 이자는 납입일과
+                상품 조건에 따라 달라질 수 있어요.
+              </p>
+            </BaseCard>
           </div>
         </BaseCard>
 
@@ -392,11 +522,15 @@ watch(
         </p>
 
         <BottomButton
+          :color="isSaving ? 'pink' : 'yellow'"
           :disabled="isSubmitting || !productOptions.length"
           @click="handleOpenConfirmation"
         >
-          {{ isSubmitting ? "가입 처리 중" : "입력 정보 확인하고 가입하기" }}
+          {{ isSubmitting ? "가입 처리 중" : "가입하기" }}
         </BottomButton>
+        <p class="text-caption text-muted text-center">
+          가입 자산은 가상투자 계좌에 반영됩니다.
+        </p>
       </template>
     </div>
   </PageContainer>

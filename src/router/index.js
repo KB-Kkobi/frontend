@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import ProductsView from '@/views/ProductsView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
 import ProductHoldingsView from '@/views/ProductHoldingsView.vue'
+import ProductHoldingDetailView from '@/views/ProductHoldingDetailView.vue'
 import ProductSubscriptionView from '@/views/ProductSubscriptionView.vue'
 import VirtualInvestView from '@/views/VirtualInvestView.vue'
 import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
@@ -22,11 +23,6 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/products', name: 'products', component: ProductsView },
-    {
-      path: '/products/holdings',
-      name: 'product-holdings',
-      component: ProductHoldingsView,
-    },
     {
       path: '/products/:productType/:productId/subscribe',
       name: 'product-subscribe',
@@ -56,6 +52,16 @@ const router = createRouter({
           path: 'history',
           name: 'virtual-history',
           component: VirtualHistoryView,
+        },
+        {
+          path: 'holdings',
+          name: 'product-holdings',
+          component: ProductHoldingsView,
+        },
+        {
+          path: 'holdings/:holdingProductId',
+          name: 'product-holding-detail',
+          component: ProductHoldingDetailView,
         },
       ],
     },

@@ -226,3 +226,17 @@ export async function fetchProductHoldings() {
   const response = await get(PRODUCT_HOLDINGS_API_PATH);
   return Array.isArray(response) ? response : [];
 }
+
+export async function fetchProductHolding(holdingProductId) {
+  const parsedHoldingProductId = Number(holdingProductId);
+  if (!Number.isInteger(parsedHoldingProductId) || parsedHoldingProductId <= 0) {
+    return null;
+  }
+
+  const holdings = await fetchProductHoldings();
+  return (
+    holdings.find(
+      (holding) => holding.holdingProductId === parsedHoldingProductId,
+    ) ?? null
+  );
+}
