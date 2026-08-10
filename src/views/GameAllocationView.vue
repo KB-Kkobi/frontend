@@ -1,5 +1,8 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { startGame } from '@/api/gameApi';
+import { ApiError } from '@/api/http';
 import BackButton from '@/components/common/BackButton.vue';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BottomButton from '@/components/common/BottomButton.vue';
@@ -16,7 +19,11 @@ import {
 } from '@/constants/game';
 import { formatCurrency, formatInterestRate } from '@/utils/format';
 
+const router = useRouter();
+
 const allocation = reactive({ ...GAME_INITIAL_ALLOCATION });
+const isSubmitting = ref(false);
+const errorMessage = ref('');
 
 const assetRatios = computed(() => ({
   cash: (allocation.cash / GAME_SEED_MONEY) * 100,
@@ -54,11 +61,47 @@ function updateAllocation(assetType, nextAmount) {
 
   allocation[assetType] = nextAmount;
 }
+
+function calculateAssetRatio(amount) {
+  return (amount / GAME_SEED_MONEY) * 100;
+}
+
+function getGameStartErrorMessage(error) {
+  if (!(error instanceof ApiError)) {
+    return '게임을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+  }
+  if (error.status === 0) return '서버에 연결할 수 없습니다.';
+  if ([401, 403].includes(error.status)) {
+    return '로그인 후 성향 진단을 시작할 수 있어요.';
+  }
+
+  return error.message || '게임을 시작하지 못했습니다.';
+}
+
+async function handleStartGame() {
+  if (isSubmitting.value) return;
+
+  isSubmitting.value = true;
+  errorMessage.value = '';
+
+  try {
+    await startGame({
+      cashRatio: calculateAssetRatio(allocation.cash),
+      stockRatio: calculateAssetRatio(allocation.stock),
+      depositRatio: calculateAssetRatio(allocation.deposit),
+    });
+    await router.replace({ name: 'game' });
+  } catch (error) {
+    errorMessage.value = getGameStartErrorMessage(error);
+  } finally {
+    isSubmitting.value = false;
+  }
+}
 </script>
 
 <template>
   <PageContainer>
-    <div class="flex flex-col gap-6 py-6">
+    <form class="flex flex-col gap-6 py-6" @submit.prevent="handleStartGame">
       <header class="flex flex-col gap-4">
         <BackButton />
         <div class="flex flex-col gap-2">
@@ -166,9 +209,13 @@ function updateAllocation(assetType, nextAmount) {
         </div>
       </BaseCard>
 
-      <BottomButton color="yellow">
-        성향 진단 시작하기
+      <p v-if="errorMessage" class="text-caption text-error" role="alert">
+        {{ errorMessage }}
+      </p>
+
+      <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+        {{ isSubmitting ? '게임을 준비하고 있어요' : '성향 진단 시작하기' }}
       </BottomButton>
-    </div>
+    </form>
   </PageContainer>
 </template>

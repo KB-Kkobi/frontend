@@ -57,7 +57,12 @@ export function clearAuthSession() {
 export function getAuthorizationHeader() {
   const session = readAuthSession();
   if (!session?.accessToken) return null;
-  if (session.accessTokenExpiresAt <= Date.now()) return null;
+  if (
+    session.accessTokenExpiresAt &&
+    session.accessTokenExpiresAt <= Date.now()
+  ) {
+    return null;
+  }
 
   const tokenType = session.tokenType || "Bearer";
   return `${tokenType} ${session.accessToken}`;
