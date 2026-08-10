@@ -1,52 +1,105 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import PageContainer from "@/components/common/PageContainer.vue";
 import BackButton from "@/components/common/BackButton.vue";
-import BasePill from "@/components/common/BasePill.vue";
+import BaseCard from "@/components/common/BaseCard.vue";
 import HoldingCard from "@/components/security/HoldingCard.vue";
 import SecurityInsightCard from "@/components/security/SecurityInsightCard.vue";
 import SecuritySummaryCard from "@/components/security/SecuritySummaryCard.vue";
-import { fetchSecurity } from "@/api/investApi";
-import { fetchPrice } from "@/api/stockApi";
-import { useStockTick } from "@/composables/useStockTick";
+import { fetchSecurityDetail, fetchSecurityQuotes } from "@/api/securityApi";
+import { ApiError } from "@/api/http";
+import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
 
 const route = useRoute();
 const security = ref(null);
-const snapshot = ref(null);
+const quote = ref(null);
 const holding = ref(null);
+const isLoading = ref(false);
+const errorMessage = ref("");
+
+let pollingTimer = null;
+let activeTicker = null;
 
 // 보유 종목 mock. 나중에 API(fetchHolding(code))로 교체.
 const MOCK_HOLDINGS = {
   "005930": { quantity: 10, avgPrice: 70000 },
 };
 
-function loadHolding(pk) {
-  const found = MOCK_HOLDINGS[pk];
+function loadHolding(ticker) {
+  const found = MOCK_HOLDINGS[ticker];
   holding.value = found && found.quantity > 0 ? found : null;
 }
 
-async function loadSecurity(pk) {
+function getDetailErrorMessage(error) {
+  if (error instanceof ApiError && error.status === 404) {
+    return "해당 증권을 찾을 수 없어요.";
+  }
+  if (error instanceof ApiError && error.status === 401) {
+    return "로그인 정보가 만료되었습니다. 다시 로그인해 주세요.";
+  }
+  if (error instanceof ApiError) return error.message;
+  return "증권 정보를 불러오지 못했습니다.";
+}
+
+async function loadQuote(ticker) {
+  try {
+    const { quotes } = await fetchSecurityQuotes([ticker]);
+    if (activeTicker !== ticker) return;
+    quote.value = quotes[0] ?? null;
+  } catch (error) {
+    console.error("[SecurityDetailView] 시세 조회 실패", error);
+  }
+}
+
+function stopPolling() {
+  if (pollingTimer) {
+    clearInterval(pollingTimer);
+    pollingTimer = null;
+  }
+}
+
+function startPolling(ticker) {
+  stopPolling();
+  pollingTimer = setInterval(() => loadQuote(ticker), SECURITY_QUOTE_POLL_INTERVAL_MS);
+}
+
+async function loadSecurity(ticker) {
   security.value = null;
-  snapshot.value = null;
-  loadHolding(pk);
+  quote.value = null;
+  errorMessage.value = "";
+  isLoading.value = true;
+  activeTicker = ticker;
+  stopPolling();
+  loadHolding(ticker);
 
-  const [domain, priceSnapshot] = await Promise.all([
-    fetchSecurity(pk),
-    fetchPrice(pk).catch((err) => {
-      console.error("[SecurityDetailView] 시세 스냅샷 로드 실패", err);
-      return null;
-    }),
-  ]);
+  try {
+    const detail = await fetchSecurityDetail(ticker);
+    if (activeTicker !== ticker) return;
 
-  snapshot.value = priceSnapshot;
+    security.value = {
+      code: detail.ticker || ticker,
+      name: detail.name || ticker,
+      market: detail.market ?? "",
+      type: detail.type,
+      kisSupported: detail.kisSupported,
+      sector: detail.sector,
+      marketCap: detail.marketCap,
+      volatility: detail.volatility,
+      averageDailyMove: detail.averageDailyMove,
+      maxDrawdown: detail.maxDrawdown,
+      averageVolume: detail.averageVolume,
+    };
 
-  // mock 도메인이 없어도 시세 스냅샷/코드만으로 렌더링되도록 fallback
-  security.value = domain ?? {
-    code: priceSnapshot?.stockCode ?? pk,
-    name: priceSnapshot?.stockName?.trim() || pk,
-    market: "",
-  };
+    if (detail.kisSupported) {
+      await loadQuote(ticker);
+      if (activeTicker === ticker) startPolling(ticker);
+    }
+  } catch (error) {
+    errorMessage.value = getDetailErrorMessage(error);
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 watch(
@@ -57,32 +110,14 @@ watch(
   { immediate: true },
 );
 
-const stockCode = computed(() => security.value?.code ?? null);
-const { tick, isConnected, error: tickError } = useStockTick(stockCode);
-
-// 실시간 tick > REST 스냅샷 > mock security 순으로 fallback
-function pick(field) {
-  if (tick.value?.[field] !== undefined && tick.value?.[field] !== null) {
-    return tick.value[field];
-  }
-  if (snapshot.value?.[field] !== undefined && snapshot.value?.[field] !== null) {
-    return snapshot.value[field];
-  }
-  return security.value?.[field] ?? null;
-}
-
-const currentPrice = computed(() => pick("price"));
-const currentChange = computed(() => pick("change"));
-const currentChangeRate = computed(() => pick("changeRate"));
-
-const connectionBadge = computed(() => {
-  if (tickError.value) {
-    return { label: "연결 오류", color: "pink" };
-  }
-  return isConnected.value
-    ? { label: "실시간 연결됨", color: "green" }
-    : { label: "재연결 중", color: "pink" };
+onUnmounted(() => {
+  activeTicker = null;
+  stopPolling();
 });
+
+const currentPrice = computed(() => quote.value?.price ?? null);
+const currentChange = computed(() => quote.value?.change ?? null);
+const currentChangeRate = computed(() => quote.value?.changeRate ?? null);
 </script>
 
 <template>
@@ -90,37 +125,48 @@ const connectionBadge = computed(() => {
     <div class="flex flex-col gap-4 py-6">
       <div class="flex items-center justify-between">
         <BackButton />
-        <BasePill
-          :label="connectionBadge.label"
-          :color="connectionBadge.color"
-          variant="filled"
-        />
       </div>
 
-      <SecuritySummaryCard
-        v-if="security"
-        :code="security.code"
-        :name="security.name"
-        :market="security.market"
-        :price="currentPrice"
-        :change="currentChange"
-        :change-rate="currentChangeRate"
-      />
-      <p v-else class="text-body text-muted">불러오는 중...</p>
+      <BaseCard v-if="isLoading && !security" color="blue">
+        <div class="flex flex-col gap-2" role="status">
+          <h2 class="text-h2 text-ink">증권 정보를 불러오는 중이에요</h2>
+          <p class="text-caption text-muted">잠시만 기다려 주세요.</p>
+        </div>
+      </BaseCard>
 
-      <HoldingCard
-        v-if="security && holding"
-        :quantity="holding.quantity"
-        :avg-price="holding.avgPrice"
-        :current-price="currentPrice"
-      />
+      <BaseCard v-else-if="errorMessage" color="pink">
+        <div class="flex flex-col gap-2" role="alert">
+          <h2 class="text-h2 text-ink">증권 정보를 불러오지 못했어요</h2>
+          <p class="text-caption text-muted">{{ errorMessage }}</p>
+        </div>
+      </BaseCard>
 
-      <SecurityInsightCard
-        v-if="security"
-        :volatility="security.volatility ?? null"
-        :max-drawdown="security.maxDrawdown ?? null"
-        :description="security.description ?? null"
-      />
+      <template v-else-if="security">
+        <SecuritySummaryCard
+          :code="security.code"
+          :name="security.name"
+          :market="security.market"
+          :type="security.type"
+          :kis-supported="security.kisSupported"
+          :price="currentPrice"
+          :change="currentChange"
+          :change-rate="currentChangeRate"
+        />
+
+        <HoldingCard
+          v-if="holding"
+          :quantity="holding.quantity"
+          :avg-price="holding.avgPrice"
+          :current-price="currentPrice"
+        />
+
+        <SecurityInsightCard
+          :product-name="security.name"
+          :average-daily-move="security.averageDailyMove"
+          :max-drawdown="security.maxDrawdown"
+          :description="security.description ?? null"
+        />
+      </template>
     </div>
   </PageContainer>
 </template>

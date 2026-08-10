@@ -30,6 +30,10 @@ function handleTabChange(key) {
       <h1 class="text-h1 text-ink">가상투자</h1>
       <TabBar :model-value="activeTab" :tabs="tabs" @update:model-value="handleTabChange" />
     </div>
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <keep-alive :include="['VirtualProductsView']">
+        <component :is="Component" />
+      </keep-alive>
+    </RouterView>
   </PageContainer>
 </template>

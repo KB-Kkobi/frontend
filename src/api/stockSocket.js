@@ -1,6 +1,6 @@
 import { Client, ReconnectionTimeMode } from "@stomp/stompjs";
 
-const STOCK_CODE_PATTERN = /^\d{6}$/;
+const TICKER_PATTERN = /^[A-Za-z0-9]{1,20}$/;
 const RECONNECT_INITIAL_MS = 500;
 const RECONNECT_MAX_MS = 30_000;
 
@@ -12,8 +12,8 @@ function buildBrokerUrl() {
   return `${protocol}//${window.location.host}/ws-stocks`;
 }
 
-function assertStockCode(code) {
-  if (typeof code !== "string" || !STOCK_CODE_PATTERN.test(code)) {
+function assertTicker(code) {
+  if (typeof code !== "string" || !TICKER_PATTERN.test(code)) {
     throw new Error(`유효하지 않은 종목코드입니다: ${code}`);
   }
 }
@@ -173,7 +173,7 @@ export function disconnect() {
  * @returns {() => void} unsubscribe 함수
  */
 export function subscribeTick(code, handler) {
-  assertStockCode(code);
+  assertTicker(code);
   if (typeof handler !== "function") {
     throw new Error("handler는 함수여야 합니다.");
   }
