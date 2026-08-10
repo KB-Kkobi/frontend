@@ -70,6 +70,10 @@ function handleGoHome() {
   router.replace({ name: 'home' });
 }
 
+function handleOpenAllocation() {
+  router.push({ name: 'game-allocation' });
+}
+
 onMounted(loadGameStatus);
 </script>
 
@@ -209,7 +213,9 @@ onMounted(loadGameStatus);
         </div>
       </BaseCard>
 
-      <BottomButton color="yellow">시작 자산 정하기</BottomButton>
+      <BottomButton color="yellow" @click="handleOpenAllocation">
+        시작 자산 정하기
+      </BottomButton>
     </div>
   </PageContainer>
 </template>
