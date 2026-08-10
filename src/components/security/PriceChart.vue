@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { CandlestickSeries, createChart } from "lightweight-charts";
 import { fetchChart } from "@/api/stockApi";
+import { subscribeTick } from "@/api/stockSocket";
 import { CHART_COLORS, getChartPeriod } from "@/constants/chart";
 import { formatDateBasic, getDateMonthsAgo } from "@/utils/date";
 
@@ -18,6 +19,8 @@ const hasData = ref(false);
 const chart = shallowRef(null);
 const candleSeries = shallowRef(null);
 let resizeObserver = null;
+let lastCandle = null;
+let unsubscribeTick = null;
 
 function createChartInstance(container) {
   const instance = createChart(container, {
@@ -97,7 +100,9 @@ async function loadChart() {
     hasData.value = data.length > 0;
     candleSeries.value.setData(data);
 
+    lastCandle = data.length > 0 ? { ...data[data.length - 1] } : null;
     if (data.length > 0) chart.value?.timeScale().fitContent();
+    setupRealtimeTick();
   } catch (err) {
     errorMessage.value = err?.message ?? "차트를 불러오지 못했습니다.";
     hasData.value = false;
@@ -105,6 +110,26 @@ async function loadChart() {
   } finally {
     isLoading.value = false;
   }
+}
+
+function setupRealtimeTick() {
+  unsubscribeTick?.();
+  unsubscribeTick = null;
+  if (!props.code) return;
+
+  unsubscribeTick = subscribeTick(props.code, (tick) => {
+    if (!candleSeries.value || !lastCandle) return;
+    const price = tick.price ?? tick.currentPrice;
+    if (price == null) return;
+
+    lastCandle = {
+      ...lastCandle,
+      close: price,
+      high: Math.max(lastCandle.high, price),
+      low: Math.min(lastCandle.low, price),
+    };
+    candleSeries.value.update(lastCandle);
+  });
 }
 
 function handleResize() {
@@ -130,6 +155,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  unsubscribeTick?.();
+  unsubscribeTick = null;
   resizeObserver?.disconnect();
   resizeObserver = null;
 
