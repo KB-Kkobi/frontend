@@ -13,6 +13,7 @@ import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
+import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
 import GameView from '@/views/GameView.vue'
 import SignUpView from '@/views/SignUpView.vue'
@@ -95,6 +96,12 @@ const router = createRouter({
       path: '/securities/:pk',
       name: 'security-detail',
       component: SecurityDetailView,
+    },
+    {
+      path: '/game/allocation',
+      name: 'game-allocation',
+      component: GameAllocationView,
+      meta: { hideBottomTabBar: true },
     },
     {
       path: '/game/introduction',
