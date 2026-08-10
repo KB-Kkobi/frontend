@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { loginUser } from "@/api/authApi";
+import { fetchGameStatus } from "@/api/gameApi";
 import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
@@ -40,6 +41,17 @@ function getLoginErrorMessage(error) {
   return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
 }
 
+async function redirectAfterLogin() {
+  try {
+    const gameStatus = await fetchGameStatus();
+    await router.replace({
+      name: gameStatus?.isCompleted ? "home" : "game-introduction",
+    });
+  } catch {
+    await router.replace({ name: "game-introduction" });
+  }
+}
+
 async function handleLogin() {
   if (isSubmitting.value) return;
 
@@ -62,7 +74,7 @@ async function handleLogin() {
   try {
     const tokenResponse = await loginUser(loginData);
     authStore.setSession(tokenResponse);
-    await router.replace({ name: "home" });
+    await redirectAfterLogin();
   } catch (error) {
     const fieldErrors =
       error instanceof ApiError ? error.data?.fieldErrors : null;

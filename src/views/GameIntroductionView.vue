@@ -1,4 +1,8 @@
 <script setup>
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { fetchGameStatus } from '@/api/gameApi';
+import { ApiError } from '@/api/http';
 import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BasePill from '@/components/common/BasePill.vue';
@@ -6,14 +10,109 @@ import BottomButton from '@/components/common/BottomButton.vue';
 import PageContainer from '@/components/common/PageContainer.vue';
 import MarketLineChart from '@/components/game/MarketLineChart.vue';
 import { GAME_INTRO_PREVIEW_PRICES, GAME_INTRO_STEPS } from '@/constants/game';
+import { useAuthStore } from '@/stores/auth';
+
+const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+
+const isLoading = ref(true);
+const errorMessage = ref('');
 
 const previewPriceMin = Math.min(...GAME_INTRO_PREVIEW_PRICES);
 const previewPriceMax = Math.max(...GAME_INTRO_PREVIEW_PRICES);
+
+function getGameStatusErrorMessage(error) {
+  if (!(error instanceof ApiError)) {
+    return '게임 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+  }
+  if (error.status === 0) return '서버에 연결할 수 없습니다.';
+
+  return error.message || '게임 정보를 확인하지 못했습니다.';
+}
+
+async function redirectToLogin() {
+  await router.replace({
+    name: 'login',
+    query: { redirect: route.fullPath },
+  });
+}
+
+async function loadGameStatus() {
+  if (!authStore.isAuthenticated) {
+    await redirectToLogin();
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const gameStatus = await fetchGameStatus();
+    if (gameStatus?.isCompleted) {
+      await router.replace({ name: 'home' });
+      return;
+    }
+  } catch (error) {
+    if (error instanceof ApiError && [401, 403].includes(error.status)) {
+      authStore.logout();
+      await redirectToLogin();
+      return;
+    }
+
+    errorMessage.value = getGameStatusErrorMessage(error);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function handleGoHome() {
+  router.replace({ name: 'home' });
+}
+
+onMounted(loadGameStatus);
 </script>
 
 <template>
   <PageContainer>
-    <div class="flex flex-col gap-6 py-6">
+    <div
+      v-if="isLoading"
+      class="flex flex-1 items-center justify-center py-6"
+      role="status"
+      aria-live="polite"
+    >
+      <BaseCard>
+        <p class="text-body text-muted">게임 정보를 확인하고 있어요.</p>
+      </BaseCard>
+    </div>
+
+    <div
+      v-else-if="errorMessage"
+      class="flex flex-1 items-center justify-center py-6"
+      role="alert"
+    >
+      <BaseCard color="pink">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-4">
+            <BaseAlertIcon class="h-6 w-6 shrink-0 text-error" />
+            <div class="flex flex-col gap-2">
+              <h1 class="text-h1 text-ink">게임 정보를 불러오지 못했어요</h1>
+              <p class="text-body text-muted">{{ errorMessage }}</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <BottomButton color="yellow" @click="loadGameStatus">
+              다시 시도
+            </BottomButton>
+            <BottomButton color="white" @click="handleGoHome">
+              홈으로 돌아가기
+            </BottomButton>
+          </div>
+        </div>
+      </BaseCard>
+    </div>
+
+    <div v-else class="flex flex-col gap-6 py-6">
       <header class="flex flex-col gap-2">
         <p class="text-caption text-muted">회원님, 반가워요</p>
         <h1 class="text-amount text-ink">
