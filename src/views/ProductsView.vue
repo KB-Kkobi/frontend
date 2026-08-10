@@ -52,7 +52,7 @@ function getListErrorMessage(error) {
     error instanceof ProductApiError &&
     error.code === PRODUCT_API_ERROR_CODES.UNAUTHORIZED
   ) {
-    return "현재 백엔드 인증 연결이 필요합니다.";
+    return "로그인 정보가 만료되었습니다. 다시 로그인해 주세요.";
   }
   if (error instanceof ProductApiError) return error.message;
   return "상품 목록을 불러오지 못했습니다.";

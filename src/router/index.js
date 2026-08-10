@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import ProductsView from '@/views/ProductsView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
+import ProductHoldingsView from '@/views/ProductHoldingsView.vue'
+import ProductHoldingDetailView from '@/views/ProductHoldingDetailView.vue'
+import ProductSubscriptionView from '@/views/ProductSubscriptionView.vue'
 import VirtualInvestView from '@/views/VirtualInvestView.vue'
 import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
 import VirtualProductsView from '@/views/VirtualProductsView.vue'
@@ -20,6 +23,11 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/products', name: 'products', component: ProductsView },
+    {
+      path: '/products/:productType/:productId/subscribe',
+      name: 'product-subscribe',
+      component: ProductSubscriptionView,
+    },
     {
       path: '/products/:productType/:productId',
       name: 'product-detail',
@@ -46,12 +54,21 @@ const router = createRouter({
           component: VirtualHistoryView,
         },
         {
-          path: 'start',
-          name: 'virtual-start',
-          component: VirtualInvestStartView,
-          meta: { hideBottomTabBar: true },
+          path: 'holdings',
+          name: 'product-holdings',
+          component: ProductHoldingsView,
+        },
+        {
+          path: 'holdings/:holdingProductId',
+          name: 'product-holding-detail',
+          component: ProductHoldingDetailView,
         },
       ],
+    },
+    {
+      path: '/virtual/start',
+      name: 'virtual-start',
+      component: VirtualInvestStartView,
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
     { path: '/my', name: 'my', component: MyPageView },

@@ -1,63 +1,89 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { loginUser } from "@/api/authApi";
+import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import { useAuthStore } from "@/stores/auth";
+import {
+  hasAuthValidationErrors,
+  validateLoginData,
+} from "@/utils/authValidation";
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const email = ref("");
 const password = ref("");
 const emailError = ref("");
 const passwordError = ref("");
-const formError = ref("");
 const isSubmitting = ref(false);
 
 function clearErrors() {
   emailError.value = "";
   passwordError.value = "";
-  formError.value = "";
+}
+
+function getLoginErrorMessage(error) {
+  if (!(error instanceof ApiError)) {
+    return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
+  }
+  if (error.status === 0) return "서버에 연결할 수 없습니다.";
+  if (error.status === 400) return "이메일과 비밀번호를 확인해주세요.";
+  if (error.status === 401) {
+    return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  }
+
+  return "로그인에 실패했습니다. 잠시 후 다시 시도해주세요.";
 }
 
 async function handleLogin() {
   if (isSubmitting.value) return;
 
   clearErrors();
-  isSubmitting.value = true;
 
   const loginData = {
-    email: email.value,
+    email: email.value.trim(),
     password: password.value,
   };
 
-  try {
-    console.log("로그인 요청 데이터:", loginData);
+  const validationErrors = validateLoginData(loginData);
+  if (hasAuthValidationErrors(validationErrors)) {
+    emailError.value = validationErrors.email;
+    passwordError.value = validationErrors.password;
+    return;
+  }
 
-    // 실제 API 연동 시 아래 대기 코드를 login API 호출로 교체합니다.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  isSubmitting.value = true;
+
+  try {
+    const tokenResponse = await loginUser(loginData);
+    authStore.setSession(tokenResponse);
     await router.replace({ name: "home" });
   } catch (error) {
-    if (error.response?.status === 400 && error.response.data?.fieldErrors) {
-      emailError.value = error.response.data.fieldErrors.email ?? "";
-      passwordError.value = error.response.data.fieldErrors.password ?? "";
+    const fieldErrors =
+      error instanceof ApiError ? error.data?.fieldErrors : null;
+
+    if (fieldErrors) {
+      emailError.value = fieldErrors.email ?? "";
+      passwordError.value = fieldErrors.password ?? "";
     } else {
-      formError.value =
-        error.response?.data?.message ??
-        "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.";
+      passwordError.value = getLoginErrorMessage(error);
     }
   } finally {
     isSubmitting.value = false;
   }
 }
 
-function handleFindPassword() {
-  router.push({ name: "password-reset" });
-}
-
 function handleSignup() {
   router.push({ name: "signup" });
+}
+
+function handleFindPassword() {
+  router.push({ name: "password-reset" });
 }
 </script>
 
@@ -82,6 +108,7 @@ function handleSignup() {
               inputmode="email"
               icon="email"
               :error-message="emailError"
+              reserve-message-space
             />
 
             <BaseTextField
@@ -93,6 +120,7 @@ function handleSignup() {
               autocomplete="current-password"
               icon="password"
               :error-message="passwordError"
+              reserve-message-space
             />
 
             <div class="flex justify-end">
@@ -104,10 +132,6 @@ function handleSignup() {
                 비밀번호 찾기 ›
               </button>
             </div>
-
-            <p v-if="formError" class="text-caption text-error" role="alert">
-              {{ formError }}
-            </p>
 
             <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
               {{ isSubmitting ? "로그인 중" : "로그인" }}

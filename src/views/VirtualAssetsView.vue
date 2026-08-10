@@ -12,6 +12,10 @@ const hasJustStarted = computed(() => route.query.started === 'true')
 function handleStart() {
   router.push({ name: 'virtual-start' })
 }
+
+function handleViewProductHoldings() {
+  router.push({ name: 'product-holdings' })
+}
 </script>
 
 <template>
@@ -74,5 +78,9 @@ function handleStart() {
         </p>
       </div>
     </BaseCard>
+
+    <BottomButton color="white" @click="handleViewProductHoldings">
+      내가 가입한 예적금 보기
+    </BottomButton>
   </div>
 </template>

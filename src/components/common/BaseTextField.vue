@@ -30,6 +30,10 @@ defineProps({
     type: String,
     default: "",
   },
+  reserveMessageSpace: {
+    type: Boolean,
+    default: false,
+  },
   autocomplete: {
     type: String,
     default: "off",
@@ -170,12 +174,13 @@ function handlePasswordVisibility() {
     </div>
 
     <p
-      v-if="hint || errorMessage"
+      v-if="hint || errorMessage || reserveMessageSpace"
       :id="`${id}-message`"
-      :class="['text-caption', errorMessage ? 'text-error' : 'text-muted']"
+      :class="['text-caption', errorMessage ? 'text-pink' : 'text-muted']"
       :role="errorMessage ? 'alert' : undefined"
     >
-      {{ errorMessage || hint }}
+      <span v-if="errorMessage || hint">{{ errorMessage || hint }}</span>
+      <span v-else aria-hidden="true">&nbsp;</span>
     </p>
   </div>
 </template>

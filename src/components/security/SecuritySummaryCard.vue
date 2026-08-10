@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import PriceChart from "@/components/security/PriceChart.vue";
+import { CHART_PERIODS } from "@/constants/chart";
 import {
   formatCurrency,
   formatSignedCurrency,
@@ -16,13 +18,7 @@ const props = defineProps({
   changeRate: { type: Number, default: 0.4 },
 });
 
-const PERIOD_OPTIONS = [
-  { key: "day", label: "일" },
-  { key: "week", label: "주" },
-  { key: "month", label: "월" },
-];
-
-const activePeriod = ref("day");
+const activePeriod = ref(CHART_PERIODS[0].key);
 
 const changeColorClass = computed(() => {
   if (props.change > 0) return "text-profit";
@@ -42,7 +38,7 @@ function handlePeriodSelect(key) {
       <div class="flex flex-col gap-2">
         <h2 class="text-h2 text-ink">{{ name }}</h2>
         <span class="text-caption text-muted tabular-nums">
-          {{ market }} · {{ code }}
+          <template v-if="market">{{ market }} · </template>{{ code }}
         </span>
       </div>
 
@@ -56,19 +52,13 @@ function handlePeriodSelect(key) {
         </p>
       </div>
 
-      <!-- 차트 자리표시자 (추후 실제 차트로 교체) -->
-      <div
-        class="flex h-40 items-center justify-center rounded-2xl bg-surface"
-      >
-        <slot name="chart">
-          <p class="text-caption text-muted">차트 영역</p>
-        </slot>
-      </div>
+      <!-- 캔들스틱 차트 -->
+      <PriceChart :code="code" :period="activePeriod" />
 
-      <!-- 기간 선택 (내부 state만, 아직 동작 없음) -->
+      <!-- 기간 선택 -->
       <div class="flex justify-end gap-2">
         <button
-          v-for="opt in PERIOD_OPTIONS"
+          v-for="opt in CHART_PERIODS"
           :key="opt.key"
           type="button"
           :class="[

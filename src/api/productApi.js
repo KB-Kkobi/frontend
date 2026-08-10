@@ -3,6 +3,8 @@ import {
   PRODUCT_TYPES,
   normalizeProductType,
 } from "@/constants/product";
+import { get, post } from "@/api/http";
+import { getAuthorizationHeader } from "@/utils/authStorage";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
@@ -10,6 +12,8 @@ const PRODUCT_API_PATHS = Object.freeze({
   [PRODUCT_TYPES.DEPOSIT]: "/api/products/deposits",
   [PRODUCT_TYPES.SAVING]: "/api/products/savings",
 });
+
+const PRODUCT_HOLDINGS_API_PATH = "/api/products/holdings";
 
 export const PRODUCT_API_ERROR_CODES = Object.freeze({
   INVALID_TYPE: "INVALID_TYPE",
@@ -33,10 +37,18 @@ async function parseResponse(response) {
   if (response.status === 204) return null;
 
   const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) return response.json();
-
   const text = await response.text();
-  return text || null;
+  if (!text) return null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  }
+
+  return text;
 }
 
 function getResponseMessage(data) {
@@ -55,10 +67,13 @@ function getErrorCode(status) {
 
 async function requestProduct(path) {
   let response;
+  const authorization = getAuthorizationHeader();
+  const headers = { Accept: "application/json" };
+  if (authorization) headers.Authorization = authorization;
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { Accept: "application/json" },
+      headers,
     });
   } catch {
     throw new ProductApiError(
@@ -201,4 +216,27 @@ export function fetchProductDetail(productType, productId) {
     productType,
   );
   return fetchDetail(productId);
+}
+
+export function subscribeProduct(request) {
+  return post(PRODUCT_HOLDINGS_API_PATH, request);
+}
+
+export async function fetchProductHoldings() {
+  const response = await get(PRODUCT_HOLDINGS_API_PATH);
+  return Array.isArray(response) ? response : [];
+}
+
+export async function fetchProductHolding(holdingProductId) {
+  const parsedHoldingProductId = Number(holdingProductId);
+  if (!Number.isInteger(parsedHoldingProductId) || parsedHoldingProductId <= 0) {
+    return null;
+  }
+
+  const holdings = await fetchProductHoldings();
+  return (
+    holdings.find(
+      (holding) => holding.holdingProductId === parsedHoldingProductId,
+    ) ?? null
+  );
 }

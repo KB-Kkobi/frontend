@@ -4,8 +4,10 @@ import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const ACTIVITY_ITEMS = [
   { id: "assessment", label: "내 성향 리포트", icon: "report" },
@@ -36,6 +38,7 @@ function handleMenuSelect(item) {
 }
 
 function handleLogout() {
+  authStore.logout();
   router.replace({ name: "login" });
 }
 </script>
@@ -91,6 +94,17 @@ function handleLogout() {
       <BottomButton color="danger" @click="handleLogout">
         로그아웃
       </BottomButton>
+
+      <footer class="flex justify-center">
+        <a
+          href="https://www.tradingview.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-caption text-muted"
+        >
+          Charts by TradingView
+        </a>
+      </footer>
     </div>
   </PageContainer>
 </template>

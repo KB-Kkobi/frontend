@@ -76,3 +76,20 @@ export function formatNullableText(value) {
   const text = String(value).trim();
   return text || "—";
 }
+
+/**
+ * 금액 입력값에서 숫자만 남기고 천 단위 구분 기호를 적용.
+ */
+export function formatCurrencyInput(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("ko-KR");
+}
+
+/**
+ * 천 단위 구분 기호가 포함된 금액 입력값을 숫자로 변환.
+ */
+export function parseCurrencyInput(value) {
+  const digits = String(value ?? "").replace(/\D/g, "");
+  return digits ? Number(digits) : null;
+}

@@ -1,12 +1,18 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { signupUser } from "@/api/authApi";
+import { ApiError } from "@/api/http";
 import kkobiSignupImage from "@/assets/images/kkobiSignup.svg";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import {
+  hasAuthValidationErrors,
+  validateSignupData,
+} from "@/utils/authValidation";
 
 const router = useRouter();
 
@@ -55,33 +61,58 @@ function applyFieldErrors(fieldErrors = {}) {
   birthDateError.value = fieldErrors.birthDate ?? "";
 }
 
+function applySignupApiError(error) {
+  const fieldErrors =
+    error instanceof ApiError ? error.data?.fieldErrors : null;
+  if (fieldErrors) {
+    applyFieldErrors(fieldErrors);
+    return;
+  }
+
+  const message = error instanceof ApiError
+    ? error.message
+    : "회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.";
+
+  if (message.includes("이메일 또는 닉네임")) {
+    formError.value = message;
+  } else if (message.includes("비밀번호")) {
+    passwordError.value = message;
+  } else if (message.includes("이메일")) {
+    emailError.value = message;
+  } else if (message.includes("닉네임")) {
+    nicknameError.value = message;
+  } else if (message.includes("생년월일")) {
+    birthDateError.value = message;
+  } else {
+    formError.value = message;
+  }
+}
+
 async function handleSignup() {
   if (isSubmitting.value) return;
 
   clearErrors();
-  isSubmitting.value = true;
 
   const signupData = {
-    email: email.value,
+    email: email.value.trim(),
     password: password.value,
-    nickname: nickname.value,
-    birthDate: birthDate.value,
+    nickname: nickname.value.trim(),
+    birthDate: birthDate.value.replaceAll(".", "-"),
   };
 
-  try {
-    console.log("회원가입 요청 데이터:", signupData);
+  const validationErrors = validateSignupData(signupData);
+  if (hasAuthValidationErrors(validationErrors)) {
+    applyFieldErrors(validationErrors);
+    return;
+  }
 
-    // 실제 API 연동 시 아래 대기 코드를 signup API 호출로 교체 예정
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  isSubmitting.value = true;
+
+  try {
+    await signupUser(signupData);
     await router.replace({ name: "login" });
   } catch (error) {
-    if (error.response?.status === 400 && error.response.data?.fieldErrors) {
-      applyFieldErrors(error.response.data.fieldErrors);
-    } else {
-      formError.value =
-        error.response?.data?.message ??
-        "회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.";
-    }
+    applySignupApiError(error);
   } finally {
     isSubmitting.value = false;
   }
@@ -167,7 +198,7 @@ async function handleSignup() {
             동의한 것으로 간주됩니다.
           </p>
 
-          <p v-if="formError" class="text-caption text-error" role="alert">
+          <p v-if="formError" class="text-caption text-pink" role="alert">
             {{ formError }}
           </p>
 

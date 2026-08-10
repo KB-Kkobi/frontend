@@ -31,9 +31,30 @@ export const RESERVE_TYPE_OPTIONS = Object.freeze([
   { value: "S", label: "정액적립식" },
 ]);
 
+export const PRODUCT_PAYMENT_DAYS = Object.freeze(
+  Array.from({ length: 28 }, (_, index) => index + 1),
+);
+
+export const PRODUCT_AMOUNT_OPTIONS = Object.freeze({
+  [PRODUCT_TYPES.DEPOSIT]: Object.freeze([500000, 1000000, 2000000]),
+  [PRODUCT_TYPES.SAVING]: Object.freeze([100000, 200000, 300000, 500000]),
+});
+
+export const PRODUCT_HOLDING_STATUSES = Object.freeze({
+  ACTIVE: "ACTIVE",
+  MATURED: "MATURED",
+  CANCELLED: "CANCELLED",
+});
+
 const PRODUCT_TYPE_LABELS = Object.freeze({
   [PRODUCT_TYPES.DEPOSIT]: "예금",
   [PRODUCT_TYPES.SAVING]: "적금",
+});
+
+const PRODUCT_HOLDING_STATUS_OPTIONS = Object.freeze({
+  [PRODUCT_HOLDING_STATUSES.ACTIVE]: { label: "진행 중", color: "green" },
+  [PRODUCT_HOLDING_STATUSES.MATURED]: { label: "만기", color: "blue" },
+  [PRODUCT_HOLDING_STATUSES.CANCELLED]: { label: "해지", color: "yellow" },
 });
 
 export function normalizeProductType(productType) {
@@ -42,4 +63,13 @@ export function normalizeProductType(productType) {
 
 export function getProductTypeLabel(productType) {
   return PRODUCT_TYPE_LABELS[normalizeProductType(productType)] ?? "상품";
+}
+
+export function getProductHoldingStatus(status) {
+  return (
+    PRODUCT_HOLDING_STATUS_OPTIONS[String(status ?? "").toUpperCase()] ?? {
+      label: "상태 확인 필요",
+      color: "yellow",
+    }
+  );
 }
