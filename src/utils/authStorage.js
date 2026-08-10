@@ -1,57 +1,45 @@
-const AUTH_STORAGE_KEY = "kkobi-auth";
 let cachedSession = null;
-let isSessionLoaded = false;
+const sessionListeners = new Set();
 
-function getStorage() {
+function notifySessionChange() {
+  sessionListeners.forEach((listener) => listener(cachedSession));
+}
+
+function normalizeSession(session) {
+  if (!session?.accessToken) return null;
+
+  return {
+    accessToken: session.accessToken,
+    tokenType: session.tokenType || "Bearer",
+    accessTokenExpiresAt: session.accessTokenExpiresAt,
+  };
+}
+
+function clearLegacyAuthSession() {
   try {
-    return typeof window === "undefined" ? null : window.localStorage;
+    window.localStorage.removeItem("kkobi-auth");
   } catch {
-    return null;
+    // 저장소 접근이 차단된 환경에서는 메모리 세션만 사용
   }
 }
 
 export function readAuthSession() {
-  if (isSessionLoaded) return cachedSession;
-
-  isSessionLoaded = true;
-  const storage = getStorage();
-  if (!storage) return null;
-
-  try {
-    const storedSession = storage.getItem(AUTH_STORAGE_KEY);
-    cachedSession = storedSession ? JSON.parse(storedSession) : null;
-  } catch {
-    try {
-      storage.removeItem(AUTH_STORAGE_KEY);
-    } catch {
-      // 저장소 접근이 차단된 환경에서는 메모리 상태만 사용합니다.
-    }
-    cachedSession = null;
-  }
-
   return cachedSession;
 }
 
 export function saveAuthSession(session) {
-  cachedSession = session;
-  isSessionLoaded = true;
-
-  try {
-    getStorage()?.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
-  } catch {
-    // 저장소 접근 실패가 로그인 자체를 막지 않도록 합니다.
-  }
+  cachedSession = normalizeSession(session);
+  notifySessionChange();
 }
 
 export function clearAuthSession() {
   cachedSession = null;
-  isSessionLoaded = true;
+  notifySessionChange();
+}
 
-  try {
-    getStorage()?.removeItem(AUTH_STORAGE_KEY);
-  } catch {
-    // 저장소가 비활성화된 환경에서도 로그아웃 상태는 유지됩니다.
-  }
+export function subscribeAuthSession(listener) {
+  sessionListeners.add(listener);
+  return () => sessionListeners.delete(listener);
 }
 
 export function getAuthorizationHeader() {
@@ -62,3 +50,5 @@ export function getAuthorizationHeader() {
   const tokenType = session.tokenType || "Bearer";
   return `${tokenType} ${session.accessToken}`;
 }
+
+clearLegacyAuthSession();

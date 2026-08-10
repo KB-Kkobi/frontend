@@ -3,10 +3,7 @@ import {
   PRODUCT_TYPES,
   normalizeProductType,
 } from "@/constants/product";
-import { get, post } from "@/api/http";
-import { getAuthorizationHeader } from "@/utils/authStorage";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+import { ApiError, get, post } from "@/api/http";
 
 const PRODUCT_API_PATHS = Object.freeze({
   [PRODUCT_TYPES.DEPOSIT]: "/api/products/deposits",
@@ -33,30 +30,6 @@ export class ProductApiError extends Error {
   }
 }
 
-async function parseResponse(response) {
-  if (response.status === 204) return null;
-
-  const contentType = response.headers.get("content-type") ?? "";
-  const text = await response.text();
-  if (!text) return null;
-
-  if (contentType.includes("application/json")) {
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
-  }
-
-  return text;
-}
-
-function getResponseMessage(data) {
-  return typeof data === "object" && data?.message
-    ? data.message
-    : "상품 정보를 불러오지 못했습니다.";
-}
-
 function getErrorCode(status) {
   if (status === 400 || status === 404) return PRODUCT_API_ERROR_CODES.NOT_FOUND;
   if (status === 401 || status === 403) {
@@ -66,33 +39,20 @@ function getErrorCode(status) {
 }
 
 async function requestProduct(path) {
-  let response;
-  const authorization = getAuthorizationHeader();
-  const headers = { Accept: "application/json" };
-  if (authorization) headers.Authorization = authorization;
-
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      headers,
-    });
-  } catch {
-    throw new ProductApiError(
-      "상품 서버에 연결할 수 없습니다.",
-      0,
-      PRODUCT_API_ERROR_CODES.NETWORK,
-    );
+    return await get(path);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ProductApiError(
+        error.message,
+        error.status,
+        error.status === 0
+          ? PRODUCT_API_ERROR_CODES.NETWORK
+          : getErrorCode(error.status),
+      );
+    }
+    throw error;
   }
-
-  const data = await parseResponse(response);
-  if (!response.ok) {
-    throw new ProductApiError(
-      getResponseMessage(data),
-      response.status,
-      getErrorCode(response.status),
-    );
-  }
-
-  return data;
 }
 
 function getProductApiPath(productType) {
