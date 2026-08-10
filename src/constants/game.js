@@ -5,3 +5,27 @@ export const CHART_VIEWBOX_HEIGHT = 40;
 export const CHART_STROKE_WIDTH = 3;
 export const CHART_MARKER_RADIUS = 1;
 export const CHART_PADDING = 5;
+
+export const GAME_INTRO_PREVIEW_PRICES = [
+  13200,
+  13450,
+  13150,
+  12700,
+  12950,
+  13600,
+];
+
+export const GAME_INTRO_STEPS = [
+  {
+    title: "자산을 배분해요",
+    description: "현금·예금·주식에 시작 자산을 나눠 담아요.",
+  },
+  {
+    title: "3분간 게임을 진행해요",
+    description: "시장 이벤트를 확인하고 직접 투자 행동을 선택해요.",
+  },
+  {
+    title: "투자 성향을 확인해요",
+    description: "선택한 행동을 분석해 8가지 성향 중 하나를 알려드려요.",
+  },
+];
