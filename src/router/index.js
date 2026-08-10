@@ -13,6 +13,7 @@ import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
+import GameIntroductionView from '@/views/GameIntroductionView.vue'
 import GameView from '@/views/GameView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import LoginView from '@/views/LoginView.vue'
@@ -94,6 +95,12 @@ const router = createRouter({
       path: '/securities/:pk',
       name: 'security-detail',
       component: SecurityDetailView,
+    },
+    {
+      path: '/game/introduction',
+      name: 'game-introduction',
+      component: GameIntroductionView,
+      meta: { hideBottomTabBar: true },
     },
     {
       path: '/game',
