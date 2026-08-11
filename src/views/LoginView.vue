@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { loginUser } from "@/api/authApi";
-import { fetchGameStatus } from "@/api/gameApi";
 import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
@@ -42,14 +41,7 @@ function getLoginErrorMessage(error) {
 }
 
 async function redirectAfterLogin() {
-  try {
-    const gameStatus = await fetchGameStatus();
-    await router.replace({
-      name: gameStatus?.isCompleted ? "home" : "game-introduction",
-    });
-  } catch {
-    await router.replace({ name: "game-introduction" });
-  }
+  await router.replace({ name: "home" });
 }
 
 async function handleLogin() {
