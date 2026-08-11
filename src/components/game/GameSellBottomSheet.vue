@@ -24,6 +24,14 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  isSubmitting: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'submit']);
@@ -73,7 +81,7 @@ function updateQuantity(event) {
 }
 
 function submitOrder() {
-  if (!canSubmit.value) return;
+  if (!canSubmit.value || props.isSubmitting) return;
   emit('submit', {
     quantity: quantity.value,
     saleAmount: saleAmount.value,
@@ -199,8 +207,22 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           </div>
         </div>
 
-        <BottomButton color="blue" :disabled="!canSubmit" @click="submitOrder">
-          {{ isQuantityExceeded ? '보유 수량을 초과했습니다' : '매도하기' }}
+        <p v-if="errorMessage" class="text-caption text-error" role="alert">
+          {{ errorMessage }}
+        </p>
+
+        <BottomButton
+          color="blue"
+          :disabled="!canSubmit || isSubmitting"
+          @click="submitOrder"
+        >
+          {{
+            isQuantityExceeded
+              ? '보유 수량을 초과했습니다'
+              : isSubmitting
+                ? '매도 처리 중...'
+                : '매도하기'
+          }}
         </BottomButton>
       </section>
     </template>

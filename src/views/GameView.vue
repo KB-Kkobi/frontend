@@ -39,7 +39,9 @@ const bannerEvent = ref(null);
 const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
 const isBuying = ref(false);
+const isSelling = ref(false);
 const buyErrorMessage = ref("");
+const sellErrorMessage = ref("");
 const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
 const averageStockPrice = ref(0);
@@ -100,6 +102,7 @@ function handleOpenBuySheet() {
 }
 
 function handleOpenSellSheet() {
+  sellErrorMessage.value = "";
   isSellSheetOpen.value = true;
 }
 
@@ -143,6 +146,49 @@ async function handleBuyStock({ quantity, orderAmount }) {
       : "매수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
   } finally {
     isBuying.value = false;
+  }
+}
+
+async function handleSellStock({ quantity, saleAmount }) {
+  if (isSelling.value || !currentTick.value || !gameStart.value) return;
+
+  isSelling.value = true;
+  sellErrorMessage.value = "";
+
+  try {
+    const isFullSale = quantity === stockQuantity.value;
+    const soldStockPrincipal = Math.round(averageStockPrice.value * quantity);
+    const nextStockPrincipal = isFullSale
+      ? 0
+      : Math.max(stockAmount.value - soldStockPrincipal, 0);
+    const action = await saveGameAction({
+      gameTick: currentTick.value.tick,
+      actionType: "SELL",
+      assetType: "STOCK",
+      actionAmount: saleAmount,
+      currentCash: cashAmount.value + saleAmount,
+      currentStockPrincipal: nextStockPrincipal,
+      currentDeposit: depositAmount.value,
+    });
+
+    stockQuantity.value -= quantity;
+    if (stockQuantity.value === 0) averageStockPrice.value = 0;
+    gameStart.value = {
+      ...gameStart.value,
+      cashAmount: action.currentCash,
+      stockAmount: action.currentStockPrincipal,
+      depositAmount: action.currentDeposit,
+      stockQuantity: stockQuantity.value,
+      averageStockPrice: averageStockPrice.value,
+    };
+    saveGameStartSession(gameStart.value);
+    isSellSheetOpen.value = false;
+  } catch (error) {
+    sellErrorMessage.value = error instanceof ApiError
+      ? error.message
+      : "매도 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  } finally {
+    isSelling.value = false;
   }
 }
 
@@ -217,6 +263,9 @@ onMounted(loadScenario);
           :current-price="currentTick?.price"
           :average-price="averageStockPrice"
           :available-quantity="stockQuantity"
+          :is-submitting="isSelling"
+          :error-message="sellErrorMessage"
+          @submit="handleSellStock"
         />
       </template>
     </div>
