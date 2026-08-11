@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { fetchScenario } from "@/api/gameApi";
+import { fetchScenario, saveGameAction } from "@/api/gameApi";
 import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
@@ -13,7 +13,10 @@ import {
   GAME_DEPOSIT_MONTHS,
 } from "@/constants/game";
 import { useGameTick } from "@/composables/useGameTick";
-import { readGameStartSession } from "@/utils/gameStorage";
+import {
+  readGameStartSession,
+  saveGameStartSession,
+} from "@/utils/gameStorage";
 
 const {
   currentTick,
@@ -33,17 +36,17 @@ const shownEventTicks = ref(new Set());
 const activeEvent = ref(null);
 const bannerEvent = ref(null);
 const isBuySheetOpen = ref(false);
+const isBuying = ref(false);
+const buyErrorMessage = ref("");
 const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
+const averageStockPrice = ref(0);
+const stockQuantity = ref(0);
 
 const prices = computed(() => visibleTicks.value.map((tick) => tick.price));
 const stockAmount = computed(() => gameStart.value?.stockAmount ?? 0);
 const cashAmount = computed(() => gameStart.value?.cashAmount ?? 0);
 const depositAmount = computed(() => gameStart.value?.depositAmount ?? 0);
-const stockQuantity = computed(() => {
-  if (!initialStockPrice.value) return 0;
-  return Math.floor(stockAmount.value / initialStockPrice.value);
-});
 const remainingDepositDays = computed(() => {
   const elapsedMonths = Math.max((currentTick.value?.month ?? 1) - 1, 0);
   return Math.max(0, (GAME_DEPOSIT_MONTHS - elapsedMonths) * 30);
@@ -65,6 +68,12 @@ async function loadScenario() {
   try {
     const scenario = await fetchScenario(DEFAULT_SCENARIO_ID);
     initialStockPrice.value = scenario.ticks[0]?.price ?? scenario.basePrice;
+    averageStockPrice.value = gameStart.value?.averageStockPrice
+      ?? initialStockPrice.value;
+    stockQuantity.value = gameStart.value?.stockQuantity
+      ?? (initialStockPrice.value
+        ? Math.floor(stockAmount.value / initialStockPrice.value)
+        : 0);
     eventsByTick.value = buildEventsByTick(scenario.events);
     start(scenario);
   } catch (error) {
@@ -81,6 +90,54 @@ function handleCloseEvent() {
   bannerEvent.value = activeEvent.value;
   activeEvent.value = null;
   resume();
+}
+
+function handleOpenBuySheet() {
+  buyErrorMessage.value = "";
+  isBuySheetOpen.value = true;
+}
+
+async function handleBuyStock({ quantity, orderAmount }) {
+  if (isBuying.value || !currentTick.value || !gameStart.value) return;
+
+  isBuying.value = true;
+  buyErrorMessage.value = "";
+
+  try {
+    const action = await saveGameAction({
+      gameTick: currentTick.value.tick,
+      actionType: "BUY",
+      assetType: "STOCK",
+      actionAmount: orderAmount,
+      currentCash: cashAmount.value - orderAmount,
+      currentStockPrincipal: stockAmount.value + orderAmount,
+      currentDeposit: depositAmount.value,
+    });
+
+    const previousQuantity = stockQuantity.value;
+    const nextQuantity = previousQuantity + quantity;
+    averageStockPrice.value = nextQuantity === 0
+      ? 0
+      : ((averageStockPrice.value * previousQuantity) + orderAmount)
+        / nextQuantity;
+    stockQuantity.value = nextQuantity;
+    gameStart.value = {
+      ...gameStart.value,
+      cashAmount: action.currentCash,
+      stockAmount: action.currentStockPrincipal,
+      depositAmount: action.currentDeposit,
+      stockQuantity: stockQuantity.value,
+      averageStockPrice: averageStockPrice.value,
+    };
+    saveGameStartSession(gameStart.value);
+    isBuySheetOpen.value = false;
+  } catch (error) {
+    buyErrorMessage.value = error instanceof ApiError
+      ? error.message
+      : "매수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  } finally {
+    isBuying.value = false;
+  }
 }
 
 watch(currentTick, (tick) => {
@@ -126,13 +183,13 @@ onMounted(loadScenario);
         <BaseCard v-if="gameStart">
           <GamePortfolioPanel
             :stock-quantity="stockQuantity"
-            :average-stock-price="initialStockPrice"
+            :average-stock-price="averageStockPrice"
             :current-stock-price="currentTick?.price"
             :cash-amount="cashAmount"
             :deposit-amount="depositAmount"
             :deposit-status="gameStart.depositStatus"
             :remaining-deposit-days="remainingDepositDays"
-            @buy="isBuySheetOpen = true"
+            @buy="handleOpenBuySheet"
           />
         </BaseCard>
         <GameEventPopup
@@ -144,6 +201,9 @@ onMounted(loadScenario);
           v-model="isBuySheetOpen"
           :current-price="currentTick?.price"
           :available-amount="cashAmount"
+          :is-submitting="isBuying"
+          :error-message="buyErrorMessage"
+          @submit="handleBuyStock"
         />
       </template>
     </div>

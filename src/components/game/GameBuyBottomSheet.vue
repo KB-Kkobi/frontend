@@ -16,9 +16,17 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  isSubmitting: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'submit']);
 
 const quantity = ref(1);
 const orderAmount = computed(() => props.currentPrice * quantity.value);
@@ -53,6 +61,15 @@ function updateQuantity(event) {
 
 function handleKeydown(event) {
   if (props.modelValue && event.key === 'Escape') closeSheet();
+}
+
+function submitOrder() {
+  if (!canSubmit.value || props.isSubmitting) return;
+
+  emit('submit', {
+    quantity: quantity.value,
+    orderAmount: orderAmount.value,
+  });
 }
 
 watch(
@@ -150,8 +167,22 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           </p>
         </div>
 
-        <BottomButton color="pink" :disabled="!canSubmit">
-          {{ isOrderExceeded ? '주문 가능 금액을 초과했습니다' : '매수하기' }}
+        <p v-if="errorMessage" class="text-caption text-error" role="alert">
+          {{ errorMessage }}
+        </p>
+
+        <BottomButton
+          color="pink"
+          :disabled="!canSubmit || isSubmitting"
+          @click="submitOrder"
+        >
+          {{
+            isOrderExceeded
+              ? '주문 가능 금액을 초과했습니다'
+              : isSubmitting
+                ? '매수 처리 중...'
+                : '매수하기'
+          }}
         </BottomButton>
       </section>
     </template>

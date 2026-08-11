@@ -15,3 +15,7 @@ export function startGame({ cashRatio, stockRatio, depositRatio }) {
     depositRatio,
   });
 }
+
+export function saveGameAction(gameAction) {
+  return post("/api/games/actions", gameAction);
+}
