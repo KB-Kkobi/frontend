@@ -76,6 +76,18 @@ const router = createRouter({
           name: 'product-termination',
           component: ProductTerminationView,
         },
+        {
+          path: 'trade/:securityId',
+          name: 'virtual-trade',
+          component: () => import('@/views/TradeView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'securities/:pk',
+          name: 'security-detail',
+          component: SecurityDetailView,
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {
@@ -103,12 +115,6 @@ const router = createRouter({
       name: 'signup',
       component: SignUpView,
       meta: { hideBottomTabBar: true, guestOnly: true },
-    },
-    {
-      path: '/securities/:pk',
-      name: 'security-detail',
-      component: SecurityDetailView,
-      meta: { requiresAuth: true },
     },
     {
       path: '/game/allocation',

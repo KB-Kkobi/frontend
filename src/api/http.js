@@ -126,3 +126,10 @@ export function post(path, body, requestOptions) {
     requestOptions,
   );
 }
+
+export function del(path) {
+  return request(path, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
+}

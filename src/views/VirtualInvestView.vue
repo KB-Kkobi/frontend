@@ -13,6 +13,10 @@ const tabs = [
   { key: 'virtual-history', label: '내역' },
 ]
 
+const HIDDEN_TABBAR_ROUTES = ['virtual-trade', 'security-detail']
+
+const isTabBarVisible = computed(() => !HIDDEN_TABBAR_ROUTES.includes(route.name))
+
 const activeTab = computed(() =>
   [
     'product-holdings',
@@ -30,14 +34,13 @@ function handleTabChange(key) {
 
 <template>
   <PageContainer>
-    <div class="flex flex-col gap-4 py-6">
-      <h1 class="text-h1 text-ink">가상투자</h1>
-      <TabBar :model-value="activeTab" :tabs="tabs" @update:model-value="handleTabChange" />
+    <div class="flex flex-col gap-4">
+<TabBar v-if="isTabBarVisible" :model-value="activeTab" :tabs="tabs" @update:model-value="handleTabChange" />
+      <RouterView v-slot="{ Component }">
+        <keep-alive :include="['VirtualAssetsView', 'VirtualProductsView', 'VirtualHistoryView']">
+          <component :is="Component" />
+        </keep-alive>
+      </RouterView>
     </div>
-    <RouterView v-slot="{ Component }">
-      <keep-alive :include="['VirtualProductsView']">
-        <component :is="Component" />
-      </keep-alive>
-    </RouterView>
   </PageContainer>
 </template>

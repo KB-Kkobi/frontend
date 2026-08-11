@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from "vue";
-import { useRoute } from "vue-router";
-import PageContainer from "@/components/common/PageContainer.vue";
+import { useRoute, useRouter } from "vue-router";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BottomButton from "@/components/common/BottomButton.vue";
 import HoldingCard from "@/components/security/HoldingCard.vue";
 import SecurityInsightCard from "@/components/security/SecurityInsightCard.vue";
 import SecuritySummaryCard from "@/components/security/SecuritySummaryCard.vue";
@@ -13,6 +13,7 @@ import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
 import { subscribeTick } from "@/api/stockSocket";
 
 const route = useRoute();
+const router = useRouter();
 const security = ref(null);
 const quote = ref(null);
 const holding = ref(null);
@@ -80,6 +81,7 @@ async function loadSecurity(ticker) {
     if (activeTicker !== ticker) return;
 
     security.value = {
+      id: detail.securityId ?? null,
       code: detail.ticker || ticker,
       name: detail.name || ticker,
       market: detail.market ?? "",
@@ -135,55 +137,67 @@ onUnmounted(() => {
 const currentPrice = computed(() => quote.value?.price ?? null);
 const currentChange = computed(() => quote.value?.change ?? null);
 const currentChangeRate = computed(() => quote.value?.changeRate ?? null);
+
+function handleTrade(side) {
+  if (!security.value?.id) return
+  router.push({
+    name: 'virtual-trade',
+    params: { securityId: security.value.id },
+    query: { ticker: security.value.code, side },
+  })
+}
 </script>
 
 <template>
-  <PageContainer>
-    <div class="flex flex-col gap-4 py-6">
-      <div class="flex items-center justify-between">
-        <BackButton />
-      </div>
-
-      <BaseCard v-if="isLoading && !security" color="blue">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">증권 정보를 불러오는 중이에요</h2>
-          <p class="text-caption text-muted">잠시만 기다려 주세요.</p>
-        </div>
-      </BaseCard>
-
-      <BaseCard v-else-if="errorMessage" color="pink">
-        <div class="flex flex-col gap-2" role="alert">
-          <h2 class="text-h2 text-ink">증권 정보를 불러오지 못했어요</h2>
-          <p class="text-caption text-muted">{{ errorMessage }}</p>
-        </div>
-      </BaseCard>
-
-      <template v-else-if="security">
-        <SecuritySummaryCard
-          :code="security.code"
-          :name="security.name"
-          :market="security.market"
-          :type="security.type"
-          :kis-supported="security.kisSupported"
-          :price="currentPrice"
-          :change="currentChange"
-          :change-rate="currentChangeRate"
-        />
-
-        <HoldingCard
-          v-if="holding"
-          :quantity="holding.quantity"
-          :avg-price="holding.avgPrice"
-          :current-price="currentPrice"
-        />
-
-        <SecurityInsightCard
-          :product-name="security.name"
-          :average-daily-move="security.averageDailyMove"
-          :max-drawdown="security.maxDrawdown"
-          :description="security.description ?? null"
-        />
-      </template>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <BackButton />
     </div>
-  </PageContainer>
+
+    <BaseCard v-if="isLoading && !security" color="blue">
+      <div class="flex flex-col gap-2" role="status">
+        <h2 class="text-h2 text-ink">증권 정보를 불러오는 중이에요</h2>
+        <p class="text-caption text-muted">잠시만 기다려 주세요.</p>
+      </div>
+    </BaseCard>
+
+    <BaseCard v-else-if="errorMessage" color="pink">
+      <div class="flex flex-col gap-2" role="alert">
+        <h2 class="text-h2 text-ink">증권 정보를 불러오지 못했어요</h2>
+        <p class="text-caption text-muted">{{ errorMessage }}</p>
+      </div>
+    </BaseCard>
+
+    <template v-else-if="security">
+      <SecuritySummaryCard
+        :code="security.code"
+        :name="security.name"
+        :market="security.market"
+        :type="security.type"
+        :kis-supported="security.kisSupported"
+        :price="currentPrice"
+        :change="currentChange"
+        :change-rate="currentChangeRate"
+      />
+
+      <HoldingCard
+        v-if="holding"
+        :quantity="holding.quantity"
+        :avg-price="holding.avgPrice"
+        :current-price="currentPrice"
+      />
+
+      <SecurityInsightCard
+        :product-name="security.name"
+        :average-daily-move="security.averageDailyMove"
+        :max-drawdown="security.maxDrawdown"
+        :description="security.description ?? null"
+      />
+
+      <div v-if="security.kisSupported && security.id" class="flex gap-4">
+        <BottomButton color="pink" @click="handleTrade('buy')">매수</BottomButton>
+        <BottomButton color="blue" @click="handleTrade('sell')">매도</BottomButton>
+      </div>
+    </template>
+  </div>
 </template>
