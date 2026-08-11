@@ -5,6 +5,7 @@ import { ApiError } from "@/api/http";
 import {
   PRODUCT_API_ERROR_CODES,
   ProductApiError,
+  estimateProductSubscription,
   fetchProductDetail,
   subscribeProduct,
 } from "@/api/productApi";
@@ -23,7 +24,7 @@ import {
   getProductTypeLabel,
   normalizeProductType,
 } from "@/constants/product";
-import { calculateMaturityDate, formatLocalDate } from "@/utils/date";
+import { formatLocalDate } from "@/utils/date";
 import {
   formatCurrency,
   formatCurrencyInput,
@@ -32,7 +33,6 @@ import {
   formatNullableText,
   parseCurrencyInput,
 } from "@/utils/format";
-import { calculateExpectedProductAmounts } from "@/utils/product";
 
 const route = useRoute();
 const router = useRouter();
@@ -44,11 +44,13 @@ const paymentDay = ref("");
 const preferentialRateApplied = ref(false);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
+const isEstimating = ref(false);
 const loadErrorMessage = ref("");
 const amountErrorMessage = ref("");
 const paymentDayErrorMessage = ref("");
 const formErrorMessage = ref("");
 const isConfirmationOpen = ref(false);
+const subscriptionEstimate = ref(null);
 
 const productType = computed(() =>
   normalizeProductType(product.value?.productType ?? route.params.productType),
@@ -102,26 +104,15 @@ const preferentialRateDifference = computed(() => {
   return Number.isFinite(difference) && difference > 0 ? difference : 0;
 });
 
-const appliedRate = computed(() => {
-  if (!selectedOption.value) return null;
-  return preferentialRateApplied.value
-    ? selectedOption.value.maximumInterestRate
-    : selectedOption.value.interestRate;
-});
-
-const expectedMaturityDate = computed(() =>
-  calculateMaturityDate(selectedOption.value?.savingTerm),
+const appliedRate = computed(() => subscriptionEstimate.value?.appliedRate ?? null);
+const expectedMaturityDate = computed(
+  () => subscriptionEstimate.value?.maturityDate ?? null,
 );
-
-const expectedAmounts = computed(() =>
-  calculateExpectedProductAmounts({
-    productType: productType.value,
-    joinAmount: joinAmount.value,
-    appliedRate: appliedRate.value,
-    savingTerm: selectedOption.value?.savingTerm,
-    paymentDay: paymentDay.value,
-  }),
-);
+const expectedAmounts = computed(() => ({
+  expectedPrincipal: subscriptionEstimate.value?.expectedPrincipal ?? null,
+  expectedInterest: subscriptionEstimate.value?.expectedAfterTaxInterest ?? null,
+  expectedAmount: subscriptionEstimate.value?.expectedMaturityAmount ?? null,
+}));
 
 const amountOptions = computed(() => {
   const options = PRODUCT_AMOUNT_OPTIONS[productType.value] ?? [];
@@ -134,7 +125,7 @@ const amountOptions = computed(() => {
 });
 
 const confirmationMessage = computed(() => {
-  if (!product.value || !selectedOption.value || !joinAmount.value) return "";
+  if (!product.value || !subscriptionEstimate.value) return "";
   return `${product.value.productName}에 ${formatCurrency(joinAmount.value)}으로 가입할까요? 적용 금리는 ${formatInterestRate(appliedRate.value)}, 예상 만기일은 ${formatLocalDate(expectedMaturityDate.value)}입니다.`;
 });
 
@@ -161,11 +152,13 @@ function getLoadErrorMessage(error) {
 function handleSelectOption(option) {
   selectedOptionId.value = option.productOptionId;
   preferentialRateApplied.value = false;
+  subscriptionEstimate.value = null;
   formErrorMessage.value = "";
 }
 
 function handleAmountInput(value) {
   joinAmountInput.value = formatCurrencyInput(value);
+  subscriptionEstimate.value = null;
   amountErrorMessage.value = "";
   formErrorMessage.value = "";
 }
@@ -177,6 +170,7 @@ function handleSelectAmount(amount) {
 function handlePreferentialRate(value) {
   if (value && !hasPreferentialRate.value) return;
   preferentialRateApplied.value = value;
+  subscriptionEstimate.value = null;
 }
 
 function validateForm() {
@@ -211,8 +205,32 @@ function validateForm() {
   return true;
 }
 
-function handleOpenConfirmation() {
-  if (validateForm()) isConfirmationOpen.value = true;
+function createSubscriptionRequest() {
+  const request = {
+    productOptionId: selectedOption.value.productOptionId,
+    joinAmount: joinAmount.value,
+    preferentialRateApplied: preferentialRateApplied.value,
+  };
+  if (isSaving.value) request.paymentDay = Number(paymentDay.value);
+  return request;
+}
+
+async function handleOpenConfirmation() {
+  if (!validateForm() || isEstimating.value) return;
+
+  isEstimating.value = true;
+  formErrorMessage.value = "";
+
+  try {
+    subscriptionEstimate.value = await estimateProductSubscription(
+      createSubscriptionRequest(),
+    );
+    isConfirmationOpen.value = true;
+  } catch (error) {
+    formErrorMessage.value = getRequestErrorMessage(error);
+  } finally {
+    isEstimating.value = false;
+  }
 }
 
 async function handleSubscribe() {
@@ -221,17 +239,10 @@ async function handleSubscribe() {
   isSubmitting.value = true;
   formErrorMessage.value = "";
 
-  const request = {
-    productOptionId: selectedOption.value.productOptionId,
-    joinAmount: joinAmount.value,
-    preferentialRateApplied: preferentialRateApplied.value,
-  };
-  if (isSaving.value) request.paymentDay = Number(paymentDay.value);
-
   try {
-    await subscribeProduct(request);
+    await subscribeProduct(createSubscriptionRequest());
     await router.push({
-      name: "product-holdings",
+      name: "virtual-assets",
       query: { subscribed: "true" },
     });
   } catch (error) {
@@ -246,6 +257,7 @@ async function loadProduct() {
   loadErrorMessage.value = "";
   product.value = null;
   selectedOptionId.value = null;
+  subscriptionEstimate.value = null;
 
   try {
     product.value = await fetchProductDetail(
@@ -262,6 +274,11 @@ async function loadProduct() {
     isLoading.value = false;
   }
 }
+
+watch(paymentDay, () => {
+  subscriptionEstimate.value = null;
+  paymentDayErrorMessage.value = "";
+});
 
 watch(
   () => [route.params.productType, route.params.productId],
@@ -463,7 +480,7 @@ watch(
           </div>
         </BaseCard>
 
-        <BaseCard v-if="selectedOption" color="blue">
+        <BaseCard v-if="subscriptionEstimate" color="blue">
           <div class="flex flex-col gap-4">
             <h2 class="text-h2 text-ink">내 예상 수령액</h2>
             <dl class="flex flex-col gap-2">
@@ -495,7 +512,7 @@ watch(
                 </dd>
               </div>
               <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">세전 이자</dt>
+                <dt class="text-caption text-muted">세후 예상 이자</dt>
                 <dd class="text-body text-ink tabular-nums">
                   {{ formatCurrency(expectedAmounts.expectedInterest) }}
                 </dd>
@@ -523,10 +540,16 @@ watch(
 
         <BottomButton
           :color="isSaving ? 'pink' : 'yellow'"
-          :disabled="isSubmitting || !productOptions.length"
+          :disabled="isSubmitting || isEstimating || !productOptions.length"
           @click="handleOpenConfirmation"
         >
-          {{ isSubmitting ? "가입 처리 중" : "가입하기" }}
+          {{
+            isSubmitting
+              ? "가입 처리 중"
+              : isEstimating
+                ? "예상 금액 확인 중"
+                : "가입하기"
+          }}
         </BottomButton>
         <p class="text-caption text-muted text-center">
           가입 자산은 가상투자 계좌에 반영됩니다.

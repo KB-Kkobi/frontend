@@ -14,7 +14,11 @@ const tabs = [
 ]
 
 const activeTab = computed(() =>
-  ['product-holdings', 'product-holding-detail'].includes(route.name)
+  [
+    'product-holdings',
+    'product-holding-detail',
+    'product-termination',
+  ].includes(route.name)
     ? 'virtual-assets'
     : route.name,
 )

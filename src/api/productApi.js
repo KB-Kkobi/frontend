@@ -191,6 +191,10 @@ export function subscribeProduct(request) {
   return post(PRODUCT_HOLDINGS_API_PATH, request);
 }
 
+export function estimateProductSubscription(request) {
+  return post(`${PRODUCT_HOLDINGS_API_PATH}/subscription-estimate`, request);
+}
+
 export async function fetchProductHoldings() {
   const response = await get(PRODUCT_HOLDINGS_API_PATH);
   return Array.isArray(response) ? response : [];
@@ -202,10 +206,24 @@ export async function fetchProductHolding(holdingProductId) {
     return null;
   }
 
-  const holdings = await fetchProductHoldings();
-  return (
-    holdings.find(
-      (holding) => holding.holdingProductId === parsedHoldingProductId,
-    ) ?? null
+  return get(`${PRODUCT_HOLDINGS_API_PATH}/${parsedHoldingProductId}`);
+}
+
+export async function fetchProductHoldingHistory() {
+  const response = await get(`${PRODUCT_HOLDINGS_API_PATH}/history`);
+  return Array.isArray(response) ? response : [];
+}
+
+export function fetchProductTerminationEstimate(holdingProductId) {
+  const parsedHoldingProductId = validateProductId(holdingProductId);
+  return get(
+    `${PRODUCT_HOLDINGS_API_PATH}/${parsedHoldingProductId}/termination-estimate`,
+  );
+}
+
+export function terminateProduct(holdingProductId) {
+  const parsedHoldingProductId = validateProductId(holdingProductId);
+  return post(
+    `${PRODUCT_HOLDINGS_API_PATH}/${parsedHoldingProductId}/terminate`,
   );
 }
