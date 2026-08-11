@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
+import { ApiError, resolveApiUrl } from "@/api/http";
 import { fetchPersonas } from "@/api/personaApi";
 import {
   PRODUCT_API_ERROR_CODES,
@@ -10,11 +11,13 @@ import {
 } from "@/api/productApi";
 import { fetchSecurityList, fetchSecurityQuotes } from "@/api/securityApi";
 import ProductListCard from "@/components/product/ProductListCard.vue";
+import ProductFilterModal from "@/components/product/ProductFilterModal.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
-import { ApiError, resolveApiUrl } from "@/api/http";
 import {
+  PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
   PRODUCT_SORT_OPTIONS,
   PRODUCT_TYPES,
@@ -68,17 +71,51 @@ function parseInitialInt(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function parseInitialList(value) {
+  if (value === null || value === undefined || value === "") return [];
+  const values = Array.isArray(value) ? value : [value];
+  return [
+    ...new Set(
+      values.flatMap((item) => String(item).split(",")).filter(Boolean),
+    ),
+  ];
+}
+
+function parseInitialSavingTerms(query) {
+  return parseInitialList(query.savingTerms ?? query.savingTerm)
+    .map(Number)
+    .filter((savingTerm) => SAVING_TERM_OPTIONS.includes(savingTerm));
+}
+
+function parseInitialOptionValues(value, options) {
+  const allowedValues = new Set(options.map((option) => option.value));
+  return parseInitialList(value).filter((item) => allowedValues.has(item));
+}
+
 const initialQuery = route.query;
+const initialSavingTerms = parseInitialSavingTerms(initialQuery);
+if (!props.standalone && initialSavingTerms.length === 0) {
+  initialSavingTerms.push(12);
+}
 
 const activeTab = ref(parseInitialTab(initialQuery.tab));
 const searchInput = ref(String(initialQuery.keyword ?? ""));
 const appliedKeyword = ref(String(initialQuery.keyword ?? ""));
 const securitySearchInput = ref(String(initialQuery.securityKeyword ?? ""));
 const appliedSecurityKeyword = ref(String(initialQuery.securityKeyword ?? ""));
-const selectedSavingTerm = ref(
-  parseInitialInt(initialQuery.savingTerm, PRODUCT_LIST_DEFAULTS.savingTerm),
+const selectedSavingTerms = ref(initialSavingTerms);
+const selectedReserveTypes = ref(
+  parseInitialOptionValues(
+    initialQuery.reserveTypes ?? initialQuery.reserveType,
+    RESERVE_TYPE_OPTIONS,
+  ),
 );
-const selectedReserveType = ref(String(initialQuery.reserveType ?? ""));
+const selectedPreferentialConditions = ref(
+  parseInitialOptionValues(
+    initialQuery.preferentialConditions,
+    PREFERENTIAL_CONDITION_OPTIONS,
+  ),
+);
 const selectedSort = ref(String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort));
 const selectedSecurityType = ref(String(initialQuery.securityType ?? ""));
 const currentPage = ref(
@@ -95,6 +132,7 @@ const latestAssessment = ref(null);
 const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
 const isPersonaImageAvailable = ref(true);
+const isFilterOpen = ref(false);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -105,6 +143,33 @@ const activeTabLabel = computed(() =>
 
 const hasPreviousPage = computed(() => currentPage.value > 1);
 const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const activeFilterCount = computed(
+  () =>
+    selectedSavingTerms.value.length +
+    (isSaving.value ? selectedReserveTypes.value.length : 0) +
+    selectedPreferentialConditions.value.length,
+);
+const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
+const activeFilterLabels = computed(() => {
+  const labels = selectedSavingTerms.value.map(
+    (savingTerm) => `${savingTerm}개월`,
+  );
+  if (isSaving.value) {
+    selectedReserveTypes.value.forEach((reserveType) => {
+      const option = RESERVE_TYPE_OPTIONS.find(
+        (item) => item.value === reserveType,
+      );
+      if (option) labels.push(option.label);
+    });
+  }
+  selectedPreferentialConditions.value.forEach((conditionType) => {
+    const option = PREFERENTIAL_CONDITION_OPTIONS.find(
+      (item) => item.value === conditionType,
+    );
+    if (option) labels.push(option.label);
+  });
+  return labels;
+});
 
 function getProductErrorMessage(error) {
   if (
@@ -128,8 +193,13 @@ function getSecurityErrorMessage(error) {
 async function loadProducts() {
   const response = await fetchProductList(activeTab.value, {
     keyword: appliedKeyword.value,
-    savingTerm: selectedSavingTerm.value,
-    reserveType: isSaving.value ? selectedReserveType.value : "",
+    savingTerms: selectedSavingTerms.value.length
+      ? selectedSavingTerms.value
+      : props.standalone
+        ? SAVING_TERM_OPTIONS
+        : [12],
+    reserveTypes: isSaving.value ? selectedReserveTypes.value : [],
+    preferentialConditions: selectedPreferentialConditions.value,
     page: currentPage.value,
     size: PRODUCT_LIST_DEFAULTS.size,
     sort: selectedSort.value,
@@ -250,7 +320,7 @@ function resetPage() {
 
 function handleSelectTab(tabKey) {
   activeTab.value = tabKey;
-  selectedReserveType.value = "";
+  selectedReserveTypes.value = [];
   selectedSecurityType.value = "";
   securitySearchInput.value = "";
   appliedSecurityKeyword.value = "";
@@ -267,18 +337,42 @@ function handleSecuritySearch() {
   resetPage();
 }
 
-function handleSelectSavingTerm(savingTerm) {
-  selectedSavingTerm.value = savingTerm;
-  resetPage();
-}
-
-function handleSelectReserveType(reserveType) {
-  selectedReserveType.value = reserveType;
-  resetPage();
-}
-
 function handleSelectSecurityType(securityType) {
   selectedSecurityType.value = securityType;
+  resetPage();
+}
+
+function handleSelectEmbeddedSavingTerm(savingTerm) {
+  selectedSavingTerms.value = [savingTerm];
+  resetPage();
+}
+
+function handleSelectEmbeddedReserveType(reserveType) {
+  selectedReserveTypes.value = reserveType ? [reserveType] : [];
+  resetPage();
+}
+
+function isEmbeddedReserveTypeSelected(reserveType) {
+  return reserveType
+    ? selectedReserveTypes.value.includes(reserveType)
+    : selectedReserveTypes.value.length === 0;
+}
+
+function handleOpenFilter() {
+  isFilterOpen.value = true;
+}
+
+function handleApplyFilters(filters) {
+  selectedSavingTerms.value = [...filters.savingTerms];
+  selectedReserveTypes.value = [...filters.reserveTypes];
+  selectedPreferentialConditions.value = [...filters.preferentialConditions];
+  resetPage();
+}
+
+function handleClearFilters() {
+  selectedSavingTerms.value = [];
+  selectedReserveTypes.value = [];
+  selectedPreferentialConditions.value = [];
   resetPage();
 }
 
@@ -313,12 +407,20 @@ function handleNextPage() {
 function buildQueryFromState() {
   const query = {};
   if (activeTab.value !== LIST_TABS.DEPOSIT) query.tab = activeTab.value;
+
   if (appliedKeyword.value) query.keyword = appliedKeyword.value;
-  if (appliedSecurityKeyword.value) query.securityKeyword = appliedSecurityKeyword.value;
-  if (selectedSavingTerm.value !== PRODUCT_LIST_DEFAULTS.savingTerm) {
-    query.savingTerm = String(selectedSavingTerm.value);
+  if (appliedSecurityKeyword.value) {
+    query.securityKeyword = appliedSecurityKeyword.value;
   }
-  if (selectedReserveType.value) query.reserveType = selectedReserveType.value;
+  if (selectedSavingTerms.value.length) {
+    query.savingTerms = selectedSavingTerms.value.map(String);
+  }
+  if (isSaving.value && selectedReserveTypes.value.length) {
+    query.reserveTypes = [...selectedReserveTypes.value];
+  }
+  if (selectedPreferentialConditions.value.length) {
+    query.preferentialConditions = [...selectedPreferentialConditions.value];
+  }
   if (selectedSort.value !== PRODUCT_LIST_DEFAULTS.sort) {
     query.sort = selectedSort.value;
   }
@@ -337,6 +439,7 @@ function isQueryEqual(a, b) {
 }
 
 function syncQueryFromState() {
+  if (!props.standalone) return;
   const nextQuery = buildQueryFromState();
   if (isQueryEqual(route.query, nextQuery)) return;
   router.replace({ query: nextQuery });
@@ -347,8 +450,9 @@ watch(
     activeTab.value,
     appliedKeyword.value,
     appliedSecurityKeyword.value,
-    selectedSavingTerm.value,
-    selectedReserveType.value,
+    selectedSavingTerms.value,
+    selectedReserveTypes.value,
+    selectedPreferentialConditions.value,
     selectedSort.value,
     selectedSecurityType.value,
     currentPage.value,
@@ -420,55 +524,147 @@ onMounted(() => {
     </div>
 
     <template v-if="!isSecurityTab">
-      <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
+      <template v-if="standalone">
+        <form
+          class="flex items-center gap-2 rounded-2xl bg-surface px-4"
+          role="search"
+          @submit.prevent="handleSearch"
+        >
+        <svg
+          class="h-5 w-5 shrink-0 text-muted"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" stroke-width="2" />
+          <path d="m16 16 4 4" stroke-width="2" stroke-linecap="round" />
+        </svg>
         <input
           v-model="searchInput"
           type="search"
-          class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
+          class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
           placeholder="은행명 또는 상품명 검색"
           aria-label="은행명 또는 상품명 검색"
         />
         <button
           type="submit"
-          class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
+          class="py-3 text-button text-pink"
         >
           검색
         </button>
-      </form>
+        </form>
 
-      <div class="flex flex-wrap gap-2" aria-label="가입 기간">
-        <button
-          v-for="savingTerm in SAVING_TERM_OPTIONS"
-          :key="savingTerm"
-          type="button"
-          :class="[
-            selectedSavingTerm === savingTerm
-              ? 'border-pink bg-pink-soft text-pink'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectSavingTerm(savingTerm)"
-        >
-          {{ savingTerm }}개월
-        </button>
-      </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-4">
+            <p class="text-caption text-muted tabular-nums">
+              {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
+            </p>
+            <div class="flex items-center gap-2">
+              <select
+                v-model="selectedSort"
+                class="rounded-2xl border border-line bg-white px-4 py-3 text-caption text-ink outline-none focus:border-pink"
+                aria-label="상품 정렬"
+                @change="resetPage"
+              >
+                <option
+                  v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                  :key="sortOption.value"
+                  :value="sortOption.value"
+                >
+                  {{ sortOption.label }}
+                </option>
+              </select>
+              <button
+                type="button"
+                :class="[
+                  hasAppliedFilters
+                    ? 'border-pink bg-pink-soft text-pink'
+                    : 'border-line bg-white text-muted',
+                  'rounded-2xl border px-4 py-3 text-button',
+                ]"
+                :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
+                @click="handleOpenFilter"
+              >
+                필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}
+              </button>
+            </div>
+          </div>
 
-      <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
-        <button
-          v-for="reserveType in RESERVE_TYPE_OPTIONS"
-          :key="reserveType.value"
-          type="button"
-          :class="[
-            selectedReserveType === reserveType.value
-              ? 'border-blue bg-blue-soft text-blue'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectReserveType(reserveType.value)"
-        >
-          {{ reserveType.label }}
-        </button>
-      </div>
+          <p class="text-caption text-muted">
+            금리는 은행 사정에 따라 변동될 수 있어요.
+          </p>
+
+          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+            <BasePill
+              v-for="label in activeFilterLabels"
+              :key="label"
+              :label="label"
+              color="pink"
+              variant="outline"
+            />
+            <button
+              type="button"
+              class="py-pill-y text-caption font-semibold text-muted"
+              @click="handleClearFilters"
+            >
+              전체 초기화
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
+          <input
+            v-model="searchInput"
+            type="search"
+            class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
+            placeholder="은행명 또는 상품명 검색"
+            aria-label="은행명 또는 상품명 검색"
+          />
+          <button
+            type="submit"
+            class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
+          >
+            검색
+          </button>
+        </form>
+
+        <div class="flex flex-wrap gap-2" aria-label="가입 기간">
+          <button
+            v-for="savingTerm in SAVING_TERM_OPTIONS"
+            :key="savingTerm"
+            type="button"
+            :class="[
+              selectedSavingTerms.includes(savingTerm)
+                ? 'border-pink bg-pink-soft text-pink'
+                : 'border-line bg-white text-muted',
+              'rounded-2xl border px-4 py-3 text-caption font-semibold',
+            ]"
+            @click="handleSelectEmbeddedSavingTerm(savingTerm)"
+          >
+            {{ savingTerm }}개월
+          </button>
+        </div>
+
+        <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
+          <button
+            v-for="reserveType in RESERVE_TYPE_OPTIONS"
+            :key="reserveType.value"
+            type="button"
+            :class="[
+              isEmbeddedReserveTypeSelected(reserveType.value)
+                ? 'border-blue bg-blue-soft text-blue'
+                : 'border-line bg-white text-muted',
+              'rounded-2xl border px-4 py-3 text-caption font-semibold',
+            ]"
+            @click="handleSelectEmbeddedReserveType(reserveType.value)"
+          >
+            {{ reserveType.label }}
+          </button>
+        </div>
+      </template>
     </template>
 
     <template v-else>
@@ -506,25 +702,10 @@ onMounted(() => {
       </div>
     </template>
 
-    <div class="flex items-center justify-between gap-4">
+    <div v-if="isSecurityTab" class="flex items-center justify-between gap-4">
       <p class="text-caption text-muted tabular-nums">
         {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
       </p>
-      <select
-        v-if="!isSecurityTab"
-        v-model="selectedSort"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-caption text-ink outline-none focus:border-pink"
-        aria-label="상품 정렬"
-        @change="resetPage"
-      >
-        <option
-          v-for="sortOption in PRODUCT_SORT_OPTIONS"
-          :key="sortOption.value"
-          :value="sortOption.value"
-        >
-          {{ sortOption.label }}
-        </option>
-      </select>
     </div>
 
     <BaseCard v-if="isLoading" color="blue">
@@ -571,6 +752,7 @@ onMounted(() => {
         v-for="product in products"
         :key="product.productId"
         :product="product"
+        :variant="standalone ? 'catalog' : 'default'"
         @select="handleSelectProduct"
       />
     </div>
@@ -613,5 +795,15 @@ onMounted(() => {
         다음
       </button>
     </nav>
+
+    <ProductFilterModal
+      v-if="standalone"
+      v-model="isFilterOpen"
+      :product-type="activeTab"
+      :saving-terms="selectedSavingTerms"
+      :reserve-types="selectedReserveTypes"
+      :preferential-conditions="selectedPreferentialConditions"
+      @apply="handleApplyFilters"
+    />
   </div>
 </template>
