@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
-import BasePill from "@/components/common/BasePill.vue";
-import { AXIS_DEFINITIONS, getAxisLevel } from "@/constants/assessment";
+import AxisBadgeRow from "@/components/assessment/AxisBadgeRow.vue";
+import { getAxisBadgesFromScores } from "@/constants/assessment";
 import { resolveAssetUrl } from "@/utils/url";
 
 const props = defineProps({
@@ -30,12 +30,7 @@ const props = defineProps({
 
 const imageUrl = computed(() => resolveAssetUrl(props.imagePath));
 
-const axisBadges = computed(() =>
-  AXIS_DEFINITIONS.map((axis) => ({
-    key: axis.key,
-    label: `${axis.label} ${getAxisLevel(props.scores[axis.key])}`,
-  })),
-);
+const axisBadges = computed(() => getAxisBadgesFromScores(props.scores));
 </script>
 
 <template>
@@ -45,14 +40,7 @@ const axisBadges = computed(() =>
 
       <h1 class="text-h1 font-bold text-navy">{{ personaName }}</h1>
 
-      <div class="flex gap-2">
-        <BasePill
-          v-for="badge in axisBadges"
-          :key="badge.key"
-          :label="badge.label"
-          color="lavender"
-        />
-      </div>
+      <AxisBadgeRow :badges="axisBadges" />
 
       <img
         v-if="imageUrl"
