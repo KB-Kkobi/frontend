@@ -39,6 +39,6 @@ export const GAME_INITIAL_ALLOCATION = {
 
 export const GAME_ALLOCATION_ADJUSTMENT_PRIORITY = {
   cash: ["deposit", "stock"],
-  deposit: ["cash", "stock"],
+  deposit: ["stock", "cash"],
   stock: ["cash", "deposit"],
 };

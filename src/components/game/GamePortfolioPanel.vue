@@ -87,7 +87,7 @@ const depositStatusText = computed(() => {
 </script>
 
 <template>
-  <section class="flex flex-col gap-6" aria-labelledby="portfolio-title">
+  <section class="flex flex-col gap-6 py-2" aria-labelledby="portfolio-title">
     <h2 id="portfolio-title" class="sr-only">현재 자산 현황</h2>
 
     <div class="flex items-start justify-between gap-4">
@@ -119,7 +119,9 @@ const depositStatusText = computed(() => {
       </div>
     </div>
 
-    <div class="flex items-center justify-between gap-4 border-t border-line pt-6">
+    <div
+      class="flex items-center justify-between gap-4 border-t border-line pt-6"
+    >
       <div class="flex items-baseline gap-2">
         <strong class="text-h1 text-ink">현금</strong>
         <span class="text-body text-muted tabular-nums">
@@ -131,7 +133,9 @@ const depositStatusText = computed(() => {
       </strong>
     </div>
 
-    <div class="flex items-start justify-between gap-4 border-t border-line pt-6">
+    <div
+      class="flex items-start justify-between gap-4 border-t border-line pt-6"
+    >
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex items-baseline gap-2">
           <strong class="text-h1 text-ink">예금</strong>
