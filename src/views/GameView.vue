@@ -5,6 +5,7 @@ import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
+import GameDepositCancelPopup from "@/components/game/GameDepositCancelPopup.vue";
 import GameEventPopup from "@/components/game/GameEventPopup.vue";
 import GamePortfolioPanel from "@/components/game/GamePortfolioPanel.vue";
 import GameSellBottomSheet from "@/components/game/GameSellBottomSheet.vue";
@@ -38,6 +39,7 @@ const activeEvent = ref(null);
 const bannerEvent = ref(null);
 const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
+const isDepositCancelPopupOpen = ref(false);
 const isBuying = ref(false);
 const isSelling = ref(false);
 const buyErrorMessage = ref("");
@@ -51,6 +53,16 @@ const prices = computed(() => visibleTicks.value.map((tick) => tick.price));
 const stockAmount = computed(() => gameStart.value?.stockAmount ?? 0);
 const cashAmount = computed(() => gameStart.value?.cashAmount ?? 0);
 const depositAmount = computed(() => gameStart.value?.depositAmount ?? 0);
+const totalAssetAmount = computed(
+  () =>
+    cashAmount.value +
+    depositAmount.value +
+    ((currentTick.value?.price ?? 0) * stockQuantity.value),
+);
+const depositRatio = computed(() => {
+  if (totalAssetAmount.value === 0) return 0;
+  return (depositAmount.value / totalAssetAmount.value) * 100;
+});
 const remainingDepositDays = computed(() => {
   const elapsedMonths = Math.max((currentTick.value?.month ?? 1) - 1, 0);
   return Math.max(0, (GAME_DEPOSIT_MONTHS - elapsedMonths) * 30);
@@ -104,6 +116,10 @@ function handleOpenBuySheet() {
 function handleOpenSellSheet() {
   sellErrorMessage.value = "";
   isSellSheetOpen.value = true;
+}
+
+function handleOpenDepositCancelPopup() {
+  isDepositCancelPopupOpen.value = true;
 }
 
 async function handleBuyStock({ quantity, orderAmount }) {
@@ -204,14 +220,17 @@ watch(currentTick, (tick) => {
   pause();
 });
 
-watch([isBuySheetOpen, isSellSheetOpen], ([isBuyOpen, isSellOpen]) => {
-  if (isBuyOpen || isSellOpen) {
+watch(
+  [isBuySheetOpen, isSellSheetOpen, isDepositCancelPopupOpen],
+  ([isBuyOpen, isSellOpen, isDepositCancelOpen]) => {
+  if (isBuyOpen || isSellOpen || isDepositCancelOpen) {
     pause();
     return;
   }
 
   if (!activeEvent.value) resume();
-});
+  },
+);
 
 onMounted(loadScenario);
 </script>
@@ -243,6 +262,7 @@ onMounted(loadScenario);
             :remaining-deposit-days="remainingDepositDays"
             @buy="handleOpenBuySheet"
             @sell="handleOpenSellSheet"
+            @cancel-deposit="handleOpenDepositCancelPopup"
           />
         </BaseCard>
         <GameEventPopup
@@ -266,6 +286,11 @@ onMounted(loadScenario);
           :is-submitting="isSelling"
           :error-message="sellErrorMessage"
           @submit="handleSellStock"
+        />
+        <GameDepositCancelPopup
+          v-model="isDepositCancelPopupOpen"
+          :deposit-amount="depositAmount"
+          :deposit-ratio="depositRatio"
         />
       </template>
     </div>

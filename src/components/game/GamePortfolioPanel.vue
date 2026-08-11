@@ -12,7 +12,7 @@ import {
   calcProfitRate,
 } from '@/utils/evaluation';
 
-const emit = defineEmits(['buy', 'sell']);
+const emit = defineEmits(['buy', 'sell', 'cancel-deposit']);
 
 const props = defineProps({
   stockQuantity: {
@@ -165,6 +165,7 @@ const depositStatusText = computed(() => {
     <BottomButton
       color="white"
       :disabled="depositStatus !== 'ACTIVE' || depositAmount === 0"
+      @click="emit('cancel-deposit')"
     >
       예금 해지하기
     </BottomButton>
