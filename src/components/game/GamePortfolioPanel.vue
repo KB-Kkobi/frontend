@@ -12,7 +12,7 @@ import {
   calcProfitRate,
 } from '@/utils/evaluation';
 
-const emit = defineEmits(['buy', 'sell']);
+const emit = defineEmits(['buy', 'sell', 'cancel-deposit']);
 
 const props = defineProps({
   stockQuantity: {
@@ -42,6 +42,10 @@ const props = defineProps({
   remainingDepositDays: {
     type: Number,
     required: true,
+  },
+  isTradingDisabled: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -152,12 +156,15 @@ const depositStatusText = computed(() => {
     </div>
 
     <div class="grid grid-cols-2 gap-3 pt-2">
-      <BottomButton color="pink" :disabled="cashAmount === 0" @click="emit('buy')"
+      <BottomButton
+        color="pink"
+        :disabled="isTradingDisabled || cashAmount === 0"
+        @click="emit('buy')"
         >매수</BottomButton
       >
       <BottomButton
         color="blue"
-        :disabled="stockQuantity === 0"
+        :disabled="isTradingDisabled || stockQuantity === 0"
         @click="emit('sell')"
         >매도</BottomButton
       >
@@ -165,6 +172,7 @@ const depositStatusText = computed(() => {
     <BottomButton
       color="white"
       :disabled="depositStatus !== 'ACTIVE' || depositAmount === 0"
+      @click="emit('cancel-deposit')"
     >
       예금 해지하기
     </BottomButton>
