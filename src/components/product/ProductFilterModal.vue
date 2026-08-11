@@ -86,11 +86,11 @@ watch(
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-5"
+      class="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
       @click.self="handleClose"
     >
       <section
-        class="flex max-h-screen w-full max-w-md flex-col gap-6 overflow-y-auto rounded-t-3xl bg-base pt-8 px-4 pb-4"
+        class="flex max-h-screen w-full max-w-[430px] flex-col gap-6 overflow-y-auto rounded-t-3xl bg-base pt-8 px-4 pb-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-filter-title"
@@ -112,7 +112,7 @@ watch(
 
         <fieldset class="flex flex-col gap-4">
           <legend class="text-h2 text-ink">가입 기간</legend>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-3 gap-2">
             <BasePill
               v-for="savingTerm in SAVING_TERM_OPTIONS"
               :key="savingTerm"
@@ -120,6 +120,7 @@ watch(
               type="button"
               :label="`${savingTerm}개월`"
               color="pink"
+              full-width
               :variant="draftSavingTerms.includes(savingTerm) ? 'filled' : 'ghost'"
               :aria-pressed="draftSavingTerms.includes(savingTerm)"
               @click="handleToggleSavingTerm(savingTerm)"
@@ -129,7 +130,7 @@ watch(
 
         <fieldset v-if="isSaving" class="flex flex-col gap-4">
           <legend class="text-h2 text-ink">적립 방식</legend>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <BasePill
               v-for="reserveType in selectableReserveTypes"
               :key="reserveType.value"
@@ -137,6 +138,7 @@ watch(
               type="button"
               :label="reserveType.label"
               color="blue"
+              full-width
               :variant="draftReserveTypes.includes(reserveType.value) ? 'filled' : 'ghost'"
               :aria-pressed="draftReserveTypes.includes(reserveType.value)"
               @click="handleToggleReserveType(reserveType.value)"
@@ -146,7 +148,7 @@ watch(
 
         <fieldset class="flex flex-col gap-4">
           <legend class="text-h2 text-ink">우대조건</legend>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <BasePill
               v-for="condition in PREFERENTIAL_CONDITION_OPTIONS"
               :key="condition.value"
@@ -154,6 +156,7 @@ watch(
               type="button"
               :label="condition.label"
               color="yellow"
+              full-width
               :variant="draftPreferentialConditions.includes(condition.value) ? 'filled' : 'ghost'"
               :aria-pressed="draftPreferentialConditions.includes(condition.value)"
               @click="handleTogglePreferentialCondition(condition.value)"
