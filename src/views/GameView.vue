@@ -42,8 +42,10 @@ const isSellSheetOpen = ref(false);
 const isDepositCancelPopupOpen = ref(false);
 const isBuying = ref(false);
 const isSelling = ref(false);
+const isCancellingDeposit = ref(false);
 const buyErrorMessage = ref("");
 const sellErrorMessage = ref("");
+const depositCancelErrorMessage = ref("");
 const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
 const averageStockPrice = ref(0);
@@ -119,6 +121,7 @@ function handleOpenSellSheet() {
 }
 
 function handleOpenDepositCancelPopup() {
+  depositCancelErrorMessage.value = "";
   isDepositCancelPopupOpen.value = true;
 }
 
@@ -208,6 +211,47 @@ async function handleSellStock({ quantity, saleAmount }) {
   }
 }
 
+async function handleCancelDeposit() {
+  if (
+    isCancellingDeposit.value ||
+    !currentTick.value ||
+    !gameStart.value ||
+    depositAmount.value <= 0
+  ) return;
+
+  isCancellingDeposit.value = true;
+  depositCancelErrorMessage.value = "";
+
+  try {
+    const cancelledDepositAmount = depositAmount.value;
+    const action = await saveGameAction({
+      gameTick: currentTick.value.tick,
+      actionType: "DEPOSIT_CANCEL",
+      assetType: "DEPOSIT",
+      actionAmount: cancelledDepositAmount,
+      currentCash: cashAmount.value + cancelledDepositAmount,
+      currentStockPrincipal: stockAmount.value,
+      currentDeposit: 0,
+    });
+
+    gameStart.value = {
+      ...gameStart.value,
+      cashAmount: action.currentCash,
+      stockAmount: action.currentStockPrincipal,
+      depositAmount: action.currentDeposit,
+      depositStatus: action.depositStatus,
+    };
+    saveGameStartSession(gameStart.value);
+    isDepositCancelPopupOpen.value = false;
+  } catch (error) {
+    depositCancelErrorMessage.value = error instanceof ApiError
+      ? error.message
+      : "예금 해지 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  } finally {
+    isCancellingDeposit.value = false;
+  }
+}
+
 watch(currentTick, (tick) => {
   if (!tick) return;
   if (shownEventTicks.value.has(tick.tick)) return;
@@ -291,6 +335,9 @@ onMounted(loadScenario);
           v-model="isDepositCancelPopupOpen"
           :deposit-amount="depositAmount"
           :deposit-ratio="depositRatio"
+          :is-submitting="isCancellingDeposit"
+          :error-message="depositCancelErrorMessage"
+          @confirm="handleCancelDeposit"
         />
       </template>
     </div>

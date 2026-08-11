@@ -21,6 +21,14 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  isSubmitting: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'confirm']);
@@ -41,6 +49,7 @@ function closePopup() {
 }
 
 function confirmCancel() {
+  if (props.isSubmitting) return;
   emit('confirm');
 }
 </script>
@@ -133,14 +142,28 @@ function confirmCancel() {
           <strong class="text-h2 text-error">
             {{ depositRatio.toFixed(0) }}% → 0% </strong
           >가 되고, 안전자산이 줄어들어요.
-          <strong class="text-ink">한 번 해지하면 되돌릴 수 없어요.</strong>
+          <strong class="text-ink"
+            >한 번 해지하면 다시 가입하거나 되돌릴 수 없어요.</strong
+          >
+        </p>
+
+        <p v-if="errorMessage" class="text-caption text-error" role="alert">
+          {{ errorMessage }}
         </p>
 
         <div class="grid grid-cols-2 gap-3">
-          <BottomButton color="danger" @click="confirmCancel">
-            해지하기
+          <BottomButton
+            color="danger"
+            :disabled="isSubmitting"
+            @click="confirmCancel"
+          >
+            {{ isSubmitting ? '해지 처리 중...' : '해지하기' }}
           </BottomButton>
-          <BottomButton color="yellow" @click="closePopup">
+          <BottomButton
+            color="yellow"
+            :disabled="isSubmitting"
+            @click="closePopup"
+          >
             계속 납입하기
           </BottomButton>
         </div>
