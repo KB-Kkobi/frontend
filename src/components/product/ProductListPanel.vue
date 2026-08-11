@@ -1,6 +1,8 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { fetchLatestAssessment } from "@/api/assessmentApi";
+import { fetchPersonas } from "@/api/personaApi";
 import {
   PRODUCT_API_ERROR_CODES,
   ProductApiError,
@@ -11,7 +13,7 @@ import ProductListCard from "@/components/product/ProductListCard.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
-import { ApiError } from "@/api/http";
+import { ApiError, resolveApiUrl } from "@/api/http";
 import {
   PRODUCT_LIST_DEFAULTS,
   PRODUCT_SORT_OPTIONS,
@@ -89,6 +91,10 @@ const totalElements = ref(0);
 const totalPages = ref(0);
 const isLoading = ref(false);
 const errorMessage = ref("");
+const latestAssessment = ref(null);
+const isAssessmentLoading = ref(props.standalone);
+const assessmentMessage = ref("");
+const isPersonaImageAvailable = ref(true);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -134,6 +140,44 @@ async function loadProducts() {
   currentPage.value = response.page;
   totalElements.value = response.totalElements;
   totalPages.value = response.totalPages;
+}
+
+async function loadLatestAssessment() {
+  isAssessmentLoading.value = true;
+  assessmentMessage.value = "";
+  isPersonaImageAvailable.value = true;
+
+  try {
+    const assessment = await fetchLatestAssessment();
+    latestAssessment.value = assessment;
+
+    try {
+      const personas = await fetchPersonas();
+      const persona = personas.find(
+        (item) => item.axisCode === assessment.personaCode,
+      );
+      if (persona?.imagePath) {
+        latestAssessment.value = {
+          ...assessment,
+          imagePath: resolveApiUrl(persona.imagePath),
+        };
+      }
+    } catch {
+      // 성향 본문은 유지하고 이미지가 없을 때만 텍스트 카드로 표시한다.
+    }
+  } catch (error) {
+    latestAssessment.value = null;
+    assessmentMessage.value =
+      error instanceof ApiError && (error.status === 401 || error.status === 403)
+        ? "로그인 후 나의 투자 성향을 확인할 수 있어요."
+        : "성향 진단을 완료하면 나에게 맞는 투자 성향이 표시돼요.";
+  } finally {
+    isAssessmentLoading.value = false;
+  }
+}
+
+function handlePersonaImageError() {
+  isPersonaImageAvailable.value = false;
 }
 
 async function loadSecurityQuotes(items) {
@@ -315,6 +359,10 @@ watch(
   },
   { immediate: true },
 );
+
+onMounted(() => {
+  if (props.standalone) loadLatestAssessment();
+});
 </script>
 
 <template>
@@ -326,12 +374,31 @@ watch(
       </p>
     </header>
 
-    <BaseCard color="yellow">
-      <div class="flex flex-col gap-2">
-        <h2 class="text-h2 text-ink">성향 배치할 곳</h2>
-        <p class="text-caption text-muted">
-          추후 사용자 투자 성향 정보가 표시됩니다.
-        </p>
+    <BaseCard v-if="standalone" color="white">
+      <div v-if="isAssessmentLoading" class="flex flex-col gap-2" role="status">
+        <p class="text-caption text-muted">성향</p>
+        <h2 class="text-h2 text-ink">나의 투자 성향을 불러오는 중이에요</h2>
+      </div>
+      <div v-else-if="latestAssessment" class="flex items-center gap-4">
+        <div class="flex min-w-0 flex-1 flex-col gap-2">
+          <p class="text-caption text-muted">성향</p>
+          <h2 class="text-h1 text-ink">{{ latestAssessment.typeName }}</h2>
+          <p class="text-body text-muted tracking-tight">
+            {{ latestAssessment.investmentFeature }}
+          </p>
+        </div>
+        <img
+          v-if="latestAssessment.imagePath && isPersonaImageAvailable"
+          :src="latestAssessment.imagePath"
+          :alt="`${latestAssessment.typeName} 성향 이미지`"
+          class="h-20 w-20 shrink-0 object-contain"
+          @error="handlePersonaImageError"
+        />
+      </div>
+      <div v-else class="flex flex-col gap-2">
+        <p class="text-caption text-muted">성향</p>
+        <h2 class="text-h2 text-ink">아직 확인된 투자 성향이 없어요</h2>
+        <p class="text-caption text-muted">{{ assessmentMessage }}</p>
       </div>
     </BaseCard>
 
