@@ -10,6 +10,7 @@ import SecuritySummaryCard from "@/components/security/SecuritySummaryCard.vue";
 import { fetchSecurityDetail, fetchSecurityQuotes } from "@/api/securityApi";
 import { ApiError } from "@/api/http";
 import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
+import { subscribeTick } from "@/api/stockSocket";
 
 const route = useRoute();
 const security = ref(null);
@@ -20,6 +21,7 @@ const errorMessage = ref("");
 
 let pollingTimer = null;
 let activeTicker = null;
+let unsubscribeTick = null;
 
 // 보유 종목 mock. 나중에 API(fetchHolding(code))로 교체.
 const MOCK_HOLDINGS = {
@@ -93,7 +95,20 @@ async function loadSecurity(ticker) {
 
     if (detail.kisSupported) {
       await loadQuote(ticker);
-      if (activeTicker === ticker) startPolling(ticker);
+      if (activeTicker === ticker) {
+        startPolling(ticker);
+        unsubscribeTick?.();
+        unsubscribeTick = subscribeTick(ticker, (tick) => {
+          const price = tick.price ?? tick.currentPrice;
+          if (price == null || activeTicker !== ticker) return;
+          quote.value = {
+            ...quote.value,
+            price,
+            change: tick.change ?? quote.value?.change,
+            changeRate: tick.changeRate ?? quote.value?.changeRate,
+          };
+        });
+      }
     }
   } catch (error) {
     errorMessage.value = getDetailErrorMessage(error);
@@ -113,6 +128,8 @@ watch(
 onUnmounted(() => {
   activeTicker = null;
   stopPolling();
+  unsubscribeTick?.();
+  unsubscribeTick = null;
 });
 
 const currentPrice = computed(() => quote.value?.price ?? null);
