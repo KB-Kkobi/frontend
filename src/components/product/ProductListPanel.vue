@@ -352,6 +352,8 @@ function resetPage() {
 
 function handleSelectTab(tabKey) {
   activeTab.value = tabKey;
+  searchInput.value = "";
+  appliedKeyword.value = "";
   selectedReserveTypes.value = [];
   selectedSecurityType.value = "";
   securitySearchInput.value = "";
