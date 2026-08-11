@@ -82,6 +82,12 @@ function handleSelectHolding(holding) {
   });
 }
 
+function handleDismissSubscribedNotice() {
+  const query = { ...route.query };
+  delete query.subscribed;
+  router.replace({ query });
+}
+
 onMounted(loadAssets);
 </script>
 
@@ -132,11 +138,16 @@ onMounted(loadAssets);
       </BaseCard>
 
       <BaseCard v-if="hasJustSubscribed" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">상품 가입이 완료됐어요</h2>
-          <p class="text-caption text-muted">
-            사용 가능한 현금과 보유 예금·적금 목록을 서버에서 다시 불러왔습니다.
-          </p>
+        <div class="flex flex-col gap-4" role="status">
+          <div class="flex flex-col gap-2">
+            <h2 class="text-h2 text-ink">상품 가입이 완료됐어요</h2>
+            <p class="text-caption text-muted">
+              사용 가능한 현금과 보유 예금·적금 목록을 서버에서 다시 불러왔습니다.
+            </p>
+          </div>
+          <BottomButton color="green" @click="handleDismissSubscribedNotice">
+            확인
+          </BottomButton>
         </div>
       </BaseCard>
 
