@@ -55,7 +55,16 @@ export const PRODUCT_AMOUNT_OPTIONS = Object.freeze({
 export const PRODUCT_HOLDING_STATUSES = Object.freeze({
   ACTIVE: "ACTIVE",
   MATURED: "MATURED",
+  TERMINATED: "TERMINATED",
   CANCELLED: "CANCELLED",
+});
+
+export const PRODUCT_TRANSACTION_TYPES = Object.freeze({
+  SUBSCRIBE: "SUBSCRIBE",
+  PAYMENT: "PAYMENT",
+  ADDITIONAL_PAYMENT: "ADDITIONAL_PAYMENT",
+  TERMINATE: "TERMINATE",
+  MATURITY: "MATURITY",
 });
 
 const PRODUCT_TYPE_LABELS = Object.freeze({
@@ -66,7 +75,16 @@ const PRODUCT_TYPE_LABELS = Object.freeze({
 const PRODUCT_HOLDING_STATUS_OPTIONS = Object.freeze({
   [PRODUCT_HOLDING_STATUSES.ACTIVE]: { label: "진행 중", color: "green" },
   [PRODUCT_HOLDING_STATUSES.MATURED]: { label: "만기", color: "blue" },
+  [PRODUCT_HOLDING_STATUSES.TERMINATED]: { label: "해지", color: "yellow" },
   [PRODUCT_HOLDING_STATUSES.CANCELLED]: { label: "해지", color: "yellow" },
+});
+
+const PRODUCT_TRANSACTION_LABELS = Object.freeze({
+  [PRODUCT_TRANSACTION_TYPES.SUBSCRIBE]: "가입",
+  [PRODUCT_TRANSACTION_TYPES.PAYMENT]: "납입",
+  [PRODUCT_TRANSACTION_TYPES.ADDITIONAL_PAYMENT]: "추가 납입",
+  [PRODUCT_TRANSACTION_TYPES.TERMINATE]: "해지",
+  [PRODUCT_TRANSACTION_TYPES.MATURITY]: "만기",
 });
 
 export function normalizeProductType(productType) {
@@ -84,4 +102,12 @@ export function getProductHoldingStatus(status) {
       color: "yellow",
     }
   );
+}
+
+export function getProductTransactionLabel(transactionType, productType) {
+  const typeLabel = getProductTypeLabel(productType);
+  const transactionLabel =
+    PRODUCT_TRANSACTION_LABELS[String(transactionType ?? "").toUpperCase()] ??
+    "거래";
+  return `${typeLabel} ${transactionLabel}`;
 }

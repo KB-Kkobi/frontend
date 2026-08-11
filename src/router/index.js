@@ -5,6 +5,7 @@ import ProductsView from '@/views/ProductsView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
 import ProductHoldingsView from '@/views/ProductHoldingsView.vue'
 import ProductHoldingDetailView from '@/views/ProductHoldingDetailView.vue'
+import ProductTerminationView from '@/views/ProductTerminationView.vue'
 import ProductSubscriptionView from '@/views/ProductSubscriptionView.vue'
 import VirtualInvestView from '@/views/VirtualInvestView.vue'
 import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
@@ -68,6 +69,11 @@ const router = createRouter({
           path: 'holdings/:holdingProductId',
           name: 'product-holding-detail',
           component: ProductHoldingDetailView,
+        },
+        {
+          path: 'holdings/:holdingProductId/termination',
+          name: 'product-termination',
+          component: ProductTerminationView,
         },
       ],
     },

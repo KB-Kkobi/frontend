@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ApiError } from "@/api/http";
 import { fetchProductHolding } from "@/api/productApi";
 import BackButton from "@/components/common/BackButton.vue";
@@ -22,6 +22,7 @@ import {
 } from "@/utils/format";
 
 const route = useRoute();
+const router = useRouter();
 
 const holding = ref(null);
 const isLoading = ref(false);
@@ -106,6 +107,13 @@ async function loadHolding() {
   } finally {
     isLoading.value = false;
   }
+}
+
+function handleViewTerminationEstimate() {
+  router.push({
+    name: "product-termination",
+    params: { holdingProductId: route.params.holdingProductId },
+  });
 }
 
 watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
@@ -288,7 +296,9 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
         </div>
       </BaseCard>
 
-      <BottomButton color="white">해지 예상 조회</BottomButton>
+      <BottomButton color="white" @click="handleViewTerminationEstimate">
+        해지 예상 조회
+      </BottomButton>
     </template>
   </div>
 </template>
