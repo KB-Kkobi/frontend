@@ -1,22 +1,24 @@
 <script setup>
-defineProps({
-  background: {
+const props = defineProps({
+  color: {
     type: String,
     default: "page",
-    validator: (v) => ["page", "page-warm"].includes(v),
+    validator: (value) => ["page", "page-warm", "base", "white"].includes(value),
   },
 });
 
-const BACKGROUND_CLASSES = {
+const colorClasses = {
   page: "bg-page",
   "page-warm": "bg-page-warm",
+  base: "bg-base",
+  white: "bg-white",
 };
 </script>
 
 <template>
   <main
     :class="[
-      BACKGROUND_CLASSES[background],
+      colorClasses[props.color],
       'mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-20',
     ]"
   >

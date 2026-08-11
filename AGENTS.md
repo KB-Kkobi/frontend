@@ -61,7 +61,7 @@
 
 | 컴포넌트        | 용도                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
-| `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `background` prop(`page` 기본값 / `page-warm`)으로 배경 그라데이션 선택 |
+| `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
 | `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color` prop(`white`/`pink`/`blue`/`green`/`yellow`/`lavender`/`cream`)으로 배경 선택 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText` prop, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |

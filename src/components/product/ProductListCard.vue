@@ -1,8 +1,10 @@
 <script setup>
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import {
   formatCurrency,
   formatInterestRate,
+  formatKoreanShortAmount,
   formatNullableText,
 } from "@/utils/format";
 
@@ -10,6 +12,11 @@ const props = defineProps({
   product: {
     type: Object,
     required: true,
+  },
+  variant: {
+    type: String,
+    default: "default",
+    validator: (value) => ["default", "catalog"].includes(value),
   },
 });
 
@@ -30,7 +37,47 @@ function handleSelect() {
     @keydown.space.prevent="handleSelect"
   >
     <BaseCard color="white">
-      <div class="flex flex-col gap-4">
+      <div v-if="variant === 'catalog'" class="flex items-center gap-4">
+        <div class="flex min-w-0 flex-1 flex-col gap-2">
+          <p class="text-caption text-muted">
+            {{ formatNullableText(product.financialCompanyName) }}
+          </p>
+          <h3 class="text-h2 text-ink">
+            {{ formatNullableText(product.productName) }}
+          </h3>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-caption text-muted tabular-nums">
+              {{ product.savingTerm ? `${product.savingTerm}개월` : "—" }}
+            </span>
+            <span v-if="product.maxLimit" class="text-caption text-muted tabular-nums">
+              최대 {{ formatKoreanShortAmount(product.maxLimit) }}
+            </span>
+            <BasePill
+              v-if="product.reserveTypeName"
+              :label="product.reserveTypeName"
+              color="blue"
+              variant="ghost"
+            />
+          </div>
+        </div>
+
+        <dl class="flex shrink-0">
+          <div class="flex flex-col gap-2 pr-4">
+            <dt class="text-caption text-muted">기본금리</dt>
+            <dd class="text-h2 text-profit tabular-nums">
+              {{ formatInterestRate(product.interestRate) }}
+            </dd>
+          </div>
+          <div class="flex flex-col gap-2 border-l border-line pl-4">
+            <dt class="text-caption text-muted">최고금리</dt>
+            <dd class="text-h2 text-profit tabular-nums">
+              {{ formatInterestRate(product.maximumInterestRate) }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div v-else class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <p class="text-caption text-muted">
             {{ formatNullableText(product.financialCompanyName) }}

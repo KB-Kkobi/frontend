@@ -50,7 +50,7 @@ onMounted(loadAssessmentResult);
 </script>
 
 <template>
-  <PageContainer background="page-warm">
+  <PageContainer color="page-warm">
     <div class="flex flex-col gap-6 py-6">
       <div class="flex items-center gap-2">
         <BackButton />

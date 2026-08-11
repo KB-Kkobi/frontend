@@ -4,7 +4,7 @@ import ProductListPanel from "@/components/product/ProductListPanel.vue";
 </script>
 
 <template>
-  <PageContainer>
+  <PageContainer color="white">
     <ProductListPanel :standalone="true" />
   </PageContainer>
 </template>

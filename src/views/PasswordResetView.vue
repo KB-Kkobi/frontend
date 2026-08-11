@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import kkobiSignupImage from "@/assets/images/kkobiSignup.svg";
+import kkobiSignupImage from "@/assets/images/kkobiSignup.png";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";

@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { loginUser } from "@/api/authApi";
 import { ApiError } from "@/api/http";
+import naruLogoImage from "@/assets/images/naruLogo.svg";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
@@ -93,11 +94,17 @@ function handleFindPassword() {
 
 <template>
   <PageContainer>
-    <div class="flex flex-1 flex-col gap-6 py-6">
+    <div class="flex flex-1 flex-col justify-center gap-6 py-6">
       <div
-        class="flex flex-1 items-center justify-center"
+        class="flex items-center justify-center"
         aria-label="서비스 로고 영역"
-      ></div>
+      >
+        <img
+          :src="naruLogoImage"
+          alt="나루 로고"
+          class="w-2/3 object-contain"
+        />
+      </div>
 
       <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
         <BaseCard color="white">
