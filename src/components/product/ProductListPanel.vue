@@ -52,18 +52,19 @@ const LIST_TABS = Object.freeze({
 });
 
 const LIST_TAB_OPTIONS = Object.freeze([
+  { key: LIST_TABS.SECURITY, label: "주식" },
   { key: LIST_TABS.DEPOSIT, label: "예금" },
   { key: LIST_TABS.SAVING, label: "적금" },
-  { key: LIST_TABS.SECURITY, label: "증권" },
 ]);
+const VISIBLE_PAGE_COUNT = 4;
 
 const router = useRouter();
 const route = useRoute();
 
 const TAB_KEYS = new Set(Object.values(LIST_TABS));
 
-function parseInitialTab(value) {
-  return TAB_KEYS.has(value) ? value : LIST_TABS.DEPOSIT;
+function parseInitialTab(value, fallbackTab) {
+  return TAB_KEYS.has(value) ? value : fallbackTab;
 }
 
 function parseInitialInt(value, fallback) {
@@ -93,12 +94,13 @@ function parseInitialOptionValues(value, options) {
 }
 
 const initialQuery = route.query;
+const defaultTab = props.standalone ? LIST_TABS.SECURITY : LIST_TABS.DEPOSIT;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 if (!props.standalone && initialSavingTerms.length === 0) {
   initialSavingTerms.push(12);
 }
 
-const activeTab = ref(parseInitialTab(initialQuery.tab));
+const activeTab = ref(parseInitialTab(initialQuery.tab, defaultTab));
 const searchInput = ref(String(initialQuery.keyword ?? ""));
 const appliedKeyword = ref(String(initialQuery.keyword ?? ""));
 const securitySearchInput = ref(String(initialQuery.securityKeyword ?? ""));
@@ -138,11 +140,30 @@ const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
 
 const activeTabLabel = computed(() =>
-  isSecurityTab.value ? "증권" : getProductTypeLabel(activeTab.value),
+  isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
 );
 
-const hasPreviousPage = computed(() => currentPage.value > 1);
-const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const pageGroupStart = computed(
+  () =>
+    Math.floor((currentPage.value - 1) / VISIBLE_PAGE_COUNT) *
+      VISIBLE_PAGE_COUNT +
+    1,
+);
+const hasPreviousPageGroup = computed(() => pageGroupStart.value > 1);
+const hasNextPageGroup = computed(
+  () => pageGroupStart.value + VISIBLE_PAGE_COUNT <= totalPages.value,
+);
+const visiblePageNumbers = computed(() => {
+  const pageCount = Math.min(
+    totalPages.value - pageGroupStart.value + 1,
+    VISIBLE_PAGE_COUNT,
+  );
+
+  return Array.from(
+    { length: pageCount },
+    (_, index) => pageGroupStart.value + index,
+  );
+});
 const activeFilterCount = computed(
   () =>
     selectedSavingTerms.value.length +
@@ -395,18 +416,24 @@ function handleSelectSecurity(security) {
   });
 }
 
-function handlePreviousPage() {
-  if (hasPreviousPage.value) currentPage.value -= 1;
+function handlePreviousPageGroup() {
+  if (!hasPreviousPageGroup.value) return;
+  currentPage.value = Math.max(pageGroupStart.value - VISIBLE_PAGE_COUNT, 1);
 }
 
-function handleNextPage() {
-  if (hasNextPage.value) currentPage.value += 1;
+function handleNextPageGroup() {
+  if (!hasNextPageGroup.value) return;
+  currentPage.value = pageGroupStart.value + VISIBLE_PAGE_COUNT;
+}
+
+function handleSelectPage(page) {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 }
 
 // URL 쿼리 동기화 — standalone 모드에서만
 function buildQueryFromState() {
   const query = {};
-  if (activeTab.value !== LIST_TABS.DEPOSIT) query.tab = activeTab.value;
+  if (activeTab.value !== defaultTab) query.tab = activeTab.value;
 
   if (appliedKeyword.value) query.keyword = appliedKeyword.value;
   if (appliedSecurityKeyword.value) {
@@ -506,7 +533,10 @@ onMounted(() => {
       </div>
     </BaseCard>
 
-    <div class="flex gap-2" aria-label="상품 유형">
+    <div
+      class="flex rounded-3xl bg-surface p-segment-p"
+      aria-label="상품 유형"
+    >
       <button
         v-for="option in LIST_TAB_OPTIONS"
         :key="option.key"
@@ -514,8 +544,8 @@ onMounted(() => {
         :class="[
           activeTab === option.key
             ? 'bg-pink text-white'
-            : 'border border-line bg-white text-muted',
-          'flex-1 rounded-2xl px-4 py-3 text-button',
+            : 'text-ink',
+          'flex-1 rounded-3xl px-4 py-3 text-button',
         ]"
         @click="handleSelectTab(option.key)"
       >
@@ -526,74 +556,120 @@ onMounted(() => {
     <template v-if="!isSecurityTab">
       <template v-if="standalone">
         <form
-          class="flex items-center gap-2 rounded-2xl bg-surface px-4"
+          class="flex items-center gap-2 rounded-3xl bg-surface px-4"
           role="search"
           @submit.prevent="handleSearch"
         >
-        <svg
-          class="h-5 w-5 shrink-0 text-muted"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" stroke-width="2" />
-          <path d="m16 16 4 4" stroke-width="2" stroke-linecap="round" />
-        </svg>
-        <input
-          v-model="searchInput"
-          type="search"
-          class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
-          placeholder="은행명 또는 상품명 검색"
-          aria-label="은행명 또는 상품명 검색"
-        />
-        <button
-          type="submit"
-          class="py-3 text-button text-pink"
-        >
-          검색
-        </button>
+          <svg
+            class="h-5 w-5 shrink-0 text-muted"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" stroke-width="2" />
+            <path
+              d="m16 16 4 4"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <input
+            v-model="searchInput"
+            type="search"
+            class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
+            placeholder="은행명 또는 상품명 검색"
+            aria-label="은행명 또는 상품명 검색"
+            @keyup.enter="handleSearch"
+          />
         </form>
 
         <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between gap-4">
-            <p class="text-caption text-muted tabular-nums">
-              {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
-            </p>
-            <div class="flex items-center gap-2">
-              <select
-                v-model="selectedSort"
-                class="rounded-2xl border border-line bg-white px-4 py-3 text-caption text-ink outline-none focus:border-pink"
-                aria-label="상품 정렬"
-                @change="resetPage"
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-2">
+              <svg
+                class="h-4 w-4 shrink-0 text-blue"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
               >
-                <option
-                  v-for="sortOption in PRODUCT_SORT_OPTIONS"
-                  :key="sortOption.value"
-                  :value="sortOption.value"
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                <path
+                  class="text-white"
+                  d="M12 11v6M12 7.5v.5"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <p class="text-caption text-muted">
+                금리는 은행 사정에 따라 변동될 수 있어요.
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <label
+                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
                 >
-                  {{ sortOption.label }}
-                </option>
-              </select>
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>정렬</span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="상품 정렬"
+                  @change="resetPage"
+                >
+                  <option
+                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                    :key="sortOption.value"
+                    :value="sortOption.value"
+                  >
+                    {{ sortOption.label }}
+                  </option>
+                </select>
+              </label>
               <button
                 type="button"
                 :class="[
                   hasAppliedFilters
-                    ? 'border-pink bg-pink-soft text-pink'
-                    : 'border-line bg-white text-muted',
-                  'rounded-2xl border px-4 py-3 text-button',
+                    ? 'text-pink'
+                    : 'text-ink',
+                  'flex items-center gap-2 py-pill-y text-caption',
                 ]"
                 :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
                 @click="handleOpenFilter"
               >
-                필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 7h7m4 0h5M4 17h3m4 0h9"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="13" cy="7" r="2" stroke-width="1.8" />
+                  <circle cx="9" cy="17" r="2" stroke-width="1.8" />
+                </svg>
+                <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
               </button>
             </div>
           </div>
-
-          <p class="text-caption text-muted">
-            금리는 은행 사정에 따라 변동될 수 있어요.
-          </p>
 
           <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
             <BasePill
@@ -772,27 +848,70 @@ onMounted(() => {
 
     <nav
       v-if="!isLoading && !errorMessage && totalPages > 0"
-      class="flex items-center justify-between gap-4"
+      class="flex items-center justify-center gap-2"
       aria-label="상품 목록 페이지"
     >
       <button
         type="button"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-button text-ink disabled:opacity-50"
-        :disabled="!hasPreviousPage"
-        @click="handlePreviousPage"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+        aria-label="이전 페이지 묶음"
+        :disabled="!hasPreviousPageGroup"
+        @click="handlePreviousPageGroup"
       >
-        이전
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="m14 6-6 6 6 6"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
-      <span class="text-caption text-muted tabular-nums">
-        {{ currentPage }} / {{ totalPages }}
-      </span>
+
+      <button
+        v-for="page in visiblePageNumbers"
+        :key="page"
+        type="button"
+        :class="[
+          currentPage === page
+            ? 'bg-pink text-white'
+            : 'bg-white text-muted',
+          'flex h-10 w-10 items-center justify-center rounded-full text-button tabular-nums',
+        ]"
+        :aria-label="`${page}페이지`"
+        :aria-current="currentPage === page ? 'page' : undefined"
+        @click="handleSelectPage(page)"
+      >
+        {{ page }}
+      </button>
+
       <button
         type="button"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-button text-ink disabled:opacity-50"
-        :disabled="!hasNextPage"
-        @click="handleNextPage"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+        aria-label="다음 페이지 묶음"
+        :disabled="!hasNextPageGroup"
+        @click="handleNextPageGroup"
       >
-        다음
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="m10 6 6 6-6 6"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
     </nav>
 
