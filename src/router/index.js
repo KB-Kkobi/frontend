@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 import ProductsView from '@/views/ProductsView.vue'
 import ProductDetailView from '@/views/ProductDetailView.vue'
@@ -23,21 +24,24 @@ import PasswordResetView from '@/views/PasswordResetView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'home', component: HomeView },
-    { path: '/products', name: 'products', component: ProductsView },
+    { path: '/', name: 'home', component: HomeView, meta: { requiresAuth: true } },
+    { path: '/products', name: 'products', component: ProductsView, meta: { requiresAuth: true } },
     {
       path: '/products/:productType/:productId/subscribe',
       name: 'product-subscribe',
       component: ProductSubscriptionView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/products/:productType/:productId',
       name: 'product-detail',
       component: ProductDetailView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/virtual',
       component: VirtualInvestView,
+      meta: { requiresAuth: true },
       children: [
         { path: '', redirect: { name: 'virtual-assets' } },
         {
@@ -71,51 +75,65 @@ const router = createRouter({
       path: '/virtual/start',
       name: 'virtual-start',
       component: VirtualInvestStartView,
+      meta: { requiresAuth: true },
     },
-    { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView },
-    { path: '/my', name: 'my', component: MyPageView },
+    { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { requiresAuth: true } },
+    { path: '/my', name: 'my', component: MyPageView, meta: { requiresAuth: true } },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { hideBottomTabBar: true },
+      meta: { hideBottomTabBar: true, guestOnly: true },
     },
     {
       path: '/password-reset',
       name: 'password-reset',
       component: PasswordResetView,
-      meta: { hideBottomTabBar: true },
+      meta: { hideBottomTabBar: true, guestOnly: true },
     },
     {
       path: '/signup',
       name: 'signup',
       component: SignUpView,
-      meta: { hideBottomTabBar: true },
+      meta: { hideBottomTabBar: true, guestOnly: true },
     },
     {
       path: '/securities/:pk',
       name: 'security-detail',
       component: SecurityDetailView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/game/allocation',
       name: 'game-allocation',
       component: GameAllocationView,
-      meta: { hideBottomTabBar: true },
+      meta: { requiresAuth: true, hideBottomTabBar: true },
     },
     {
       path: '/game/introduction',
       name: 'game-introduction',
       component: GameIntroductionView,
-      meta: { hideBottomTabBar: true },
+      meta: { requiresAuth: true, hideBottomTabBar: true },
     },
     {
       path: '/game',
       name: 'game',
       component: GameView,
-      meta: { hideBottomTabBar: true },
+      meta: { requiresAuth: true, hideBottomTabBar: true },
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (to.meta.guestOnly && auth.isAuthenticated) {
+    return { name: 'home' }
+  }
 })
 
 export default router
