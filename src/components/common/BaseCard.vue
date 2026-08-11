@@ -4,7 +4,7 @@ defineProps({
     type: String,
     default: "white",
     validator: (v) =>
-      ["white", "pink", "blue", "green", "yellow"].includes(v),
+      ["white", "pink", "blue", "green", "yellow", "lavender", "cream"].includes(v),
   },
 });
 
@@ -14,6 +14,8 @@ const COLOR_CLASSES = {
   blue: "bg-blue-soft",
   green: "bg-green-soft",
   yellow: "bg-yellow-soft",
+  lavender: "bg-lavender-soft",
+  cream: "bg-cream-soft",
 };
 </script>
 

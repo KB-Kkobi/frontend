@@ -25,6 +25,11 @@ export default {
       blue: { DEFAULT: "#5B8BF7", soft: "#F0F5FE" },
       green: { DEFAULT: "#55C770", soft: "#EFFAF7" },
       yellow: { DEFAULT: "#FED063", soft: "#FEF7E0" },
+      lavender: { DEFAULT: "#9B8EDB", soft: "#F1ECFB" },
+      cream: { DEFAULT: "#FBDD84", soft: "#FDF1CE" },
+
+      // ── 강조 텍스트 전용 (버튼에는 쓰지 않음) ──
+      navy: "#1E2A5E",
 
       // ── 의미 색 (금액·수치·알림 전용) ──
       profit: "#FF6B9D", // 수익 / 상승 = 핑크
@@ -67,6 +72,8 @@ export default {
       backgroundImage: {
         // 페이지 배경 그라데이션 (흰색 → 크림)
         page: "linear-gradient(180deg, #FDFAE9 0%,  #FFFFFF 100%)",
+        // 리포트류 화면 전용 warm 그라데이션 (연회색 → 크림)
+        "page-warm": "linear-gradient(180deg, #FCFCFC 0%, #FFFAE5 100%)",
       },
 
       spacing: {

@@ -18,6 +18,7 @@ import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
 import GameView from '@/views/GameView.vue'
+import AssessmentResultView from '@/views/AssessmentResultView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import PasswordResetView from '@/views/PasswordResetView.vue'
@@ -126,6 +127,12 @@ const router = createRouter({
       name: 'game',
       component: GameView,
       meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
+    {
+      path: '/assessment/result',
+      name: 'assessment-result',
+      component: AssessmentResultView,
+      meta: { requiresAuth: true },
     },
   ],
 })

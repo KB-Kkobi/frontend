@@ -35,6 +35,10 @@ function handleProfile() {
 }
 
 function handleMenuSelect(item) {
+  if (item.id === "assessment") {
+    router.push({ name: "assessment-result" });
+    return;
+  }
   console.log("마이페이지 메뉴:", item.id);
 }
 

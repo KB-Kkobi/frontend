@@ -5,6 +5,11 @@ defineProps({
     default: "pink",
     validator: (v) => ["pink", "blue", "green", "yellow", "white", "danger"].includes(v),
   },
+  shape: {
+    type: String,
+    default: "rounded",
+    validator: (v) => ["rounded", "pill"].includes(v),
+  },
   type: {
     type: String,
     default: "button",
@@ -20,6 +25,11 @@ const COLOR_CLASSES = {
   white: "bg-surface text-ink border border-line",
   danger: "bg-white text-error border border-line",
 };
+
+const SHAPE_CLASSES = {
+  rounded: "rounded-2xl",
+  pill: "rounded-full",
+};
 </script>
 
 <template>
@@ -28,7 +38,8 @@ const COLOR_CLASSES = {
     :disabled="disabled"
     :class="[
       COLOR_CLASSES[color],
-      'w-full rounded-2xl px-4 py-3 text-button active:opacity-90 disabled:opacity-50',
+      SHAPE_CLASSES[shape],
+      'w-full px-4 py-3 text-button active:opacity-90 disabled:opacity-50',
     ]"
   >
     <slot />
