@@ -4,6 +4,7 @@ import BaseBadge from '@/components/common/BaseBadge.vue';
 import BottomButton from '@/components/common/BottomButton.vue';
 import {
   GAME_DEPOSIT_INTEREST_RATE,
+  GAME_DEPOSIT_INTEREST_TAX_RATE,
   GAME_DEPOSIT_MONTHS,
 } from '@/constants/game';
 import { formatCurrency } from '@/utils/format';
@@ -37,7 +38,8 @@ const maturityInterest = computed(() =>
   Math.round(
     props.depositAmount *
       (GAME_DEPOSIT_INTEREST_RATE / 100) *
-      (GAME_DEPOSIT_MONTHS / 12),
+      (GAME_DEPOSIT_MONTHS / 12) *
+      (1 - GAME_DEPOSIT_INTEREST_TAX_RATE / 100),
   ),
 );
 const maturityAmount = computed(

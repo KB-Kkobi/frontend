@@ -29,6 +29,7 @@ export const GAME_SEED_MONEY = 10_000_000;
 export const GAME_DURATION_MONTHS = 12;
 export const GAME_DEPOSIT_MONTHS = 12;
 export const GAME_DEPOSIT_INTEREST_RATE = 3.5;
+export const GAME_DEPOSIT_INTEREST_TAX_RATE = 15.4;
 export const GAME_ALLOCATION_STEP = 100_000;
 
 export const GAME_INITIAL_ALLOCATION = {

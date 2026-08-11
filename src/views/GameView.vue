@@ -6,6 +6,7 @@ import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
 import GameDepositCancelPopup from "@/components/game/GameDepositCancelPopup.vue";
+import GameDepositMaturityPopup from "@/components/game/GameDepositMaturityPopup.vue";
 import GameEventPopup from "@/components/game/GameEventPopup.vue";
 import GamePortfolioPanel from "@/components/game/GamePortfolioPanel.vue";
 import GameSellBottomSheet from "@/components/game/GameSellBottomSheet.vue";
@@ -40,6 +41,8 @@ const bannerEvent = ref(null);
 const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
 const isDepositCancelPopupOpen = ref(false);
+const isDepositMaturityPopupOpen = ref(false);
+const hasResolvedDepositMaturity = ref(false);
 const isBuying = ref(false);
 const isSelling = ref(false);
 const isCancellingDeposit = ref(false);
@@ -50,6 +53,7 @@ const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
 const averageStockPrice = ref(0);
 const stockQuantity = ref(0);
+const finalGameTick = ref(null);
 
 const prices = computed(() => visibleTicks.value.map((tick) => tick.price));
 const stockAmount = computed(() => gameStart.value?.stockAmount ?? 0);
@@ -65,6 +69,11 @@ const depositRatio = computed(() => {
   if (totalAssetAmount.value === 0) return 0;
   return (depositAmount.value / totalAssetAmount.value) * 100;
 });
+const isGameFinished = computed(
+  () =>
+    finalGameTick.value !== null &&
+    currentTick.value?.tick === finalGameTick.value,
+);
 const remainingDepositDays = computed(() => {
   const elapsedMonths = Math.max((currentTick.value?.month ?? 1) - 1, 0);
   return Math.max(0, (GAME_DEPOSIT_MONTHS - elapsedMonths) * 30);
@@ -92,6 +101,7 @@ async function loadScenario() {
       ?? (initialStockPrice.value
         ? Math.floor(stockAmount.value / initialStockPrice.value)
         : 0);
+    finalGameTick.value = scenario.ticks.at(-1)?.tick ?? null;
     eventsByTick.value = buildEventsByTick(scenario.events);
     start(scenario);
   } catch (error) {
@@ -107,15 +117,18 @@ async function loadScenario() {
 function handleCloseEvent() {
   bannerEvent.value = activeEvent.value;
   activeEvent.value = null;
+  if (openDepositMaturityPopup()) return;
   resume();
 }
 
 function handleOpenBuySheet() {
+  if (isGameFinished.value) return;
   buyErrorMessage.value = "";
   isBuySheetOpen.value = true;
 }
 
 function handleOpenSellSheet() {
+  if (isGameFinished.value) return;
   sellErrorMessage.value = "";
   isSellSheetOpen.value = true;
 }
@@ -123,6 +136,31 @@ function handleOpenSellSheet() {
 function handleOpenDepositCancelPopup() {
   depositCancelErrorMessage.value = "";
   isDepositCancelPopupOpen.value = true;
+}
+
+function openDepositMaturityPopup() {
+  if (
+    hasResolvedDepositMaturity.value ||
+    activeEvent.value ||
+    currentTick.value?.tick !== finalGameTick.value ||
+    gameStart.value?.depositStatus !== "ACTIVE" ||
+    depositAmount.value <= 0
+  ) return false;
+
+  isDepositMaturityPopupOpen.value = true;
+  pause();
+  return true;
+}
+
+function handleConfirmDepositMaturity(maturityAmount) {
+  hasResolvedDepositMaturity.value = true;
+  gameStart.value = {
+    ...gameStart.value,
+    depositAmount: maturityAmount,
+    depositStatus: "MATURED",
+  };
+  saveGameStartSession(gameStart.value);
+  isDepositMaturityPopupOpen.value = false;
 }
 
 async function handleBuyStock({ quantity, orderAmount }) {
@@ -254,20 +292,26 @@ async function handleCancelDeposit() {
 
 watch(currentTick, (tick) => {
   if (!tick) return;
-  if (shownEventTicks.value.has(tick.tick)) return;
-
   const event = eventsByTick.value.get(tick.tick);
-  if (!event) return;
+  if (event && !shownEventTicks.value.has(tick.tick)) {
+    shownEventTicks.value.add(tick.tick);
+    activeEvent.value = event;
+    pause();
+    return;
+  }
 
-  shownEventTicks.value.add(tick.tick);
-  activeEvent.value = event;
-  pause();
+  openDepositMaturityPopup();
 });
 
 watch(
-  [isBuySheetOpen, isSellSheetOpen, isDepositCancelPopupOpen],
-  ([isBuyOpen, isSellOpen, isDepositCancelOpen]) => {
-  if (isBuyOpen || isSellOpen || isDepositCancelOpen) {
+  [
+    isBuySheetOpen,
+    isSellSheetOpen,
+    isDepositCancelPopupOpen,
+    isDepositMaturityPopupOpen,
+  ],
+  ([isBuyOpen, isSellOpen, isDepositCancelOpen, isDepositMaturityOpen]) => {
+  if (isBuyOpen || isSellOpen || isDepositCancelOpen || isDepositMaturityOpen) {
     pause();
     return;
   }
@@ -304,6 +348,7 @@ onMounted(loadScenario);
             :deposit-amount="depositAmount"
             :deposit-status="gameStart.depositStatus"
             :remaining-deposit-days="remainingDepositDays"
+            :is-trading-disabled="isGameFinished"
             @buy="handleOpenBuySheet"
             @sell="handleOpenSellSheet"
             @cancel-deposit="handleOpenDepositCancelPopup"
@@ -338,6 +383,11 @@ onMounted(loadScenario);
           :is-submitting="isCancellingDeposit"
           :error-message="depositCancelErrorMessage"
           @confirm="handleCancelDeposit"
+        />
+        <GameDepositMaturityPopup
+          v-model="isDepositMaturityPopupOpen"
+          :deposit-amount="depositAmount"
+          @confirm="handleConfirmDepositMaturity"
         />
       </template>
     </div>

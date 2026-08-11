@@ -43,6 +43,10 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  isTradingDisabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const stockEvaluationAmount = computed(() =>
@@ -152,12 +156,15 @@ const depositStatusText = computed(() => {
     </div>
 
     <div class="grid grid-cols-2 gap-3 pt-2">
-      <BottomButton color="pink" :disabled="cashAmount === 0" @click="emit('buy')"
+      <BottomButton
+        color="pink"
+        :disabled="isTradingDisabled || cashAmount === 0"
+        @click="emit('buy')"
         >매수</BottomButton
       >
       <BottomButton
         color="blue"
-        :disabled="stockQuantity === 0"
+        :disabled="isTradingDisabled || stockQuantity === 0"
         @click="emit('sell')"
         >매도</BottomButton
       >
