@@ -1,13 +1,19 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
+import { refreshAccessToken } from "@/api/http";
 import {
   clearAuthSession,
   readAuthSession,
   saveAuthSession,
+  subscribeAuthSession,
 } from "@/utils/authStorage";
 
 export const useAuthStore = defineStore("auth", () => {
   const session = ref(readAuthSession());
+  const isInitialized = ref(false);
+  subscribeAuthSession((nextSession) => {
+    session.value = nextSession;
+  });
 
   const accessToken = computed(() => session.value?.accessToken ?? null);
   const isAuthenticated = computed(() => {
@@ -18,16 +24,14 @@ export const useAuthStore = defineStore("auth", () => {
   });
 
   function setSession(tokenResponse) {
-    if (!tokenResponse?.accessToken || !tokenResponse?.refreshToken) {
+    if (!tokenResponse?.accessToken) {
       throw new Error("로그인 응답에 인증 토큰이 없습니다.");
     }
 
     session.value = {
       accessToken: tokenResponse.accessToken,
-      refreshToken: tokenResponse.refreshToken,
       tokenType: tokenResponse.tokenType || "Bearer",
       accessTokenExpiresAt: tokenResponse.accessTokenExpiresAt,
-      refreshTokenExpiresAt: tokenResponse.refreshTokenExpiresAt,
     };
     saveAuthSession(session.value);
   }
@@ -37,11 +41,25 @@ export const useAuthStore = defineStore("auth", () => {
     clearAuthSession();
   }
 
+  async function initialize() {
+    if (isInitialized.value) return;
+
+    try {
+      await refreshAccessToken();
+    } catch {
+      clearAuthSession();
+    } finally {
+      isInitialized.value = true;
+    }
+  }
+
   return {
     session,
     accessToken,
     isAuthenticated,
+    isInitialized,
     setSession,
     logout,
+    initialize,
   };
 });
