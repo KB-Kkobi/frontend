@@ -12,7 +12,7 @@ import {
   calcProfitRate,
 } from '@/utils/evaluation';
 
-const emit = defineEmits(['buy']);
+const emit = defineEmits(['buy', 'sell']);
 
 const props = defineProps({
   stockQuantity: {
@@ -155,7 +155,10 @@ const depositStatusText = computed(() => {
       <BottomButton color="pink" :disabled="cashAmount === 0" @click="emit('buy')"
         >매수</BottomButton
       >
-      <BottomButton color="blue" :disabled="stockQuantity === 0"
+      <BottomButton
+        color="blue"
+        :disabled="stockQuantity === 0"
+        @click="emit('sell')"
         >매도</BottomButton
       >
     </div>

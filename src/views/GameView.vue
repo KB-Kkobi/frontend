@@ -7,6 +7,7 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
 import GameEventPopup from "@/components/game/GameEventPopup.vue";
 import GamePortfolioPanel from "@/components/game/GamePortfolioPanel.vue";
+import GameSellBottomSheet from "@/components/game/GameSellBottomSheet.vue";
 import MarketIndexCard from "@/components/game/MarketIndexCard.vue";
 import {
   DEFAULT_SCENARIO_ID,
@@ -36,6 +37,7 @@ const shownEventTicks = ref(new Set());
 const activeEvent = ref(null);
 const bannerEvent = ref(null);
 const isBuySheetOpen = ref(false);
+const isSellSheetOpen = ref(false);
 const isBuying = ref(false);
 const buyErrorMessage = ref("");
 const gameStart = ref(readGameStartSession());
@@ -97,6 +99,10 @@ function handleOpenBuySheet() {
   isBuySheetOpen.value = true;
 }
 
+function handleOpenSellSheet() {
+  isSellSheetOpen.value = true;
+}
+
 async function handleBuyStock({ quantity, orderAmount }) {
   if (isBuying.value || !currentTick.value || !gameStart.value) return;
 
@@ -152,8 +158,8 @@ watch(currentTick, (tick) => {
   pause();
 });
 
-watch(isBuySheetOpen, (isOpen) => {
-  if (isOpen) {
+watch([isBuySheetOpen, isSellSheetOpen], ([isBuyOpen, isSellOpen]) => {
+  if (isBuyOpen || isSellOpen) {
     pause();
     return;
   }
@@ -190,6 +196,7 @@ onMounted(loadScenario);
             :deposit-status="gameStart.depositStatus"
             :remaining-deposit-days="remainingDepositDays"
             @buy="handleOpenBuySheet"
+            @sell="handleOpenSellSheet"
           />
         </BaseCard>
         <GameEventPopup
@@ -204,6 +211,12 @@ onMounted(loadScenario);
           :is-submitting="isBuying"
           :error-message="buyErrorMessage"
           @submit="handleBuyStock"
+        />
+        <GameSellBottomSheet
+          v-model="isSellSheetOpen"
+          :current-price="currentTick?.price"
+          :average-price="averageStockPrice"
+          :available-quantity="stockQuantity"
         />
       </template>
     </div>
