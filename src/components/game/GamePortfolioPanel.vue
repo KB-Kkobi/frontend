@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import BottomButton from '@/components/common/BottomButton.vue';
 import {
   formatCurrency,
-  formatKoreanShortAmount,
   formatRate,
   formatSignedCurrency,
 } from '@/utils/format';
@@ -12,6 +11,8 @@ import {
   calcProfitLoss,
   calcProfitRate,
 } from '@/utils/evaluation';
+
+const emit = defineEmits(['buy']);
 
 const props = defineProps({
   stockQuantity: {
@@ -106,7 +107,7 @@ const depositStatusText = computed(() => {
 
       <div class="flex shrink-0 flex-col items-end gap-1">
         <strong class="text-h1 text-ink tabular-nums">
-          {{ formatKoreanShortAmount(stockEvaluationAmount) }}
+          {{ formatCurrency(stockEvaluationAmount) }}
         </strong>
         <p
           :class="[profitColorClass, 'text-caption font-semibold tabular-nums']"
@@ -129,7 +130,7 @@ const depositStatusText = computed(() => {
         </span>
       </div>
       <strong class="text-h1 text-ink tabular-nums">
-        {{ formatKoreanShortAmount(cashAmount) }}
+        {{ formatCurrency(cashAmount) }}
       </strong>
     </div>
 
@@ -146,12 +147,12 @@ const depositStatusText = computed(() => {
         <p class="text-caption text-muted">{{ depositStatusText }}</p>
       </div>
       <strong class="text-h1 text-ink tabular-nums">
-        {{ formatKoreanShortAmount(depositAmount) }}
+        {{ formatCurrency(depositAmount) }}
       </strong>
     </div>
 
     <div class="grid grid-cols-2 gap-3 pt-2">
-      <BottomButton color="pink" :disabled="cashAmount === 0"
+      <BottomButton color="pink" :disabled="cashAmount === 0" @click="emit('buy')"
         >매수</BottomButton
       >
       <BottomButton color="blue" :disabled="stockQuantity === 0"

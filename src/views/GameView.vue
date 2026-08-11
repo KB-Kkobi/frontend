@@ -4,6 +4,7 @@ import { fetchScenario } from "@/api/gameApi";
 import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
 import GameEventPopup from "@/components/game/GameEventPopup.vue";
 import GamePortfolioPanel from "@/components/game/GamePortfolioPanel.vue";
 import MarketIndexCard from "@/components/game/MarketIndexCard.vue";
@@ -31,6 +32,7 @@ const eventsByTick = ref(new Map());
 const shownEventTicks = ref(new Set());
 const activeEvent = ref(null);
 const bannerEvent = ref(null);
+const isBuySheetOpen = ref(false);
 const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
 
@@ -93,6 +95,15 @@ watch(currentTick, (tick) => {
   pause();
 });
 
+watch(isBuySheetOpen, (isOpen) => {
+  if (isOpen) {
+    pause();
+    return;
+  }
+
+  if (!activeEvent.value) resume();
+});
+
 onMounted(loadScenario);
 </script>
 
@@ -121,12 +132,18 @@ onMounted(loadScenario);
             :deposit-amount="depositAmount"
             :deposit-status="gameStart.depositStatus"
             :remaining-deposit-days="remainingDepositDays"
+            @buy="isBuySheetOpen = true"
           />
         </BaseCard>
         <GameEventPopup
           :event="activeEvent"
           :visible="!!activeEvent"
           @close="handleCloseEvent"
+        />
+        <GameBuyBottomSheet
+          v-model="isBuySheetOpen"
+          :current-price="currentTick?.price"
+          :available-amount="cashAmount"
         />
       </template>
     </div>
