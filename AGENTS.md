@@ -23,16 +23,17 @@
 | 용도                     | 클래스                                                               |
 | ------------------------ | -------------------------------------------------------------------- |
 | 주색 버튼·강조           | `bg-pink` · `text-pink`                                              |
-| 카테고리 강조 텍스트     | `text-blue` · `text-green` · `text-yellow`                           |
-| 컨테이너 배경(옅은 틴트) | `bg-pink-soft` · `bg-blue-soft` · `bg-green-soft` · `bg-yellow-soft` |
+| 카테고리 강조 텍스트     | `text-blue` · `text-green` · `text-yellow` · `text-lavender` · `text-cream` |
+| 컨테이너 배경(옅은 틴트) | `bg-pink-soft` · `bg-blue-soft` · `bg-green-soft` · `bg-yellow-soft` · `bg-lavender-soft` · `bg-cream-soft` |
 | 수익 / 상승              | `text-profit` (핑크)                                                 |
 | 손실 / 하락              | `text-loss` (블루)                                                   |
 | 성공 / 에러 알림         | `text-success` · `text-error`                                        |
 | 제목·본문 텍스트         | `text-ink`                                                           |
+| 강조 제목(네이비)        | `text-navy` — 리포트류 화면의 큰 강조 타이틀 전용                    |
 | 보조 텍스트              | `text-muted`                                                         |
 | 테두리·구분선            | `border-line` · `border-line-soft`(BaseCard 흰색 전용, 크림톤)       |
 | 카드 배경                | `bg-surface`                                                         |
-| 페이지 배경              | `bg-page`(그라데이션) · `bg-base`(단색)                              |
+| 페이지 배경              | `bg-page`(그라데이션) · `bg-page-warm`(리포트류 warm 그라데이션) · `bg-base`(단색) |
 
 ## 타이포그래피
 
@@ -60,14 +61,14 @@
 
 | 컴포넌트        | 용도                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
-| `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼                                                       |
-| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color` prop으로 배경 선택                                              |
+| `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `background` prop(`page` 기본값 / `page-warm`)으로 배경 그라데이션 선택 |
+| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color` prop(`white`/`pink`/`blue`/`green`/`yellow`/`lavender`/`cream`)으로 배경 선택 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText` prop, `@confirm`/`@cancel` emit |
-| `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택                                                              |
+| `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |
 | `BottomTabBar`  | 하단 탭 네비게이션                                                                                        |
-| `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) prop. `ghost`=`bg-surface text-muted font-normal` |
+| `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) prop. `ghost`=`bg-surface text-muted font-normal` |
 
 - 새 컴포넌트를 만들기 전에 이 목록부터 확인.
 - 부족한 변형이 필요하면 컴포넌트를 확장(새 `props` 값 추가)하지, 사용처에서 클래스 override로 우회하지 말 것.
