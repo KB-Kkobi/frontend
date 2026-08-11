@@ -240,6 +240,17 @@ async function loadLatestAssessment() {
 
   try {
     const assessment = await fetchLatestAssessment();
+    if (
+      !assessment ||
+      typeof assessment !== "object" ||
+      !String(assessment.typeName ?? "").trim()
+    ) {
+      latestAssessment.value = null;
+      assessmentMessage.value =
+        "성향 진단을 완료하면 나에게 맞는 투자 성향을 표시해요.";
+      return;
+    }
+
     latestAssessment.value = assessment;
 
     try {
