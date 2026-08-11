@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { logoutUser } from "@/api/authApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
@@ -37,9 +38,13 @@ function handleMenuSelect(item) {
   console.log("마이페이지 메뉴:", item.id);
 }
 
-function handleLogout() {
-  authStore.logout();
-  router.replace({ name: "login" });
+async function handleLogout() {
+  try {
+    await logoutUser();
+  } finally {
+    authStore.logout();
+    await router.replace({ name: "login" });
+  }
 }
 </script>
 

@@ -51,7 +51,7 @@ const colorClasses = computed(() => {
   <component
     :is="as"
     :class="[
-      'inline-flex items-center rounded-full py-pill-y px-pill-x text-caption tracking-tight',
+      'inline-flex shrink-0 items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight',
       colorClasses,
     ]"
   >

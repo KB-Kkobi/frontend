@@ -6,16 +6,25 @@ import { INSIGHT_BASE_AMOUNT } from "@/constants/insight";
 
 const props = defineProps({
   period: { type: String, default: "최근 3년 기준" },
-  volatility: { type: Number, default: null },
+  productName: { type: String, default: "" },
+  averageDailyMove: { type: Number, default: null },
   maxDrawdown: { type: Number, default: null },
   description: { type: Object, default: null },
 });
 
-const volatilityRateLabel = computed(() => formatVolatility(props.volatility));
+const averageDailyMoveLabel = computed(() =>
+  formatVolatility(props.averageDailyMove),
+);
 
-const volatilityAmountLabel = computed(() => {
-  if (props.volatility === null || props.volatility === undefined) return "—";
-  const amount = (INSIGHT_BASE_AMOUNT * Math.abs(props.volatility)) / 100;
+const averageDailyMoveAmountLabel = computed(() => {
+  if (
+    props.averageDailyMove === null ||
+    props.averageDailyMove === undefined
+  ) {
+    return "—";
+  }
+  const amount =
+    (INSIGHT_BASE_AMOUNT * Math.abs(props.averageDailyMove)) / 100;
   return `약 ${formatKoreanShortAmount(amount)}`;
 });
 
@@ -26,8 +35,13 @@ const maxDrawdownLabel = computed(() => formatRate(props.maxDrawdown));
   <BaseCard>
     <div class="flex flex-col gap-4">
       <!-- 헤더 -->
-      <div class="flex items-center justify-between">
-        <h2 class="text-h2 text-ink">알아두면 좋아요</h2>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex min-w-0 flex-col gap-2">
+          <h2 class="text-h2 text-ink">알아두면 좋아요</h2>
+          <p v-if="productName" class="truncate text-caption text-muted">
+            {{ productName }}
+          </p>
+        </div>
         <span class="text-caption text-muted">{{ period }}</span>
       </div>
 
@@ -54,12 +68,12 @@ const maxDrawdownLabel = computed(() => formatRate(props.maxDrawdown));
           <div class="flex flex-col gap-2">
             <p class="text-body font-semibold text-ink tracking-tight">
               하루 평균
-              <span class="tabular-nums">{{ volatilityRateLabel }}</span>
+              <span class="tabular-nums">{{ averageDailyMoveLabel }}</span>
               움직여요
             </p>
             <p class="text-caption text-muted tracking-tight">
               100만원 넣었다면
-              <span class="tabular-nums">{{ volatilityAmountLabel }}</span>
+              <span class="tabular-nums">{{ averageDailyMoveAmountLabel }}</span>
             </p>
           </div>
         </div>

@@ -3,14 +3,14 @@ import {
   PRODUCT_TYPES,
   normalizeProductType,
 } from "@/constants/product";
-import { getAuthorizationHeader } from "@/utils/authStorage";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+import { ApiError, get, post } from "@/api/http";
 
 const PRODUCT_API_PATHS = Object.freeze({
   [PRODUCT_TYPES.DEPOSIT]: "/api/products/deposits",
   [PRODUCT_TYPES.SAVING]: "/api/products/savings",
 });
+
+const PRODUCT_HOLDINGS_API_PATH = "/api/products/holdings";
 
 export const PRODUCT_API_ERROR_CODES = Object.freeze({
   INVALID_TYPE: "INVALID_TYPE",
@@ -30,22 +30,6 @@ export class ProductApiError extends Error {
   }
 }
 
-async function parseResponse(response) {
-  if (response.status === 204) return null;
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) return response.json();
-
-  const text = await response.text();
-  return text || null;
-}
-
-function getResponseMessage(data) {
-  return typeof data === "object" && data?.message
-    ? data.message
-    : "상품 정보를 불러오지 못했습니다.";
-}
-
 function getErrorCode(status) {
   if (status === 400 || status === 404) return PRODUCT_API_ERROR_CODES.NOT_FOUND;
   if (status === 401 || status === 403) {
@@ -55,33 +39,20 @@ function getErrorCode(status) {
 }
 
 async function requestProduct(path) {
-  let response;
-  const authorization = getAuthorizationHeader();
-  const headers = { Accept: "application/json" };
-  if (authorization) headers.Authorization = authorization;
-
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      headers,
-    });
-  } catch {
-    throw new ProductApiError(
-      "상품 서버에 연결할 수 없습니다.",
-      0,
-      PRODUCT_API_ERROR_CODES.NETWORK,
-    );
+    return await get(path);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ProductApiError(
+        error.message,
+        error.status,
+        error.status === 0
+          ? PRODUCT_API_ERROR_CODES.NETWORK
+          : getErrorCode(error.status),
+      );
+    }
+    throw error;
   }
-
-  const data = await parseResponse(response);
-  if (!response.ok) {
-    throw new ProductApiError(
-      getResponseMessage(data),
-      response.status,
-      getErrorCode(response.status),
-    );
-  }
-
-  return data;
 }
 
 function getProductApiPath(productType) {
@@ -205,4 +176,27 @@ export function fetchProductDetail(productType, productId) {
     productType,
   );
   return fetchDetail(productId);
+}
+
+export function subscribeProduct(request) {
+  return post(PRODUCT_HOLDINGS_API_PATH, request);
+}
+
+export async function fetchProductHoldings() {
+  const response = await get(PRODUCT_HOLDINGS_API_PATH);
+  return Array.isArray(response) ? response : [];
+}
+
+export async function fetchProductHolding(holdingProductId) {
+  const parsedHoldingProductId = Number(holdingProductId);
+  if (!Number.isInteger(parsedHoldingProductId) || parsedHoldingProductId <= 0) {
+    return null;
+  }
+
+  const holdings = await fetchProductHoldings();
+  return (
+    holdings.find(
+      (holding) => holding.holdingProductId === parsedHoldingProductId,
+    ) ?? null
+  );
 }

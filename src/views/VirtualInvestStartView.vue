@@ -64,41 +64,44 @@ async function handleSubmit() {
 <template>
   <PageContainer>
     <form
-      class="flex flex-col gap-4 py-6"
+      class="flex flex-col gap-6 py-6"
       @submit.prevent="handleSubmit"
     >
-      <header class="flex items-center gap-2">
-        <BackButton />
-        <h1 class="text-h2 text-ink">가상투자 시작하기</h1>
-      </header>
+      <BackButton />
 
       <div class="flex flex-col gap-2">
-        <p class="text-h2 text-ink">투자를 시작하기 전,</p>
-        <p class="text-h2 text-pink">나에게 맞는 조건을 설정해요</p>
+        <h1 class="flex flex-col gap-2 text-h1 text-ink">
+          <span>투자를 시작하기 전,</span>
+          <span class="text-pink">나에게 맞는 조건을 설정해요</span>
+        </h1>
         <p class="text-caption text-muted">
           설정한 금액은 언제든 마이페이지에서 바꿀 수 있어요.
         </p>
       </div>
 
-      <InvestmentAmountField
-        id="seed-money"
-        v-model="seedMoney"
-        title="초기 자산"
-        description="가상투자를 시작할 시드머니예요"
-        icon="wallet"
-        :options="SEED_MONEY_OPTIONS"
-        :maximum="ACCOUNT_AMOUNT_LIMITS.seedMoney"
-      />
+      <BaseCard color="white">
+        <div class="flex flex-col gap-6">
+          <InvestmentAmountField
+            id="seed-money"
+            v-model="seedMoney"
+            title="초기 자산"
+            description="가상투자를 시작할 시드머니예요"
+            icon="wallet"
+            :options="SEED_MONEY_OPTIONS"
+            :maximum="ACCOUNT_AMOUNT_LIMITS.seedMoney"
+          />
 
-      <InvestmentAmountField
-        id="monthly-investment-amount"
-        v-model="monthlyInvestAmount"
-        title="월 투자금"
-        description="매월 자동으로 추가 투자될 금액이에요"
-        icon="calendar"
-        :options="MONTHLY_INVESTMENT_OPTIONS"
-        :maximum="ACCOUNT_AMOUNT_LIMITS.monthlyInvestAmount"
-      />
+          <InvestmentAmountField
+            id="monthly-investment-amount"
+            v-model="monthlyInvestAmount"
+            title="월 투자금"
+            description="매월 자동으로 추가 투자될 금액이에요"
+            icon="calendar"
+            :options="MONTHLY_INVESTMENT_OPTIONS"
+            :maximum="ACCOUNT_AMOUNT_LIMITS.monthlyInvestAmount"
+          />
+        </div>
+      </BaseCard>
 
       <BaseCard color="blue">
         <div class="flex items-center gap-4">
