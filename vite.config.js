@@ -21,6 +21,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/resources': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/ws-stocks': {
         target: 'ws://localhost:8080',
         ws: true,

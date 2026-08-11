@@ -11,7 +11,6 @@ export const PRODUCT_TYPE_OPTIONS = Object.freeze([
 export const PRODUCT_LIST_DEFAULTS = Object.freeze({
   page: 1,
   size: 5,
-  savingTerm: 12,
   sort: "maximumInterestRate,desc",
 });
 
@@ -21,6 +20,7 @@ export const PRODUCT_SORT_OPTIONS = Object.freeze([
   { value: "maximumInterestRate,desc", label: "최고 금리순" },
   { value: "maximumInterestRate,asc", label: "최고 금리 낮은순" },
   { value: "interestRate,desc", label: "기본 금리순" },
+  { value: "interestRate,asc", label: "기본 금리 낮은순" },
   { value: "productName,asc", label: "상품명순" },
   { value: "financialCompanyName,asc", label: "금융회사순" },
 ]);
@@ -29,6 +29,18 @@ export const RESERVE_TYPE_OPTIONS = Object.freeze([
   { value: "", label: "전체" },
   { value: "F", label: "자유적립식" },
   { value: "S", label: "정액적립식" },
+]);
+
+export const PREFERENTIAL_CONDITION_OPTIONS = Object.freeze([
+  { value: "INCOME_TRANSFER", label: "급여·연금 이체" },
+  { value: "CARD_USAGE", label: "카드 이용" },
+  { value: "AUTOMATIC_TRANSFER", label: "자동이체" },
+  // 기존 백엔드 파서는 첫 거래·신규 고객 조건을 이 코드로 저장한다.
+  { value: "MARKETING_CONSENT", label: "첫 거래·신규 고객" },
+  { value: "HOUSING_SUBSCRIPTION", label: "주택청약" },
+  { value: "OPEN_BANKING", label: "오픈뱅킹" },
+  { value: "NON_FACE_TO_FACE", label: "비대면 가입" },
+  { value: "OTHER", label: "기타" },
 ]);
 
 export const PRODUCT_PAYMENT_DAYS = Object.freeze(

@@ -1,6 +1,9 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { fetchLatestAssessment } from "@/api/assessmentApi";
+import { ApiError, resolveApiUrl } from "@/api/http";
+import { fetchPersonas } from "@/api/personaApi";
 import {
   PRODUCT_API_ERROR_CODES,
   ProductApiError,
@@ -8,11 +11,13 @@ import {
 } from "@/api/productApi";
 import { fetchSecurityList, fetchSecurityQuotes } from "@/api/securityApi";
 import ProductListCard from "@/components/product/ProductListCard.vue";
+import ProductFilterModal from "@/components/product/ProductFilterModal.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
-import { ApiError } from "@/api/http";
 import {
+  PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
   PRODUCT_SORT_OPTIONS,
   PRODUCT_TYPES,
@@ -47,18 +52,19 @@ const LIST_TABS = Object.freeze({
 });
 
 const LIST_TAB_OPTIONS = Object.freeze([
+  { key: LIST_TABS.SECURITY, label: "주식" },
   { key: LIST_TABS.DEPOSIT, label: "예금" },
   { key: LIST_TABS.SAVING, label: "적금" },
-  { key: LIST_TABS.SECURITY, label: "증권" },
 ]);
+const VISIBLE_PAGE_COUNT = 4;
 
 const router = useRouter();
 const route = useRoute();
 
 const TAB_KEYS = new Set(Object.values(LIST_TABS));
 
-function parseInitialTab(value) {
-  return TAB_KEYS.has(value) ? value : LIST_TABS.DEPOSIT;
+function parseInitialTab(value, fallbackTab) {
+  return TAB_KEYS.has(value) ? value : fallbackTab;
 }
 
 function parseInitialInt(value, fallback) {
@@ -66,17 +72,52 @@ function parseInitialInt(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-const initialQuery = route.query;
+function parseInitialList(value) {
+  if (value === null || value === undefined || value === "") return [];
+  const values = Array.isArray(value) ? value : [value];
+  return [
+    ...new Set(
+      values.flatMap((item) => String(item).split(",")).filter(Boolean),
+    ),
+  ];
+}
 
-const activeTab = ref(parseInitialTab(initialQuery.tab));
+function parseInitialSavingTerms(query) {
+  return parseInitialList(query.savingTerms ?? query.savingTerm)
+    .map(Number)
+    .filter((savingTerm) => SAVING_TERM_OPTIONS.includes(savingTerm));
+}
+
+function parseInitialOptionValues(value, options) {
+  const allowedValues = new Set(options.map((option) => option.value));
+  return parseInitialList(value).filter((item) => allowedValues.has(item));
+}
+
+const initialQuery = route.query;
+const defaultTab = props.standalone ? LIST_TABS.SECURITY : LIST_TABS.DEPOSIT;
+const initialSavingTerms = parseInitialSavingTerms(initialQuery);
+if (!props.standalone && initialSavingTerms.length === 0) {
+  initialSavingTerms.push(12);
+}
+
+const activeTab = ref(parseInitialTab(initialQuery.tab, defaultTab));
 const searchInput = ref(String(initialQuery.keyword ?? ""));
 const appliedKeyword = ref(String(initialQuery.keyword ?? ""));
 const securitySearchInput = ref(String(initialQuery.securityKeyword ?? ""));
 const appliedSecurityKeyword = ref(String(initialQuery.securityKeyword ?? ""));
-const selectedSavingTerm = ref(
-  parseInitialInt(initialQuery.savingTerm, PRODUCT_LIST_DEFAULTS.savingTerm),
+const selectedSavingTerms = ref(initialSavingTerms);
+const selectedReserveTypes = ref(
+  parseInitialOptionValues(
+    initialQuery.reserveTypes ?? initialQuery.reserveType,
+    RESERVE_TYPE_OPTIONS,
+  ),
 );
-const selectedReserveType = ref(String(initialQuery.reserveType ?? ""));
+const selectedPreferentialConditions = ref(
+  parseInitialOptionValues(
+    initialQuery.preferentialConditions,
+    PREFERENTIAL_CONDITION_OPTIONS,
+  ),
+);
 const selectedSort = ref(String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort));
 const selectedSecurityType = ref(String(initialQuery.securityType ?? ""));
 const currentPage = ref(
@@ -89,16 +130,67 @@ const totalElements = ref(0);
 const totalPages = ref(0);
 const isLoading = ref(false);
 const errorMessage = ref("");
+const latestAssessment = ref(null);
+const isAssessmentLoading = ref(props.standalone);
+const assessmentMessage = ref("");
+const isPersonaImageAvailable = ref(true);
+const isFilterOpen = ref(false);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
 
 const activeTabLabel = computed(() =>
-  isSecurityTab.value ? "증권" : getProductTypeLabel(activeTab.value),
+  isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
 );
 
-const hasPreviousPage = computed(() => currentPage.value > 1);
-const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const pageGroupStart = computed(
+  () =>
+    Math.floor((currentPage.value - 1) / VISIBLE_PAGE_COUNT) *
+      VISIBLE_PAGE_COUNT +
+    1,
+);
+const hasPreviousPageGroup = computed(() => pageGroupStart.value > 1);
+const hasNextPageGroup = computed(
+  () => pageGroupStart.value + VISIBLE_PAGE_COUNT <= totalPages.value,
+);
+const visiblePageNumbers = computed(() => {
+  const pageCount = Math.min(
+    totalPages.value - pageGroupStart.value + 1,
+    VISIBLE_PAGE_COUNT,
+  );
+
+  return Array.from(
+    { length: pageCount },
+    (_, index) => pageGroupStart.value + index,
+  );
+});
+const activeFilterCount = computed(
+  () =>
+    selectedSavingTerms.value.length +
+    (isSaving.value ? selectedReserveTypes.value.length : 0) +
+    selectedPreferentialConditions.value.length,
+);
+const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
+const activeFilterLabels = computed(() => {
+  const labels = selectedSavingTerms.value.map(
+    (savingTerm) => `${savingTerm}개월`,
+  );
+  if (isSaving.value) {
+    selectedReserveTypes.value.forEach((reserveType) => {
+      const option = RESERVE_TYPE_OPTIONS.find(
+        (item) => item.value === reserveType,
+      );
+      if (option) labels.push(option.label);
+    });
+  }
+  selectedPreferentialConditions.value.forEach((conditionType) => {
+    const option = PREFERENTIAL_CONDITION_OPTIONS.find(
+      (item) => item.value === conditionType,
+    );
+    if (option) labels.push(option.label);
+  });
+  return labels;
+});
 
 function getProductErrorMessage(error) {
   if (
@@ -122,8 +214,13 @@ function getSecurityErrorMessage(error) {
 async function loadProducts() {
   const response = await fetchProductList(activeTab.value, {
     keyword: appliedKeyword.value,
-    savingTerm: selectedSavingTerm.value,
-    reserveType: isSaving.value ? selectedReserveType.value : "",
+    savingTerms: selectedSavingTerms.value.length
+      ? selectedSavingTerms.value
+      : props.standalone
+        ? SAVING_TERM_OPTIONS
+        : [12],
+    reserveTypes: isSaving.value ? selectedReserveTypes.value : [],
+    preferentialConditions: selectedPreferentialConditions.value,
     page: currentPage.value,
     size: PRODUCT_LIST_DEFAULTS.size,
     sort: selectedSort.value,
@@ -134,6 +231,55 @@ async function loadProducts() {
   currentPage.value = response.page;
   totalElements.value = response.totalElements;
   totalPages.value = response.totalPages;
+}
+
+async function loadLatestAssessment() {
+  isAssessmentLoading.value = true;
+  assessmentMessage.value = "";
+  isPersonaImageAvailable.value = true;
+
+  try {
+    const assessment = await fetchLatestAssessment();
+    if (
+      !assessment ||
+      typeof assessment !== "object" ||
+      !String(assessment.typeName ?? "").trim()
+    ) {
+      latestAssessment.value = null;
+      assessmentMessage.value =
+        "성향 진단을 완료하면 나에게 맞는 투자 성향을 표시해요.";
+      return;
+    }
+
+    latestAssessment.value = assessment;
+
+    try {
+      const personas = await fetchPersonas();
+      const persona = personas.find(
+        (item) => item.axisCode === assessment.personaCode,
+      );
+      if (persona?.imagePath) {
+        latestAssessment.value = {
+          ...assessment,
+          imagePath: resolveApiUrl(persona.imagePath),
+        };
+      }
+    } catch {
+      // 성향 본문은 유지하고 이미지가 없을 때만 텍스트 카드로 표시한다.
+    }
+  } catch (error) {
+    latestAssessment.value = null;
+    assessmentMessage.value =
+      error instanceof ApiError && (error.status === 401 || error.status === 403)
+        ? "로그인 후 나의 투자 성향을 확인할 수 있어요."
+        : "성향 진단을 완료하면 나에게 맞는 투자 성향이 표시돼요.";
+  } finally {
+    isAssessmentLoading.value = false;
+  }
+}
+
+function handlePersonaImageError() {
+  isPersonaImageAvailable.value = false;
 }
 
 async function loadSecurityQuotes(items) {
@@ -206,7 +352,7 @@ function resetPage() {
 
 function handleSelectTab(tabKey) {
   activeTab.value = tabKey;
-  selectedReserveType.value = "";
+  selectedReserveTypes.value = [];
   selectedSecurityType.value = "";
   securitySearchInput.value = "";
   appliedSecurityKeyword.value = "";
@@ -223,18 +369,42 @@ function handleSecuritySearch() {
   resetPage();
 }
 
-function handleSelectSavingTerm(savingTerm) {
-  selectedSavingTerm.value = savingTerm;
-  resetPage();
-}
-
-function handleSelectReserveType(reserveType) {
-  selectedReserveType.value = reserveType;
-  resetPage();
-}
-
 function handleSelectSecurityType(securityType) {
   selectedSecurityType.value = securityType;
+  resetPage();
+}
+
+function handleSelectEmbeddedSavingTerm(savingTerm) {
+  selectedSavingTerms.value = [savingTerm];
+  resetPage();
+}
+
+function handleSelectEmbeddedReserveType(reserveType) {
+  selectedReserveTypes.value = reserveType ? [reserveType] : [];
+  resetPage();
+}
+
+function isEmbeddedReserveTypeSelected(reserveType) {
+  return reserveType
+    ? selectedReserveTypes.value.includes(reserveType)
+    : selectedReserveTypes.value.length === 0;
+}
+
+function handleOpenFilter() {
+  isFilterOpen.value = true;
+}
+
+function handleApplyFilters(filters) {
+  selectedSavingTerms.value = [...filters.savingTerms];
+  selectedReserveTypes.value = [...filters.reserveTypes];
+  selectedPreferentialConditions.value = [...filters.preferentialConditions];
+  resetPage();
+}
+
+function handleClearFilters() {
+  selectedSavingTerms.value = [];
+  selectedReserveTypes.value = [];
+  selectedPreferentialConditions.value = [];
   resetPage();
 }
 
@@ -257,24 +427,38 @@ function handleSelectSecurity(security) {
   });
 }
 
-function handlePreviousPage() {
-  if (hasPreviousPage.value) currentPage.value -= 1;
+function handlePreviousPageGroup() {
+  if (!hasPreviousPageGroup.value) return;
+  currentPage.value = Math.max(pageGroupStart.value - VISIBLE_PAGE_COUNT, 1);
 }
 
-function handleNextPage() {
-  if (hasNextPage.value) currentPage.value += 1;
+function handleNextPageGroup() {
+  if (!hasNextPageGroup.value) return;
+  currentPage.value = pageGroupStart.value + VISIBLE_PAGE_COUNT;
+}
+
+function handleSelectPage(page) {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 }
 
 // URL 쿼리 동기화 — standalone 모드에서만
 function buildQueryFromState() {
   const query = {};
-  if (activeTab.value !== LIST_TABS.DEPOSIT) query.tab = activeTab.value;
+  if (activeTab.value !== defaultTab) query.tab = activeTab.value;
+
   if (appliedKeyword.value) query.keyword = appliedKeyword.value;
-  if (appliedSecurityKeyword.value) query.securityKeyword = appliedSecurityKeyword.value;
-  if (selectedSavingTerm.value !== PRODUCT_LIST_DEFAULTS.savingTerm) {
-    query.savingTerm = String(selectedSavingTerm.value);
+  if (appliedSecurityKeyword.value) {
+    query.securityKeyword = appliedSecurityKeyword.value;
   }
-  if (selectedReserveType.value) query.reserveType = selectedReserveType.value;
+  if (selectedSavingTerms.value.length) {
+    query.savingTerms = selectedSavingTerms.value.map(String);
+  }
+  if (isSaving.value && selectedReserveTypes.value.length) {
+    query.reserveTypes = [...selectedReserveTypes.value];
+  }
+  if (selectedPreferentialConditions.value.length) {
+    query.preferentialConditions = [...selectedPreferentialConditions.value];
+  }
   if (selectedSort.value !== PRODUCT_LIST_DEFAULTS.sort) {
     query.sort = selectedSort.value;
   }
@@ -293,6 +477,7 @@ function isQueryEqual(a, b) {
 }
 
 function syncQueryFromState() {
+  if (!props.standalone) return;
   const nextQuery = buildQueryFromState();
   if (isQueryEqual(route.query, nextQuery)) return;
   router.replace({ query: nextQuery });
@@ -303,8 +488,9 @@ watch(
     activeTab.value,
     appliedKeyword.value,
     appliedSecurityKeyword.value,
-    selectedSavingTerm.value,
-    selectedReserveType.value,
+    selectedSavingTerms.value,
+    selectedReserveTypes.value,
+    selectedPreferentialConditions.value,
     selectedSort.value,
     selectedSecurityType.value,
     currentPage.value,
@@ -315,6 +501,10 @@ watch(
   },
   { immediate: true },
 );
+
+onMounted(() => {
+  if (props.standalone) loadLatestAssessment();
+});
 </script>
 
 <template>
@@ -326,16 +516,38 @@ watch(
       </p>
     </header>
 
-    <BaseCard color="yellow">
-      <div class="flex flex-col gap-2">
-        <h2 class="text-h2 text-ink">성향 배치할 곳</h2>
-        <p class="text-caption text-muted">
-          추후 사용자 투자 성향 정보가 표시됩니다.
-        </p>
+    <BaseCard v-if="standalone" color="white">
+      <div v-if="isAssessmentLoading" class="flex flex-col gap-2" role="status">
+        <p class="text-caption text-muted">성향</p>
+        <h2 class="text-h2 text-ink">나의 투자 성향을 불러오는 중이에요</h2>
+      </div>
+      <div v-else-if="latestAssessment" class="flex items-center gap-4">
+        <div class="flex min-w-0 flex-1 flex-col gap-2">
+          <p class="text-caption text-muted">성향</p>
+          <h2 class="text-h1 text-ink">{{ latestAssessment.typeName }}</h2>
+          <p class="text-body text-muted tracking-tight">
+            {{ latestAssessment.investmentFeature }}
+          </p>
+        </div>
+        <img
+          v-if="latestAssessment.imagePath && isPersonaImageAvailable"
+          :src="latestAssessment.imagePath"
+          :alt="`${latestAssessment.typeName} 성향 이미지`"
+          class="h-20 w-20 shrink-0 object-contain"
+          @error="handlePersonaImageError"
+        />
+      </div>
+      <div v-else class="flex flex-col gap-2">
+        <p class="text-caption text-muted">성향</p>
+        <h2 class="text-h2 text-ink">아직 확인된 투자 성향이 없어요</h2>
+        <p class="text-caption text-muted">{{ assessmentMessage }}</p>
       </div>
     </BaseCard>
 
-    <div class="flex gap-2" aria-label="상품 유형">
+    <div
+      class="flex rounded-3xl bg-surface p-segment-p"
+      aria-label="상품 유형"
+    >
       <button
         v-for="option in LIST_TAB_OPTIONS"
         :key="option.key"
@@ -343,8 +555,8 @@ watch(
         :class="[
           activeTab === option.key
             ? 'bg-pink text-white'
-            : 'border border-line bg-white text-muted',
-          'flex-1 rounded-2xl px-4 py-3 text-button',
+            : 'text-ink',
+          'flex-1 rounded-3xl px-4 py-3 text-button',
         ]"
         @click="handleSelectTab(option.key)"
       >
@@ -353,55 +565,193 @@ watch(
     </div>
 
     <template v-if="!isSecurityTab">
-      <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
-        <input
-          v-model="searchInput"
-          type="search"
-          class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
-          placeholder="은행명 또는 상품명 검색"
-          aria-label="은행명 또는 상품명 검색"
-        />
-        <button
-          type="submit"
-          class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
+      <template v-if="standalone">
+        <form
+          class="flex items-center gap-2 rounded-3xl bg-surface px-4"
+          role="search"
+          @submit.prevent="handleSearch"
         >
-          검색
-        </button>
-      </form>
+          <svg
+            class="h-5 w-5 shrink-0 text-muted"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" stroke-width="2" />
+            <path
+              d="m16 16 4 4"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <input
+            v-model="searchInput"
+            type="search"
+            class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
+            placeholder="은행명 또는 상품명 검색"
+            aria-label="은행명 또는 상품명 검색"
+            @keyup.enter="handleSearch"
+          />
+        </form>
 
-      <div class="flex flex-wrap gap-2" aria-label="가입 기간">
-        <button
-          v-for="savingTerm in SAVING_TERM_OPTIONS"
-          :key="savingTerm"
-          type="button"
-          :class="[
-            selectedSavingTerm === savingTerm
-              ? 'border-pink bg-pink-soft text-pink'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectSavingTerm(savingTerm)"
-        >
-          {{ savingTerm }}개월
-        </button>
-      </div>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-2">
+              <svg
+                class="h-4 w-4 shrink-0 text-blue"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                <path
+                  class="text-white"
+                  d="M12 11v6M12 7.5v.5"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <p class="text-caption text-muted">
+                금리는 은행 사정에 따라 변동될 수 있어요.
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+              <label
+                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>정렬</span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="상품 정렬"
+                  @change="resetPage"
+                >
+                  <option
+                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                    :key="sortOption.value"
+                    :value="sortOption.value"
+                  >
+                    {{ sortOption.label }}
+                  </option>
+                </select>
+              </label>
+              <button
+                type="button"
+                :class="[
+                  hasAppliedFilters
+                    ? 'text-pink'
+                    : 'text-ink',
+                  'flex items-center gap-2 py-pill-y text-caption',
+                ]"
+                :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
+                @click="handleOpenFilter"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 7h7m4 0h5M4 17h3m4 0h9"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="13" cy="7" r="2" stroke-width="1.8" />
+                  <circle cx="9" cy="17" r="2" stroke-width="1.8" />
+                </svg>
+                <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
+              </button>
+            </div>
+          </div>
 
-      <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
-        <button
-          v-for="reserveType in RESERVE_TYPE_OPTIONS"
-          :key="reserveType.value"
-          type="button"
-          :class="[
-            selectedReserveType === reserveType.value
-              ? 'border-blue bg-blue-soft text-blue'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectReserveType(reserveType.value)"
-        >
-          {{ reserveType.label }}
-        </button>
-      </div>
+          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+            <BasePill
+              v-for="label in activeFilterLabels"
+              :key="label"
+              :label="label"
+              color="pink"
+              variant="outline"
+            />
+            <button
+              type="button"
+              class="py-pill-y text-caption font-semibold text-muted"
+              @click="handleClearFilters"
+            >
+              전체 초기화
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
+          <input
+            v-model="searchInput"
+            type="search"
+            class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
+            placeholder="은행명 또는 상품명 검색"
+            aria-label="은행명 또는 상품명 검색"
+          />
+          <button
+            type="submit"
+            class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
+          >
+            검색
+          </button>
+        </form>
+
+        <div class="flex flex-wrap gap-2" aria-label="가입 기간">
+          <button
+            v-for="savingTerm in SAVING_TERM_OPTIONS"
+            :key="savingTerm"
+            type="button"
+            :class="[
+              selectedSavingTerms.includes(savingTerm)
+                ? 'border-pink bg-pink-soft text-pink'
+                : 'border-line bg-white text-muted',
+              'rounded-2xl border px-4 py-3 text-caption font-semibold',
+            ]"
+            @click="handleSelectEmbeddedSavingTerm(savingTerm)"
+          >
+            {{ savingTerm }}개월
+          </button>
+        </div>
+
+        <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
+          <button
+            v-for="reserveType in RESERVE_TYPE_OPTIONS"
+            :key="reserveType.value"
+            type="button"
+            :class="[
+              isEmbeddedReserveTypeSelected(reserveType.value)
+                ? 'border-blue bg-blue-soft text-blue'
+                : 'border-line bg-white text-muted',
+              'rounded-2xl border px-4 py-3 text-caption font-semibold',
+            ]"
+            @click="handleSelectEmbeddedReserveType(reserveType.value)"
+          >
+            {{ reserveType.label }}
+          </button>
+        </div>
+      </template>
     </template>
 
     <template v-else>
@@ -439,25 +789,10 @@ watch(
       </div>
     </template>
 
-    <div class="flex items-center justify-between gap-4">
+    <div v-if="isSecurityTab" class="flex items-center justify-between gap-4">
       <p class="text-caption text-muted tabular-nums">
         {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
       </p>
-      <select
-        v-if="!isSecurityTab"
-        v-model="selectedSort"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-caption text-ink outline-none focus:border-pink"
-        aria-label="상품 정렬"
-        @change="resetPage"
-      >
-        <option
-          v-for="sortOption in PRODUCT_SORT_OPTIONS"
-          :key="sortOption.value"
-          :value="sortOption.value"
-        >
-          {{ sortOption.label }}
-        </option>
-      </select>
     </div>
 
     <BaseCard v-if="isLoading" color="blue">
@@ -504,6 +839,7 @@ watch(
         v-for="product in products"
         :key="product.productId"
         :product="product"
+        :variant="standalone ? 'catalog' : 'default'"
         @select="handleSelectProduct"
       />
     </div>
@@ -523,28 +859,81 @@ watch(
 
     <nav
       v-if="!isLoading && !errorMessage && totalPages > 0"
-      class="flex items-center justify-between gap-4"
+      class="flex items-center justify-center gap-2"
       aria-label="상품 목록 페이지"
     >
       <button
         type="button"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-button text-ink disabled:opacity-50"
-        :disabled="!hasPreviousPage"
-        @click="handlePreviousPage"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+        aria-label="이전 페이지 묶음"
+        :disabled="!hasPreviousPageGroup"
+        @click="handlePreviousPageGroup"
       >
-        이전
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="m14 6-6 6 6 6"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
-      <span class="text-caption text-muted tabular-nums">
-        {{ currentPage }} / {{ totalPages }}
-      </span>
+
+      <button
+        v-for="page in visiblePageNumbers"
+        :key="page"
+        type="button"
+        :class="[
+          currentPage === page
+            ? 'bg-pink text-white'
+            : 'bg-white text-muted',
+          'flex h-10 w-10 items-center justify-center rounded-full text-button tabular-nums',
+        ]"
+        :aria-label="`${page}페이지`"
+        :aria-current="currentPage === page ? 'page' : undefined"
+        @click="handleSelectPage(page)"
+      >
+        {{ page }}
+      </button>
+
       <button
         type="button"
-        class="rounded-2xl border border-line bg-white px-4 py-3 text-button text-ink disabled:opacity-50"
-        :disabled="!hasNextPage"
-        @click="handleNextPage"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+        aria-label="다음 페이지 묶음"
+        :disabled="!hasNextPageGroup"
+        @click="handleNextPageGroup"
       >
-        다음
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="m10 6 6 6-6 6"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
     </nav>
+
+    <ProductFilterModal
+      v-if="standalone"
+      v-model="isFilterOpen"
+      :product-type="activeTab"
+      :saving-terms="selectedSavingTerms"
+      :reserve-types="selectedReserveTypes"
+      :preferential-conditions="selectedPreferentialConditions"
+      @apply="handleApplyFilters"
+    />
   </div>
 </template>

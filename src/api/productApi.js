@@ -95,6 +95,15 @@ function buildProductListQuery(params = {}) {
   const requestParams = { ...PRODUCT_LIST_DEFAULTS, ...params };
 
   Object.entries(requestParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== null && item !== undefined && item !== "") {
+          query.append(key, String(item));
+        }
+      });
+      return;
+    }
+
     if (value !== null && value !== undefined && value !== "") {
       query.set(key, String(value));
     }
