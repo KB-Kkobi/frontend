@@ -21,12 +21,18 @@ const product = ref(null);
 const isLoading = ref(false);
 const errorState = ref(null);
 
+const isVirtualInvestment = computed(() => route.query.tradable === "true");
+
 const productTypeLabel = computed(() =>
   getProductTypeLabel(product.value?.productType ?? route.params.productType),
 );
 
 const productOptions = computed(() =>
   Array.isArray(product.value?.options) ? product.value.options : [],
+);
+
+const isSubscribeDisabled = computed(() =>
+  isVirtualInvestment.value ? !productOptions.value.length : !product.value?.applyUrl,
 );
 
 function getErrorState(error) {
@@ -85,13 +91,22 @@ async function loadProductDetail() {
 }
 
 function handleSubscribe() {
-  router.push({
-    name: "product-subscribe",
-    params: {
-      productType: route.params.productType,
-      productId: route.params.productId,
-    },
-  });
+  if (isVirtualInvestment.value) {
+    router.push({
+      name: "product-subscribe",
+      params: {
+        productType: route.params.productType,
+        productId: route.params.productId,
+      },
+    });
+    return;
+  }
+
+  if (!product.value?.applyUrl) {
+    return;
+  }
+
+  window.open(product.value.applyUrl, "_blank", "noopener,noreferrer");
 }
 
 watch(
@@ -223,7 +238,7 @@ watch(
         </section>
 
         <BottomButton
-          :disabled="!productOptions.length"
+          :disabled="isSubscribeDisabled"
           @click="handleSubscribe"
         >
           이 상품 가입하기
