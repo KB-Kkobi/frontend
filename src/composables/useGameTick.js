@@ -77,6 +77,19 @@ export function useGameTick() {
     runInterval();
   }
 
+  function resumeAfterDelay(delayMs) {
+    stop();
+    if (ticks.value.length <= 1) return;
+    if (currentTickIndex.value >= ticks.value.length - 1) return;
+
+    intervalId = setTimeout(() => {
+      intervalId = null;
+      currentTickIndex.value += 1;
+      if (currentTickIndex.value >= ticks.value.length - 1) return;
+      runInterval();
+    }, delayMs);
+  }
+
   onUnmounted(stop);
 
   return {
@@ -91,5 +104,6 @@ export function useGameTick() {
     stop,
     pause,
     resume,
+    resumeAfterDelay,
   };
 }
