@@ -8,31 +8,35 @@ const ORDERS_PATH = "/api/orders";
 /**
  * 내 포트폴리오 조회 (총자산, 현금잔고 등)
  */
-export function fetchPortfolio() {
-  return get(`${ACCOUNTS_PATH}/portfolio`);
+export async function fetchPortfolio() {
+  const res = await get(`${ACCOUNTS_PATH}/portfolio`);
+  return res?.data ?? res;
 }
 
 /**
  * 내 보유 종목 목록 조회
  */
-export function fetchHoldings() {
-  return get(`${ACCOUNTS_PATH}/holdings`);
+export async function fetchHoldings() {
+  const res = await get(`${ACCOUNTS_PATH}/holdings`);
+  return res?.data ?? res;
 }
 
 /**
  * 단일 종목 현재가 조회
  * @param {number} securityId
  */
-export function fetchQuote(securityId) {
-  return get(`${SECURITIES_PATH}/${securityId}/quote`);
+export async function fetchQuote(securityId) {
+  const res = await get(`${SECURITIES_PATH}/${securityId}/quote`);
+  return res?.data ?? res;
 }
 
 /**
  * 종목 주문가능 정보 조회 (주문가능금액, 최대매수수량 등)
  * @param {number} securityId
  */
-export function fetchOrderable(securityId) {
-  return get(`${SECURITIES_PATH}/${securityId}/orderable`);
+export async function fetchOrderable(securityId) {
+  const res = await get(`${SECURITIES_PATH}/${securityId}/orderable`);
+  return res?.data ?? res;
 }
 
 /**
@@ -63,7 +67,7 @@ export function cancelOrder(securityOrderId) {
  * undefined/null 파라미터는 쿼리스트링에서 제외된다.
  * @param {{ status?: string, securityId?: number, from?: string, to?: string, page?: number, size?: number }} params
  */
-export function fetchOrders(params = {}) {
+export async function fetchOrders(params = {}) {
   const query = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -73,5 +77,6 @@ export function fetchOrders(params = {}) {
   });
 
   const queryString = query.toString();
-  return get(queryString ? `${ORDERS_PATH}?${queryString}` : ORDERS_PATH);
+  const res = await get(queryString ? `${ORDERS_PATH}?${queryString}` : ORDERS_PATH);
+  return res?.data ?? res;
 }

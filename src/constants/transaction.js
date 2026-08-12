@@ -15,3 +15,9 @@ export const STOCK_TYPE_OPTIONS = [
   { key: 'equityEtf', label: '주식형 ETF' },
   { key: 'bondEtf', label: '채권형 ETF' },
 ]
+
+export const HISTORY_TYPE_OPTIONS = [
+  { key: 'stock', label: '주식' },
+  { key: 'deposit', label: '예금' },
+  { key: 'saving', label: '적금' },
+]

@@ -6,24 +6,34 @@ import TransactionCard from '@/components/transaction/TransactionCard.vue'
 import TransactionSegment from '@/components/transaction/TransactionSegment.vue'
 import PeriodFilter from '@/components/transaction/PeriodFilter.vue'
 import SortToggle from '@/components/transaction/SortToggle.vue'
-import StockTypeFilter from '@/components/transaction/StockTypeFilter.vue'
-import { fetchOrders, cancelOrder } from '@/api/trade'
+import TypeFilter from '@/components/transaction/TypeFilter.vue'
+import { cancelOrder, fetchOrders } from '@/api/trade'
 import { ORDER_STATUS, ORDER_ERROR_MESSAGE } from '@/constants/trade'
-import { PERIOD_OPTIONS } from '@/constants/transaction'
+import { PERIOD_OPTIONS, STOCK_TYPE_OPTIONS, HISTORY_TYPE_OPTIONS } from '@/constants/transaction'
+import { useHistoryOrders } from '@/composables/useHistoryOrders'
+
+// ── props / emits ─────────────────────────────────────────────────────────────
+// (없음)
+
+// ── composables · store ───────────────────────────────────────────────────────
+const {
+  filteredItems,
+  normalizedItems,
+  isLoading: isLoadingHistory,
+  hasError,
+  selectedTypes,
+  sort: activeSort,
+  loadHistory,
+} = useHistoryOrders()
 
 // ── 반응형 상태 ───────────────────────────────────────────────────────────────
 const activeSegment = ref('history')
 const activePeriod = ref('1m')
-const activeSort = ref('desc')
-const selectedTypes = ref([])
 const selectedPendingTypes = ref([])
 const showCancelModal = ref(false)
 const cancelTargetId = ref(null)
 const cancelError = ref(null)
-
-const historyOrders = ref([])
 const pendingOrders = ref([])
-const isLoadingHistory = ref(false)
 const isLoadingPending = ref(false)
 const isCancelling = ref(false)
 
@@ -60,22 +70,6 @@ function formatPrice(value) {
   return `${Number(value).toLocaleString('ko-KR')}원`
 }
 
-function statusLabel(status) {
-  if (status === ORDER_STATUS.FILLED) return '체결'
-  if (status === ORDER_STATUS.CANCELLED) return '사용자 취소'
-  if (status === ORDER_STATUS.EXPIRED) return '장마감 만료'
-  if (status === ORDER_STATUS.PENDING) return '대기중'
-  if (status === ORDER_STATUS.REJECTED) return '거부됨'
-  return status ?? ''
-}
-
-function statusPillColor(status) {
-  if (status === ORDER_STATUS.FILLED) return 'green'
-  if (status === ORDER_STATUS.PENDING) return 'yellow'
-  if (status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.EXPIRED) return 'blue'
-  return 'pink'
-}
-
 function orderTypeLabel(orderType) {
   if (!orderType) return ''
   return orderType === 'BUY' ? '매수' : '매도'
@@ -84,23 +78,6 @@ function orderTypeLabel(orderType) {
 function orderMethodLabel(orderMethod) {
   if (!orderMethod) return ''
   return orderMethod === 'MARKET' ? '시장가' : '지정가'
-}
-
-function buildHistoryStats(order) {
-  const stats = [
-    { label: '수량', value: order.quantity != null ? `${order.quantity}주` : '--' },
-    { label: '주문 방식', value: orderMethodLabel(order.orderMethod) },
-  ]
-  if (order.price != null) {
-    stats.push({ label: '주문 단가', value: formatPrice(order.price) })
-  }
-  if (order.filledPrice != null) {
-    stats.push({ label: '체결 단가', value: formatPrice(order.filledPrice) })
-  }
-  if (order.totalAmount != null) {
-    stats.push({ label: '거래 금액', value: formatPrice(order.totalAmount) })
-  }
-  return stats
 }
 
 function buildPendingStats(order) {
@@ -119,23 +96,6 @@ function normalizeOrders(data) {
 }
 
 // ── 데이터 조회 ──────────────────────────────────────────────────────────────
-async function loadHistoryOrders() {
-  isLoadingHistory.value = true
-  try {
-    const params = {
-      from: periodFromDate.value,
-      sort: activeSort.value,
-    }
-    const data = await fetchOrders(params)
-    historyOrders.value = normalizeOrders(data)
-  } catch (err) {
-    console.error('[VirtualHistoryView] 거래 내역 조회 실패', err)
-    historyOrders.value = []
-  } finally {
-    isLoadingHistory.value = false
-  }
-}
-
 async function loadPendingOrders() {
   isLoadingPending.value = true
   try {
@@ -164,9 +124,11 @@ async function handleConfirmCancel() {
     await cancelOrder(cancelTargetId.value)
     await loadPendingOrders()
   } catch (err) {
-    const code = err?.data?.code ?? err?.data?.errorCode ?? null
+    const code = err?.code ?? null
     cancelError.value =
-      (code && ORDER_ERROR_MESSAGE[code]) || ORDER_ERROR_MESSAGE.ORDER_NOT_CANCELABLE
+      err?.serverMessage ||
+      (code && ORDER_ERROR_MESSAGE[code]) ||
+      ORDER_ERROR_MESSAGE.ORDER_NOT_CANCELABLE
     console.error('[VirtualHistoryView] 주문 취소 실패', err)
   } finally {
     isCancelling.value = false
@@ -175,15 +137,15 @@ async function handleConfirmCancel() {
 }
 
 // ── watch ─────────────────────────────────────────────────────────────────────
-watch([activePeriod, activeSort], () => {
+watch(activePeriod, () => {
   if (activeSegment.value === 'history') {
-    loadHistoryOrders()
+    loadHistory(periodFromDate.value)
   }
 })
 
 watch(activeSegment, (newSegment) => {
   if (newSegment === 'history') {
-    loadHistoryOrders()
+    loadHistory(periodFromDate.value)
   } else if (newSegment === 'pending') {
     loadPendingOrders()
   }
@@ -191,14 +153,14 @@ watch(activeSegment, (newSegment) => {
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
-  loadHistoryOrders()
+  loadHistory(periodFromDate.value)
   loadPendingOrders()
 })
 
 // keep-alive 재진입 시 내역 최신화
 onActivated(() => {
   if (activeSegment.value === 'history') {
-    loadHistoryOrders()
+    loadHistory(periodFromDate.value)
   } else {
     loadPendingOrders()
   }
@@ -213,11 +175,11 @@ onActivated(() => {
     <div class="flex min-h-12 items-center gap-2">
       <template v-if="activeSegment === 'history'">
         <div class="min-w-0 flex-1"><PeriodFilter v-model="activePeriod" /></div>
-        <div class="min-w-0 flex-1"><StockTypeFilter v-model="selectedTypes" /></div>
+        <div class="min-w-0 flex-1"><TypeFilter v-model="selectedTypes" :options="HISTORY_TYPE_OPTIONS" /></div>
         <SortToggle v-model="activeSort" />
       </template>
       <template v-else-if="activeSegment === 'pending'">
-        <div class="ml-auto w-1/2 min-w-0"><StockTypeFilter v-model="selectedPendingTypes" /></div>
+        <div class="ml-auto w-1/2 min-w-0"><TypeFilter v-model="selectedPendingTypes" :options="STOCK_TYPE_OPTIONS" /></div>
       </template>
     </div>
 
@@ -232,24 +194,31 @@ onActivated(() => {
         <p class="text-caption text-muted">내역을 불러오는 중이에요...</p>
       </BaseCard>
 
-      <BaseCard v-else-if="historyOrders.length === 0" color="white">
-        <div class="flex flex-col gap-2">
-          <p class="text-body text-muted tracking-tight">거래 내역이 없어요</p>
-          <p class="text-caption text-muted tracking-tight">선택한 기간의 거래 내역이 없습니다.</p>
-        </div>
-      </BaseCard>
+      <template v-else-if="filteredItems.length === 0">
+        <BaseCard color="white">
+          <div class="flex flex-col gap-2">
+            <p class="text-body text-muted tracking-tight">
+              {{ normalizedItems.length === 0 ? '거래 내역이 없어요' : '검색 결과가 없어요' }}
+            </p>
+            <p class="text-caption text-muted tracking-tight">
+              {{
+                normalizedItems.length === 0
+                  ? '아직 주식 거래나 예금·적금 거래가 없습니다.'
+                  : '선택한 필터 조건에 맞는 내역이 없습니다.'
+              }}
+            </p>
+          </div>
+        </BaseCard>
+      </template>
 
       <TransactionCard
-        v-for="order in historyOrders"
-        :key="order.securityOrderId ?? order.id"
-        :name="order.securityName ?? order.name ?? order.ticker ?? '--'"
-        :sub-label="order.ticker ?? ''"
-        :pill="{
-          label: statusLabel(order.status),
-          color: statusPillColor(order.status),
-        }"
-        :datetime="formatDatetime(order.createdAt ?? order.orderedAt)"
-        :stats="buildHistoryStats(order)"
+        v-for="item in filteredItems"
+        :key="item.id"
+        :name="item.name"
+        :sub-label="item.subLabel"
+        :pill="item.pill"
+        :datetime="item.datetime"
+        :stats="item.stats"
       />
     </div>
 

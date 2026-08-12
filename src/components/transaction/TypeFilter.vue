@@ -1,9 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { STOCK_TYPE_OPTIONS } from '@/constants/transaction'
 
 const props = defineProps({
   modelValue: {
+    type: Array,
+    required: true,
+  },
+  options: {
     type: Array,
     required: true,
   },
@@ -17,7 +20,7 @@ const isOpen = ref(false)
 const summaryLabel = computed(() => {
   const count = props.modelValue.length
   if (count === 0) return '전체'
-  if (count === 1) return STOCK_TYPE_OPTIONS.find((o) => o.key === props.modelValue[0])?.label ?? ''
+  if (count === 1) return props.options.find((o) => o.key === props.modelValue[0])?.label ?? ''
   return `${count}개`
 })
 
@@ -77,7 +80,7 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
       class="absolute left-0 top-full z-10 mt-2 min-w-full overflow-hidden rounded-2xl border border-line bg-white"
     >
       <button
-        v-for="option in STOCK_TYPE_OPTIONS"
+        v-for="option in options"
         :key="option.key"
         type="button"
         :class="[

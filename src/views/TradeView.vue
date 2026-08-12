@@ -155,9 +155,11 @@ async function submitOrder() {
       await loadOrderable()
     }
   } catch (err) {
-    const code = err?.data?.code ?? err?.data?.errorCode ?? null
+    const code = err?.code ?? null
     orderError.value =
-      (code && ORDER_ERROR_MESSAGE[code]) || ORDER_ERROR_MESSAGE.QUOTE_UNAVAILABLE
+      err?.serverMessage ||
+      (code && ORDER_ERROR_MESSAGE[code]) ||
+      ORDER_ERROR_MESSAGE.QUOTE_UNAVAILABLE
   } finally {
     isSubmitting.value = false
   }

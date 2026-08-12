@@ -20,6 +20,8 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
     this.data = data;
+    this.code = data?.error?.code ?? null;
+    this.serverMessage = data?.error?.message ?? null;
   }
 }
 
@@ -96,9 +98,7 @@ async function request(
 
   if (!response.ok) {
     const message =
-      typeof data === "object" && data?.message
-        ? data.message
-        : "요청을 처리하지 못했습니다.";
+      data?.error?.message ?? data?.message ?? "요청을 처리하지 못했습니다.";
     throw new ApiError(message, response.status, data);
   }
 
