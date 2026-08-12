@@ -58,7 +58,7 @@ const changeColorClass = computed(() => {
         </p>
       </div>
 
-      <div class="w-full text-ink">
+      <div class="w-full text-pink">
         <MarketLineChart
           :prices="prices"
           :total-ticks="totalTicks"

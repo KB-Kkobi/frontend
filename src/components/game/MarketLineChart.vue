@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from "vue";
 import {
-  CHART_MARKER_RADIUS,
+  CHART_FILL_OPACITY_TOP,
+  CHART_MARKER_RADIUS_PX,
   CHART_PADDING,
   CHART_STROKE_WIDTH,
   CHART_VIEWBOX_HEIGHT,
@@ -27,8 +28,11 @@ const props = defineProps({
   },
 });
 
+const gradientId = `market-line-chart-fill-${Math.random().toString(36).slice(2)}`;
+
 const innerWidth = CHART_VIEWBOX_WIDTH - CHART_PADDING * 2;
 const innerHeight = CHART_VIEWBOX_HEIGHT - CHART_PADDING * 2;
+const baselineY = CHART_PADDING + innerHeight;
 
 const points = computed(() => {
   const { prices, totalTicks, priceMin, priceMax } = props;
@@ -48,6 +52,17 @@ const polylinePoints = computed(() =>
   points.value.map(({ x, y }) => `${x},${y}`).join(" "),
 );
 
+const areaPoints = computed(() => {
+  if (points.value.length === 0) return "";
+  const first = points.value[0];
+  const last = points.value[points.value.length - 1];
+  return [
+    `${first.x},${baselineY}`,
+    ...points.value.map(({ x, y }) => `${x},${y}`),
+    `${last.x},${baselineY}`,
+  ].join(" ");
+});
+
 const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
 </script>
 
@@ -58,6 +73,20 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
     preserveAspectRatio="none"
     xmlns="http://www.w3.org/2000/svg"
   >
+    <defs>
+      <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="currentColor" :stop-opacity="CHART_FILL_OPACITY_TOP" />
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <polygon
+      v-if="areaPoints"
+      :points="areaPoints"
+      :fill="`url(#${gradientId})`"
+      stroke="none"
+    />
+
     <polyline
       :points="polylinePoints"
       fill="none"
@@ -67,12 +96,16 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
       stroke-linejoin="round"
       vector-effect="non-scaling-stroke"
     />
+
     <circle
       v-if="lastPoint"
       :cx="lastPoint.x"
       :cy="lastPoint.y"
-      :r="CHART_MARKER_RADIUS"
-      fill="currentColor"
+      r="0.01"
+      fill="none"
+      stroke="currentColor"
+      :stroke-width="CHART_MARKER_RADIUS_PX * 2"
+      vector-effect="non-scaling-stroke"
     />
   </svg>
 </template>

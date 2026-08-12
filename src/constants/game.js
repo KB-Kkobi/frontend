@@ -2,9 +2,10 @@ export const DEFAULT_SCENARIO_ID = 'SC001';
 
 export const CHART_VIEWBOX_WIDTH = 100;
 export const CHART_VIEWBOX_HEIGHT = 40;
-export const CHART_STROKE_WIDTH = 3;
-export const CHART_MARKER_RADIUS = 1;
-export const CHART_PADDING = 5;
+export const CHART_STROKE_WIDTH = 2.5;
+export const CHART_MARKER_RADIUS_PX = 5;
+export const CHART_PADDING = 2;
+export const CHART_FILL_OPACITY_TOP = 0.18;
 
 export const GAME_INTRO_PREVIEW_PRICES = [
   13200, 13450, 13150, 12700, 12950, 13600,
@@ -31,6 +32,7 @@ export const GAME_DEPOSIT_MONTHS = 12;
 export const GAME_DEPOSIT_INTEREST_RATE = 3.5;
 export const GAME_DEPOSIT_INTEREST_TAX_RATE = 15.4;
 export const GAME_ALLOCATION_STEP = 100_000;
+export const GAME_EVENT_RESUME_DELAY_MS = 2_500;
 
 export const GAME_INITIAL_ALLOCATION = {
   cash: 3_000_000,

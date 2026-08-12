@@ -16,6 +16,7 @@ import MarketIndexCard from "@/components/game/MarketIndexCard.vue";
 import {
   DEFAULT_SCENARIO_ID,
   GAME_DEPOSIT_MONTHS,
+  GAME_EVENT_RESUME_DELAY_MS,
 } from "@/constants/game";
 import { useGameTick } from "@/composables/useGameTick";
 import {
@@ -35,6 +36,7 @@ const {
   restore,
   pause,
   resume,
+  resumeAfterDelay,
 } = useGameTick();
 const router = useRouter();
 
@@ -93,9 +95,9 @@ const remainingDepositDays = computed(() => {
 
 function buildEventsByTick(events) {
   return new Map(
-    events.map(({ tick, tag, tagTone, summary, description }) => [
+    events.map(({ tick, tag, summary, description }) => [
       tick,
-      { tag, tagTone, summary, description },
+      { tag, summary, description },
     ]),
   );
 }
@@ -141,7 +143,7 @@ function handleCloseEvent() {
     requestGameCompletion();
     return;
   }
-  resume();
+  resumeAfterDelay(GAME_EVENT_RESUME_DELAY_MS);
 }
 
 function handleOpenBuySheet() {

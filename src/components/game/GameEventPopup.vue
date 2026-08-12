@@ -1,10 +1,9 @@
 <script setup>
-import { computed } from "vue";
 import BaseAlertIcon from "@/components/common/BaseAlertIcon.vue";
 import BaseBadge from "@/components/common/BaseBadge.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 
-const props = defineProps({
+defineProps({
   event: {
     type: Object,
     default: null,
@@ -16,28 +15,20 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close"]);
-
-const TAG_TONE_COLORS = {
-  UP: "pink-soft",
-  DOWN: "blue-soft",
-  WARN: "yellow-soft",
-};
-
-const badgeColor = computed(
-  () => TAG_TONE_COLORS[props.event?.tagTone] ?? "yellow-soft",
-);
 </script>
 
 <template>
   <Teleport to="body">
-    <template v-if="visible">
-      <div class="fixed inset-0 bg-ink/50" aria-hidden="true" />
-
-      <div class="fixed inset-x-0 top-24 z-10 mx-auto max-w-[430px] px-5">
+    <div
+      v-if="visible"
+      class="fixed inset-0 z-10 bg-ink/50"
+      @click.self="emit('close')"
+    >
+      <div class="mx-auto max-w-[430px] px-5 pt-24">
         <BaseCard color="white">
           <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between">
-              <BaseBadge :color="badgeColor">
+              <BaseBadge color="error-soft">
                 <span class="inline-flex items-center gap-2">
                   <BaseAlertIcon class="h-4 w-4" />
                   {{ event?.tag }}
@@ -71,6 +62,6 @@ const badgeColor = computed(
           </div>
         </BaseCard>
       </div>
-    </template>
+    </div>
   </Teleport>
 </template>
