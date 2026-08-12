@@ -1,41 +1,77 @@
 <script setup>
-import { ref } from "vue";
-import BackButton from "@/components/common/BackButton.vue";
+import { onMounted, ref } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
-import BaseModal from "@/components/common/BaseModal.vue";
-import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import HomePersonaSummaryCard from "@/components/home/HomePersonaSummaryCard.vue";
+import HomeAssessmentIntroCard from "@/components/home/HomeAssessmentIntroCard.vue";
+import { fetchMyInfo } from "@/api/authApi";
+import { fetchAssessmentResult } from "@/api/assessmentApi";
+import { ApiError } from "@/api/http";
 
-const isBuyConfirmOpen = ref(false);
+const nickname = ref("");
+const assessmentResult = ref(null);
+const isLoading = ref(true);
+const errorMessage = ref("");
+
+async function loadHomeData() {
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    const [myInfo, result] = await Promise.all([fetchMyInfo(), fetchAssessmentResult()]);
+    nickname.value = myInfo.nickname;
+    assessmentResult.value = result;
+  } catch (error) {
+    errorMessage.value =
+      error instanceof ApiError ? error.message : "홈 정보를 불러오지 못했습니다.";
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(loadHomeData);
 </script>
 
 <template>
-  <PageContainer>
-    <div class="flex flex-col gap-4 py-6">
-      <h1 class="text-h1 text-ink">홈</h1>
-      <BackButton />
+  <PageContainer color="page-warm">
+    <div class="flex flex-col gap-6 py-6">
+      <header class="flex flex-col gap-1">
+        <h1 class="text-h1 text-ink">
+          안녕하세요<span v-if="nickname">, {{ nickname }}님</span>! 👋
+        </h1>
+        <p class="text-caption text-muted">오늘도 현명한 투자를 응원해요! 💛</p>
+      </header>
 
-      <BaseCard color="pink">
-        <h2 class="text-h2 text-ink">제목 텍스트 예시</h2>
-        <div>요소들의</div>
-        <div>배경 카드의</div>
-        <div>예시입니다</div>
+      <BaseCard v-if="isLoading" color="white">
+        <div class="flex flex-col gap-2" role="status">
+          <h2 class="text-h2 text-ink">홈 정보를 불러오는 중이에요</h2>
+          <p class="text-caption text-muted">잠시만 기다려 주세요.</p>
+        </div>
       </BaseCard>
 
-      <div class="flex gap-2">
-        <BottomButton color="pink" @click="isBuyConfirmOpen = true">
-          매수 (꼭 눌러보세요)
-        </BottomButton>
-        <BottomButton color="blue" @click="confirm">매도</BottomButton>
-      </div>
+      <BaseCard v-else-if="errorMessage" color="pink">
+        <div class="flex flex-col gap-2" role="alert">
+          <h2 class="text-h2 text-ink">정보를 불러오지 못했어요</h2>
+          <p class="text-caption text-muted">{{ errorMessage }}</p>
+        </div>
+      </BaseCard>
 
-      <div><BottomButton color="yellow">예시 버튼입니다</BottomButton></div>
+      <HomePersonaSummaryCard
+        v-else-if="assessmentResult"
+        :persona-name="assessmentResult.persona.personaName"
+        :description="assessmentResult.persona.description"
+        :image-path="assessmentResult.persona.imagePath"
+        :scores="{
+          rtScore: assessmentResult.rtScore,
+          lhScore: assessmentResult.lhScore,
+          rpScore: assessmentResult.rpScore,
+        }"
+        :stock-ratio="assessmentResult.persona.stockRatio"
+        :bond-ratio="assessmentResult.persona.bondRatio"
+        :deposit-ratio="assessmentResult.persona.depositRatio"
+      />
+
+      <HomeAssessmentIntroCard v-else />
     </div>
-
-    <BaseModal
-      v-model="isBuyConfirmOpen"
-      message="정말로 매수하시겠습니까?"
-      confirm-color="pink"
-    />
   </PageContainer>
 </template>
