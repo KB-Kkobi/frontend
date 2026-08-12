@@ -126,3 +126,21 @@ export function post(path, body, requestOptions) {
     requestOptions,
   );
 }
+
+export function patch(path, body) {
+  return request(path, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+export function remove(path) {
+  return request(path, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
+}
