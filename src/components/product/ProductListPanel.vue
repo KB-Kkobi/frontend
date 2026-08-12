@@ -418,6 +418,7 @@ function handleSelectProduct(product) {
       productType: normalizeProductType(product.productType),
       productId: product.productId,
     },
+    query: props.tradable ? { tradable: "true" } : undefined,
   });
 }
 
