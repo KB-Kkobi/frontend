@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { fetchMyInfo } from '@/api/authApi';
 import { fetchGameStatus } from '@/api/gameApi';
 import { ApiError } from '@/api/http';
 import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
@@ -18,6 +19,7 @@ const authStore = useAuthStore();
 
 const isLoading = ref(true);
 const errorMessage = ref('');
+const nickname = ref('');
 
 const previewPriceMin = Math.min(...GAME_INTRO_PREVIEW_PRICES);
 const previewPriceMax = Math.max(...GAME_INTRO_PREVIEW_PRICES);
@@ -48,11 +50,15 @@ async function loadGameStatus() {
   errorMessage.value = '';
 
   try {
-    const gameStatus = await fetchGameStatus();
+    const [gameStatus, myInfo] = await Promise.all([
+      fetchGameStatus(),
+      fetchMyInfo(),
+    ]);
     if (gameStatus?.isCompleted) {
       await router.replace({ name: 'home' });
       return;
     }
+    nickname.value = myInfo?.nickname ?? '';
   } catch (error) {
     if (error instanceof ApiError && [401, 403].includes(error.status)) {
       authStore.logout();
@@ -118,7 +124,9 @@ onMounted(loadGameStatus);
 
     <div v-else class="flex flex-col gap-6 py-6">
       <header class="flex flex-col gap-2">
-        <p class="text-caption text-muted">회원님, 반가워요</p>
+        <p class="text-caption text-muted">
+          {{ nickname ? `${nickname}님` : '회원님' }}, 반가워요
+        </p>
         <h1 class="text-amount text-ink">
           3분만 직접<br />
           투자해볼까요?
