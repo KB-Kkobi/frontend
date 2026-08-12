@@ -1,16 +1,13 @@
 <script setup>
 import { computed } from 'vue';
 import BottomButton from '@/components/common/BottomButton.vue';
+import { GAME_SEED_MONEY } from '@/constants/game';
 import {
   formatCurrency,
   formatRate,
   formatSignedCurrency,
 } from '@/utils/format';
-import {
-  calcEvaluationAmount,
-  calcProfitLoss,
-  calcProfitRate,
-} from '@/utils/evaluation';
+import { calcEvaluationAmount } from '@/utils/evaluation';
 
 const emit = defineEmits(['buy', 'sell', 'cancel-deposit']);
 
@@ -20,6 +17,10 @@ const props = defineProps({
     required: true,
   },
   averageStockPrice: {
+    type: Number,
+    required: true,
+  },
+  stockPrincipal: {
     type: Number,
     required: true,
   },
@@ -52,20 +53,25 @@ const props = defineProps({
 const stockEvaluationAmount = computed(() =>
   calcEvaluationAmount(props.currentStockPrice, props.stockQuantity),
 );
-const stockProfitAmount = computed(() =>
-  calcProfitLoss(
-    props.currentStockPrice,
-    props.averageStockPrice,
-    props.stockQuantity,
-  ),
-);
+const stockProfitAmount = computed(() => {
+  if (props.stockQuantity === 0 || stockEvaluationAmount.value === null) {
+    return null;
+  }
+  return stockEvaluationAmount.value - props.stockPrincipal;
+});
 const stockProfitRate = computed(() => {
-  if (props.stockQuantity === 0) return null;
-  return calcProfitRate(props.currentStockPrice, props.averageStockPrice);
+  if (stockProfitAmount.value === null || props.stockPrincipal <= 0) return null;
+  return (stockProfitAmount.value / props.stockPrincipal) * 100;
 });
 const totalAssetAmount = computed(
   () =>
     props.cashAmount + props.depositAmount + (stockEvaluationAmount.value ?? 0),
+);
+const totalProfitAmount = computed(
+  () => totalAssetAmount.value - GAME_SEED_MONEY,
+);
+const totalProfitRate = computed(
+  () => (totalProfitAmount.value / GAME_SEED_MONEY) * 100,
 );
 
 function calculateAssetRatio(amount) {
@@ -83,6 +89,11 @@ const profitColorClass = computed(() => {
   if (stockProfitAmount.value < 0) return 'text-loss';
   return 'text-muted';
 });
+const totalProfitColorClass = computed(() => {
+  if (totalProfitAmount.value > 0) return 'text-profit';
+  if (totalProfitAmount.value < 0) return 'text-loss';
+  return 'text-muted';
+});
 const depositStatusText = computed(() => {
   if (props.depositStatus === 'CANCELLED') return '해지 완료';
   if (props.depositStatus === 'MATURED') return '만기 완료';
@@ -95,6 +106,33 @@ const depositStatusText = computed(() => {
   <section class="flex flex-col gap-6 py-2" aria-labelledby="portfolio-title">
     <h2 id="portfolio-title" class="sr-only">현재 자산 현황</h2>
 
+    <div class="flex flex-col gap-2 rounded-2xl bg-yellow-soft p-4">
+      <div class="flex items-center justify-between gap-4">
+        <strong class="text-h2 text-ink">현재 총자산</strong>
+        <strong class="text-amount text-ink tabular-nums">
+          {{ formatCurrency(totalAssetAmount) }}
+        </strong>
+      </div>
+      <div class="flex items-center justify-between gap-4">
+        <span class="text-caption text-muted">시작 자산</span>
+        <span class="text-body text-muted tabular-nums">
+          {{ formatCurrency(GAME_SEED_MONEY) }}
+        </span>
+      </div>
+      <div class="flex items-center justify-between gap-4 border-t border-line pt-2">
+        <span class="text-caption text-muted">전체 손익</span>
+        <span
+          :class="[
+            totalProfitColorClass,
+            'text-body font-semibold tabular-nums',
+          ]"
+        >
+          {{ formatSignedCurrency(totalProfitAmount) }}
+          ({{ formatRate(totalProfitRate) }})
+        </span>
+      </div>
+    </div>
+
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex items-baseline gap-2">
@@ -104,7 +142,7 @@ const depositStatusText = computed(() => {
           </span>
         </div>
         <p class="text-caption text-muted tabular-nums">
-          평균 {{ formatCurrency(averageStockPrice) }} ·
+          평균 {{ formatCurrency(Math.round(averageStockPrice)) }} ·
           {{ stockQuantity.toLocaleString('ko-KR') }}주
         </p>
       </div>
@@ -158,7 +196,12 @@ const depositStatusText = computed(() => {
     <div class="grid grid-cols-2 gap-3 pt-2">
       <BottomButton
         color="pink"
-        :disabled="isTradingDisabled || cashAmount === 0"
+        :disabled="
+          isTradingDisabled ||
+          cashAmount === 0 ||
+          !currentStockPrice ||
+          cashAmount < currentStockPrice
+        "
         @click="emit('buy')"
         >매수</BottomButton
       >

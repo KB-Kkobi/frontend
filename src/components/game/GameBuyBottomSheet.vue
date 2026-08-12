@@ -29,6 +29,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit']);
 
 const quantity = ref(1);
+const maximumQuantity = computed(() => {
+  if (props.currentPrice <= 0) return 0;
+  return Math.floor(props.availableAmount / props.currentPrice);
+});
 const orderAmount = computed(() => props.currentPrice * quantity.value);
 const quantityInputWidth = computed(
   () => `${Math.max(String(quantity.value).length, 1)}ch`,
@@ -46,17 +50,43 @@ function closeSheet() {
 }
 
 function decreaseQuantity() {
-  quantity.value = Math.max(1, quantity.value - 1);
+  quantity.value = Math.max(1, Number(quantity.value || 1) - 1);
 }
 
 function increaseQuantity() {
-  quantity.value += 1;
+  quantity.value = Math.min(
+    maximumQuantity.value,
+    Number(quantity.value || 0) + 1,
+  );
+}
+
+function setMinimumQuantity() {
+  quantity.value = 1;
+}
+
+function setMaximumQuantity() {
+  if (maximumQuantity.value > 0) quantity.value = maximumQuantity.value;
 }
 
 function updateQuantity(event) {
+  if (event.target.value === '') {
+    quantity.value = '';
+    return;
+  }
+
   const nextQuantity = Number(event.target.value);
-  quantity.value =
-    Number.isInteger(nextQuantity) && nextQuantity > 0 ? nextQuantity : 1;
+  if (!Number.isInteger(nextQuantity) || nextQuantity < 1) {
+    quantity.value = 1;
+    event.target.value = '1';
+    return;
+  }
+  const limitedQuantity = Math.min(nextQuantity, maximumQuantity.value);
+  quantity.value = limitedQuantity;
+  event.target.value = String(limitedQuantity);
+}
+
+function restoreMinimumQuantity() {
+  if (quantity.value === '') quantity.value = 1;
 }
 
 function handleKeydown(event) {
@@ -131,8 +161,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
               type="number"
               inputmode="numeric"
               min="1"
+              :max="maximumQuantity"
               aria-label="매수 수량"
               @input="updateQuantity"
+              @blur="restoreMinimumQuantity"
             />
             <span class="text-h1 text-ink">주</span>
           </div>
@@ -148,10 +180,29 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           <button
             type="button"
             class="flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-white text-amount text-ink"
+            :disabled="quantity >= maximumQuantity"
             aria-label="수량 늘리기"
             @click="increaseQuantity"
           >
             +
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            class="rounded-xl border border-line bg-white px-3 py-2 text-body text-ink"
+            @click="setMinimumQuantity"
+          >
+            최소 1주
+          </button>
+          <button
+            type="button"
+            class="rounded-xl border border-line bg-white px-3 py-2 text-body text-ink disabled:opacity-50"
+            :disabled="maximumQuantity < 1"
+            @click="setMaximumQuantity"
+          >
+            최대 {{ maximumQuantity.toLocaleString('ko-KR') }}주
           </button>
         </div>
 

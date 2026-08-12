@@ -343,6 +343,7 @@ onMounted(loadScenario);
           <GamePortfolioPanel
             :stock-quantity="stockQuantity"
             :average-stock-price="averageStockPrice"
+            :stock-principal="stockAmount"
             :current-stock-price="currentTick?.price"
             :cash-amount="cashAmount"
             :deposit-amount="depositAmount"
