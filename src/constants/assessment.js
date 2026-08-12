@@ -10,22 +10,6 @@ export function getAxisLevel(score) {
   return score > AXIS_SCORE_THRESHOLD ? "높음" : "낮음";
 }
 
-export function getAxisBadgesFromScores(scores) {
-  return AXIS_DEFINITIONS.map((axis) => ({
-    key: axis.key,
-    label: `${axis.label} ${getAxisLevel(scores[axis.key])}`,
-  }));
-}
-
-const AXIS_CODE_LEVEL_LABELS = { H: "높음", L: "낮음" };
-
-export function getAxisBadgesFromCode(axisCode) {
-  return AXIS_DEFINITIONS.map((axis, index) => ({
-    key: axis.key,
-    label: `${axis.label} ${AXIS_CODE_LEVEL_LABELS[axisCode?.[index]] ?? "-"}`,
-  }));
-}
-
 export const PORTFOLIO_SEGMENT_DEFINITIONS = Object.freeze([
   { key: "stockRatio", label: "주식", color: "pink" },
   { key: "bondRatio", label: "채권", color: "blue" },
