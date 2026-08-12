@@ -18,6 +18,7 @@ const props = defineProps({
     type: String,
     default: 'span',
   },
+  fullWidth: Boolean,
 })
 
 const VARIANT_MAP = {
@@ -48,13 +49,18 @@ const colorClasses = computed(() => {
   const variantColors = VARIANT_MAP[props.variant] ?? VARIANT_MAP.filled
   return variantColors[props.color] ?? variantColors.pink
 })
+
+const layoutClasses = computed(() =>
+  props.fullWidth ? 'w-full justify-center' : 'shrink-0',
+)
 </script>
 
 <template>
   <component
     :is="as"
     :class="[
-      'inline-flex shrink-0 items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight',
+      'inline-flex items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight',
+      layoutClasses,
       colorClasses,
     ]"
   >

@@ -4,7 +4,6 @@ import BasePill from "@/components/common/BasePill.vue";
 import {
   formatCurrency,
   formatInterestRate,
-  formatKoreanShortAmount,
   formatNullableText,
 } from "@/utils/format";
 
@@ -48,9 +47,6 @@ function handleSelect() {
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-caption text-muted tabular-nums">
               {{ product.savingTerm ? `${product.savingTerm}개월` : "—" }}
-            </span>
-            <span v-if="product.maxLimit" class="text-caption text-muted tabular-nums">
-              최대 {{ formatKoreanShortAmount(product.maxLimit) }}
             </span>
             <BasePill
               v-if="product.reserveTypeName"

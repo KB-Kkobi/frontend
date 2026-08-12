@@ -5,7 +5,9 @@
  */
 export function formatCurrency(value) {
   if (value === null || value === undefined) return "—";
-  return `${value.toLocaleString("ko-KR")}원`;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "—";
+  return `${numericValue.toLocaleString("ko-KR")}원`;
 }
 
 /**
@@ -15,8 +17,10 @@ export function formatCurrency(value) {
  */
 export function formatSignedCurrency(value) {
   if (value === null || value === undefined) return "—";
-  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
-  return `${sign}${Math.abs(value).toLocaleString("ko-KR")}원`;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "—";
+  const sign = numericValue > 0 ? "+" : numericValue < 0 ? "-" : "";
+  return `${sign}${Math.abs(numericValue).toLocaleString("ko-KR")}원`;
 }
 
 /**
@@ -47,7 +51,9 @@ export function formatVolatility(value) {
  */
 export function formatKoreanShortAmount(value) {
   if (value === null || value === undefined) return "—";
-  const rounded = Math.round(value);
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return "—";
+  const rounded = Math.round(numericValue);
   const man = Math.floor(rounded / 10000);
   const cheon = Math.floor((rounded % 10000) / 1000);
   if (man > 0 && cheon > 0) return `${man}만 ${cheon}천원`;
