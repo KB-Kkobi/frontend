@@ -43,6 +43,10 @@ function handleRecommendProducts() {
   router.push({ name: "products" });
 }
 
+function handleViewPersonaTypes() {
+  router.push({ name: "persona-types" });
+}
+
 onMounted(loadAssessmentResult);
 </script>
 
@@ -117,7 +121,13 @@ onMounted(loadAssessmentResult);
         />
 
         <div class="flex flex-col items-center gap-4">
-          <span class="text-caption text-muted">다른 유형도 궁금하다면 8가지 유형 전체보기 &gt;</span>
+          <button
+            type="button"
+            class="text-caption text-navy"
+            @click="handleViewPersonaTypes"
+          >
+            다른 유형도 궁금하다면 8가지 유형 전체보기 &gt;
+          </button>
           <BottomButton color="pink" shape="pill" @click="handleRecommendProducts">
             내 성향 상품 추천받기
           </BottomButton>
