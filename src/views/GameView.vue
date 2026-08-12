@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { fetchScenario, saveGameAction } from "@/api/gameApi";
+import { useRouter } from "vue-router";
+import { completeGame, fetchScenario, saveGameAction } from "@/api/gameApi";
 import { ApiError } from "@/api/http";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
+import GameCompletionPopup from "@/components/game/GameCompletionPopup.vue";
 import GameDepositCancelPopup from "@/components/game/GameDepositCancelPopup.vue";
 import GameDepositMaturityPopup from "@/components/game/GameDepositMaturityPopup.vue";
 import GameEventPopup from "@/components/game/GameEventPopup.vue";
@@ -17,7 +19,9 @@ import {
 } from "@/constants/game";
 import { useGameTick } from "@/composables/useGameTick";
 import {
+  readGameCompletionSession,
   readGameStartSession,
+  saveGameCompletionSession,
   saveGameStartSession,
 } from "@/utils/gameStorage";
 
@@ -28,9 +32,11 @@ const {
   priceMin,
   priceMax,
   start,
+  restore,
   pause,
   resume,
 } = useGameTick();
+const router = useRouter();
 
 const isLoading = ref(true);
 const errorMessage = ref("");
@@ -42,7 +48,10 @@ const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
 const isDepositCancelPopupOpen = ref(false);
 const isDepositMaturityPopupOpen = ref(false);
+const isGameCompletionPopupOpen = ref(false);
 const hasResolvedDepositMaturity = ref(false);
+const isCompletingGame = ref(false);
+const gameCompletionErrorMessage = ref("");
 const isBuying = ref(false);
 const isSelling = ref(false);
 const isCancellingDeposit = ref(false);
@@ -54,6 +63,9 @@ const initialStockPrice = ref(0);
 const averageStockPrice = ref(0);
 const stockQuantity = ref(0);
 const finalGameTick = ref(null);
+const isRestoredCompletedGame = ref(
+  readGameCompletionSession() || gameStart.value?.isCompleted === true,
+);
 
 const prices = computed(() => visibleTicks.value.map((tick) => tick.price));
 const stockAmount = computed(() => gameStart.value?.stockAmount ?? 0);
@@ -103,6 +115,13 @@ async function loadScenario() {
         : 0);
     finalGameTick.value = scenario.ticks.at(-1)?.tick ?? null;
     eventsByTick.value = buildEventsByTick(scenario.events);
+    if (isRestoredCompletedGame.value) {
+      shownEventTicks.value = new Set(scenario.events.map(({ tick }) => tick));
+      restore(scenario, scenario.ticks.length - 1);
+      hasResolvedDepositMaturity.value = true;
+      isGameCompletionPopupOpen.value = true;
+      return;
+    }
     start(scenario);
   } catch (error) {
     errorMessage.value =
@@ -118,6 +137,10 @@ function handleCloseEvent() {
   bannerEvent.value = activeEvent.value;
   activeEvent.value = null;
   if (openDepositMaturityPopup()) return;
+  if (isGameFinished.value) {
+    requestGameCompletion();
+    return;
+  }
   resume();
 }
 
@@ -161,6 +184,37 @@ function handleConfirmDepositMaturity(maturityAmount) {
   };
   saveGameStartSession(gameStart.value);
   isDepositMaturityPopupOpen.value = false;
+  requestGameCompletion();
+}
+
+async function requestGameCompletion() {
+  if (isCompletingGame.value) return;
+
+  isGameCompletionPopupOpen.value = true;
+  isCompletingGame.value = true;
+  gameCompletionErrorMessage.value = "";
+
+  try {
+    await completeGame();
+    saveGameCompletionSession();
+    gameStart.value = {
+      ...gameStart.value,
+      isCompleted: true,
+    };
+    saveGameStartSession(gameStart.value);
+    isRestoredCompletedGame.value = true;
+  } catch (error) {
+    gameCompletionErrorMessage.value = error instanceof ApiError
+      ? error.message
+      : "게임 결과 저장에 실패했습니다. 다시 시도해 주세요.";
+  } finally {
+    isCompletingGame.value = false;
+  }
+}
+
+function handleViewAssessmentResult() {
+  saveGameCompletionSession();
+  router.push({ name: "assessment-result" });
 }
 
 async function handleBuyStock({ quantity, orderAmount }) {
@@ -292,6 +346,7 @@ async function handleCancelDeposit() {
 
 watch(currentTick, (tick) => {
   if (!tick) return;
+  if (isRestoredCompletedGame.value) return;
   const event = eventsByTick.value.get(tick.tick);
   if (event && !shownEventTicks.value.has(tick.tick)) {
     shownEventTicks.value.add(tick.tick);
@@ -300,7 +355,8 @@ watch(currentTick, (tick) => {
     return;
   }
 
-  openDepositMaturityPopup();
+  if (!isGameFinished.value) return;
+  if (!openDepositMaturityPopup()) requestGameCompletion();
 });
 
 watch(
@@ -389,6 +445,16 @@ onMounted(loadScenario);
           v-model="isDepositMaturityPopupOpen"
           :deposit-amount="depositAmount"
           @confirm="handleConfirmDepositMaturity"
+        />
+        <GameCompletionPopup
+          v-model="isGameCompletionPopupOpen"
+          :stock-amount="(currentTick?.price ?? 0) * stockQuantity"
+          :cash-amount="cashAmount"
+          :deposit-amount="depositAmount"
+          :is-loading="isCompletingGame"
+          :error-message="gameCompletionErrorMessage"
+          @retry="requestGameCompletion"
+          @view-result="handleViewAssessmentResult"
         />
       </template>
     </div>

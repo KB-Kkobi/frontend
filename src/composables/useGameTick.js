@@ -1,4 +1,4 @@
-import { computed, onUnmounted, ref } from "vue";
+import { computed, onUnmounted, ref } from 'vue';
 
 function normalizeTick({ tick, month, marketIndex, price, changeRate }) {
   return { tick, month, marketIndex, price, changeRate };
@@ -10,8 +10,12 @@ export function useGameTick() {
   const currentTickIndex = ref(0);
   let intervalId = null;
 
-  const currentTick = computed(() => ticks.value[currentTickIndex.value] ?? null);
-  const visibleTicks = computed(() => ticks.value.slice(0, currentTickIndex.value + 1));
+  const currentTick = computed(
+    () => ticks.value[currentTickIndex.value] ?? null,
+  );
+  const visibleTicks = computed(() =>
+    ticks.value.slice(0, currentTickIndex.value + 1),
+  );
 
   const totalTickCount = computed(() => ticks.value.length);
   const priceMin = computed(() => {
@@ -51,6 +55,17 @@ export function useGameTick() {
     runInterval();
   }
 
+  function restore(scenario, tickIndex) {
+    stop();
+
+    ticks.value = scenario.ticks.map(normalizeTick);
+    tickIntervalMs.value = scenario.tickIntervalMs;
+    currentTickIndex.value = Math.min(
+      Math.max(tickIndex, 0),
+      Math.max(ticks.value.length - 1, 0),
+    );
+  }
+
   function pause() {
     stop();
   }
@@ -72,6 +87,7 @@ export function useGameTick() {
     priceMin,
     priceMax,
     start,
+    restore,
     stop,
     pause,
     resume,
