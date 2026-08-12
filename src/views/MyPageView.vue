@@ -17,6 +17,7 @@ const personaName = ref("");
 const ACTIVITY_ITEMS = [
   { id: "assessment", label: "내 성향 리포트", icon: "report" },
   { id: "notifications", label: "알림 설정", icon: "notification" },
+  { id: "friends", label: "친구 관리", icon: "friends" },
 ];
 
 const SUPPORT_ITEMS = [
@@ -55,6 +56,10 @@ function handleProfile() {
 function handleMenuSelect(item) {
   if (item.id === "assessment") {
     router.push({ name: "assessment-result" });
+    return;
+  }
+  if (item.id === "friends") {
+    router.push({ name: "friend-management" });
     return;
   }
   console.log("마이페이지 메뉴:", item.id);
