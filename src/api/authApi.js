@@ -1,4 +1,4 @@
-import { post } from "@/api/http";
+import { get, post } from "@/api/http";
 
 export function signupUser({ email, password, nickname, birthDate }) {
   return post(
@@ -22,4 +22,8 @@ export function logoutUser() {
     skipAuth: true,
     skipRefresh: true,
   });
+}
+
+export function fetchMyInfo() {
+  return get("/api/auth/me");
 }

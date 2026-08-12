@@ -99,3 +99,10 @@ export function parseCurrencyInput(value) {
   const digits = String(value ?? "").replace(/\D/g, "");
   return digits ? Number(digits) : null;
 }
+
+export function getFirstSentence(text) {
+  if (!text) return "";
+  const trimmed = String(text).trim();
+  const match = trimmed.match(/^.*?[.!?](?=\s|$)/);
+  return match ? match[0].trim() : trimmed;
+}
