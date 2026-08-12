@@ -1,6 +1,8 @@
 <script setup>
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { logoutUser } from "@/api/authApi";
+import { fetchMyInfo, logoutUser } from "@/api/authApi";
+import { fetchLatestAssessment } from "@/api/assessmentApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
@@ -9,6 +11,8 @@ import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const nickname = ref("");
+const personaName = ref("");
 
 const ACTIVITY_ITEMS = [
   { id: "assessment", label: "내 성향 리포트", icon: "report" },
@@ -30,6 +34,20 @@ const APP_INFO_ITEMS = [
   },
 ];
 
+async function loadMyPageProfile() {
+  const [userResult, assessmentResult] = await Promise.allSettled([
+    fetchMyInfo(),
+    fetchLatestAssessment(),
+  ]);
+
+  if (userResult.status === "fulfilled") {
+    nickname.value = userResult.value?.nickname ?? "";
+  }
+  if (assessmentResult.status === "fulfilled") {
+    personaName.value = assessmentResult.value?.typeName ?? "";
+  }
+}
+
 function handleProfile() {
   console.log("프로필 정보");
 }
@@ -50,6 +68,8 @@ async function handleLogout() {
     await router.replace({ name: "login" });
   }
 }
+
+onMounted(loadMyPageProfile);
 </script>
 
 <template>
@@ -72,8 +92,10 @@ async function handleLogout() {
             </span>
 
             <span class="flex min-w-0 flex-1 flex-col gap-2">
-              <strong class="text-h2 text-ink">꼬비</strong>
-              <span class="text-caption text-muted">불꽃 추격자</span>
+              <strong class="text-h2 text-ink">{{ nickname || "회원" }}</strong>
+              <span class="text-caption text-muted">
+                {{ personaName || "성향 진단 전" }}
+              </span>
             </span>
 
             <svg
