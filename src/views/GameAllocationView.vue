@@ -18,7 +18,10 @@ import {
   GAME_SEED_MONEY,
 } from '@/constants/game';
 import { formatCurrency, formatInterestRate } from '@/utils/format';
-import { saveGameStartSession } from '@/utils/gameStorage';
+import {
+  clearGameCompletionSession,
+  saveGameStartSession,
+} from '@/utils/gameStorage';
 
 const router = useRouter();
 
@@ -91,6 +94,7 @@ async function handleStartGame() {
       stockRatio: calculateAssetRatio(allocation.stock),
       depositRatio: calculateAssetRatio(allocation.deposit),
     });
+    clearGameCompletionSession();
     saveGameStartSession(gameStart);
     await router.replace({ name: 'game' });
   } catch (error) {

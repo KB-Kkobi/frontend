@@ -19,6 +19,7 @@ const props = defineProps({
     default: 'span',
   },
   fullWidth: Boolean,
+  disabled: Boolean,
 })
 
 const VARIANT_MAP = {
@@ -58,8 +59,9 @@ const layoutClasses = computed(() =>
 <template>
   <component
     :is="as"
+    :disabled="as === 'button' ? disabled : undefined"
     :class="[
-      'inline-flex items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight',
+      'inline-flex items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight disabled:cursor-not-allowed disabled:opacity-50',
       layoutClasses,
       colorClasses,
     ]"

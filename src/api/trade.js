@@ -1,4 +1,4 @@
-import { get, post, del } from "@/api/http";
+import { get, post, remove } from "@/api/http";
 import { ORDER_METHOD } from "@/constants/trade";
 
 const ACCOUNTS_PATH = "/api/accounts/me";
@@ -59,7 +59,7 @@ export function createOrder({ securityId, orderType, orderMethod, price, quantit
  * @param {number} securityOrderId
  */
 export function cancelOrder(securityOrderId) {
-  return del(`${ORDERS_PATH}/${securityOrderId}`);
+  return remove(`${ORDERS_PATH}/${securityOrderId}`);
 }
 
 /**

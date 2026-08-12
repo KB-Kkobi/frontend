@@ -26,13 +26,10 @@ async function loadAssessmentResult() {
 
   try {
     result.value = await fetchAssessmentResult();
+    hasNoAssessment.value = result.value === null;
   } catch (error) {
-    if (error instanceof ApiError && error.status === 400) {
-      hasNoAssessment.value = true;
-    } else {
-      errorMessage.value =
-        error instanceof ApiError ? error.message : "진단 결과를 불러오지 못했습니다.";
-    }
+    errorMessage.value =
+      error instanceof ApiError ? error.message : "진단 결과를 불러오지 못했습니다.";
   } finally {
     isLoading.value = false;
   }
@@ -67,13 +64,13 @@ onMounted(loadAssessmentResult);
       <BaseCard v-else-if="hasNoAssessment" color="yellow">
         <div class="flex flex-col gap-4" role="status">
           <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-ink">아직 진단 이력이 없어요</h2>
+            <h2 class="text-h2 text-ink">지금 바로 성향 진단하기</h2>
             <p class="text-caption text-muted">
               게임을 완료하면 나만의 투자 성향 리포트를 확인할 수 있어요.
             </p>
           </div>
           <BottomButton color="pink" @click="handleStartGame">
-            게임 시작하러 가기
+            성향 파악 게임 시작하기
           </BottomButton>
         </div>
       </BaseCard>

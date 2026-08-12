@@ -14,6 +14,7 @@ import VirtualHistoryView from '@/views/VirtualHistoryView.vue'
 import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import FriendManagementView from '@/views/FriendManagementView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
@@ -98,6 +99,12 @@ const router = createRouter({
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { requiresAuth: true } },
     { path: '/my', name: 'my', component: MyPageView, meta: { requiresAuth: true } },
+    {
+      path: '/my/friends',
+      name: 'friend-management',
+      component: FriendManagementView,
+      meta: { requiresAuth: true },
+    },
     {
       path: '/login',
       name: 'login',

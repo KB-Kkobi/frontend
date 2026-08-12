@@ -1,4 +1,5 @@
 const GAME_START_STORAGE_KEY = "kkobi-game-start";
+const GAME_COMPLETION_STORAGE_KEY = "kkobi-game-completion";
 
 function getSessionStorage() {
   try {
@@ -26,4 +27,24 @@ export function readGameStartSession() {
   } catch {
     return null;
   }
+}
+
+export function saveGameCompletionSession() {
+  try {
+    getSessionStorage()?.setItem(GAME_COMPLETION_STORAGE_KEY, "true");
+  } catch {}
+}
+
+export function readGameCompletionSession() {
+  try {
+    return getSessionStorage()?.getItem(GAME_COMPLETION_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function clearGameCompletionSession() {
+  try {
+    getSessionStorage()?.removeItem(GAME_COMPLETION_STORAGE_KEY);
+  } catch {}
 }
