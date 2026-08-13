@@ -14,6 +14,7 @@ import {
   validateLoginData,
 } from "@/utils/authValidation";
 
+/** @type {import("vue-router").Router} */
 const router = useRouter();
 const authStore = useAuthStore();
 
