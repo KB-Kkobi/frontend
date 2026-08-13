@@ -241,7 +241,7 @@ watch(
           :disabled="isSubscribeDisabled"
           @click="handleSubscribe"
         >
-          이 상품 가입하기
+          {{ isVirtualInvestment ? "이 상품 가입하기" : "이 상품 보러가기" }}
         </BottomButton>
       </template>
     </div>
