@@ -14,6 +14,7 @@ import { subscribeTick } from "@/api/stockSocket";
 
 const route = useRoute();
 const router = useRouter();
+const isVirtualInvestment = computed(() => route.query.tradable === "true");
 const security = ref(null);
 const quote = ref(null);
 const holding = ref(null);
@@ -194,7 +195,7 @@ function handleTrade(side) {
         :description="security.description ?? null"
       />
 
-      <div v-if="security.kisSupported && security.id" class="flex gap-4">
+      <div v-if="isVirtualInvestment && security.kisSupported && security.id" class="flex gap-4">
         <BottomButton color="pink" @click="handleTrade('buy')">매수</BottomButton>
         <BottomButton color="blue" @click="handleTrade('sell')">매도</BottomButton>
       </div>

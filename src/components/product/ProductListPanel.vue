@@ -427,6 +427,7 @@ function handleSelectSecurity(security) {
   router.push({
     name: "security-detail",
     params: { pk: security.ticker },
+    query: props.tradable ? { tradable: "true" } : undefined,
   });
 }
 
