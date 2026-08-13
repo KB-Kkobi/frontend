@@ -8,9 +8,10 @@ export class AccountApiError extends Error {
   }
 }
 
-export async function createAccount({ seedMoney, monthlyInvestAmount }) {
+// 초기 투자금은 서버에서 고정 지급하므로 요청 Body 없이 호출한다.
+export async function createAccount() {
   try {
-    return await post("/api/accounts", { seedMoney, monthlyInvestAmount });
+    return await post("/api/accounts");
   } catch (error) {
     if (error instanceof ApiError) {
       throw new AccountApiError(error.message, error.status);
