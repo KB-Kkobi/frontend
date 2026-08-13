@@ -59,14 +59,7 @@ function handleSelect() {
 </script>
 
 <template>
-  <article
-    role="button"
-    tabindex="0"
-    :aria-label="`${security.name} 상세 보기`"
-    @click="handleSelect"
-    @keydown.enter="handleSelect"
-    @keydown.space.prevent="handleSelect"
-  >
+  <article class="relative">
     <BaseCard color="white" elevation="flat">
       <div class="flex items-start justify-between gap-4">
         <div class="flex min-w-0 flex-col gap-2">
@@ -98,5 +91,11 @@ function handleSelect() {
         </div>
       </div>
     </BaseCard>
+    <button
+      type="button"
+      class="absolute inset-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink"
+      :aria-label="`${security.name} 상세 보기`"
+      @click="handleSelect"
+    />
   </article>
 </template>

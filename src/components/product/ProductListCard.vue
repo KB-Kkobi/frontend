@@ -1,6 +1,5 @@
 <script setup>
 import BaseCard from "@/components/common/BaseCard.vue";
-import BasePill from "@/components/common/BasePill.vue";
 import {
   formatCurrency,
   formatInterestRate,
@@ -27,14 +26,7 @@ function handleSelect() {
 </script>
 
 <template>
-  <article
-    role="button"
-    tabindex="0"
-    :aria-label="`${formatNullableText(product.productName)} 상세 보기`"
-    @click="handleSelect"
-    @keydown.enter="handleSelect"
-    @keydown.space.prevent="handleSelect"
-  >
+  <article class="relative">
     <BaseCard color="white" elevation="flat">
       <div v-if="variant === 'catalog'" class="flex items-center gap-4">
         <div class="flex min-w-0 flex-1 flex-col gap-2">
@@ -112,5 +104,11 @@ function handleSelect() {
         </p>
       </div>
     </BaseCard>
+    <button
+      type="button"
+      class="absolute inset-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink"
+      :aria-label="`${formatNullableText(product.productName)} 상세 보기`"
+      @click="handleSelect"
+    />
   </article>
 </template>
