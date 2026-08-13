@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { fetchFriendLeaderboard, fetchPersonaLeaderboard } from "@/api/leaderboardApi";
+import { fetchPersonas } from "@/api/personaApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import TabBar from "@/components/common/TabBar.vue";
+import LeaderboardPersonaSummaryCard from "@/components/leaderboard/LeaderboardPersonaSummaryCard.vue";
 import LeaderboardRankRow from "@/components/leaderboard/LeaderboardRankRow.vue";
 
 // ── 상수 ─────────────────────────────────────────────────────────────────────
@@ -26,6 +28,9 @@ const tabStates = reactive({
   persona: { data: null, hasLoaded: false, isLoading: false, errorMessage: "" },
   friends: { data: null, hasLoaded: false, isLoading: false, errorMessage: "" },
 });
+// 리더보드 응답에는 imagePath가 없어 성향 목록에서 한 번만 찾아 캐싱한다.
+const personaImagePath = ref(null);
+const loadedImagePersonaId = ref(null);
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentState = computed(() => tabStates[activeTab.value]);
@@ -40,6 +45,7 @@ const showPersonaEmptyState = computed(() => isPersonaTab.value && !personaId.va
 const showFriendsEmptyNotice = computed(
   () => !isPersonaTab.value && rankings.value.length <= 1,
 );
+const participantCount = computed(() => rankings.value.length);
 
 // ── 데이터 조회 ──────────────────────────────────────────────────────────────
 async function loadTab(tabKey) {
@@ -60,9 +66,29 @@ async function loadTab(tabKey) {
   }
 }
 
+// 성향 이미지는 보조 시각 요소이므로 실패해도 화면 흐름을 막지 않는다.
+async function loadPersonaImage(targetPersonaId) {
+  if (!targetPersonaId || loadedImagePersonaId.value === targetPersonaId) return;
+  loadedImagePersonaId.value = targetPersonaId;
+
+  try {
+    const personas = await fetchPersonas();
+    const matched = Array.isArray(personas)
+      ? personas.find((persona) => persona.personaId === targetPersonaId)
+      : null;
+    personaImagePath.value = matched?.imagePath ?? null;
+  } catch {
+    personaImagePath.value = null;
+  }
+}
+
 // ── watch ─────────────────────────────────────────────────────────────────────
 watch(activeTab, (tabKey) => {
   loadTab(tabKey);
+});
+
+watch(personaId, (nextPersonaId) => {
+  if (nextPersonaId) loadPersonaImage(nextPersonaId);
 });
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
@@ -113,12 +139,13 @@ onMounted(() => {
 
         <template v-else>
           <!-- 성향끼리 탭 요약 -->
-          <BaseCard v-if="isPersonaTab" color="white" elevation="highlight">
-            <div class="flex flex-col items-center gap-2 text-center">
-              <p class="text-h2 text-ink">{{ personaName }}끼리 비교하고 있어요</p>
-              <p class="text-caption text-muted">현재 나는 {{ myRank }}위예요</p>
-            </div>
-          </BaseCard>
+          <LeaderboardPersonaSummaryCard
+            v-if="isPersonaTab"
+            :persona-name="personaName"
+            :image-path="personaImagePath"
+            :my-rank="myRank"
+            :participant-count="participantCount"
+          />
 
           <!-- 친구끼리 탭: 친구 없음 안내 (본인 데이터는 아래 목록에 계속 표시) -->
           <BaseCard v-if="showFriendsEmptyNotice" color="white" elevation="flat">
@@ -128,17 +155,24 @@ onMounted(() => {
           </BaseCard>
 
           <!-- 순위 목록 -->
-          <div v-if="rankings.length" class="flex flex-col gap-4">
-            <LeaderboardRankRow
-              v-for="item in rankings"
-              :key="item.userId ?? item.rank"
-              :rank="item.rank"
-              :nickname="item.nickname"
-              :persona-name="item.personaName"
-              :total-asset="item.totalAsset"
-              :return-rate="item.returnRate"
-              :is-me="item.rank === myRank"
-            />
+          <div v-if="rankings.length" class="flex flex-col gap-2">
+            <div class="flex items-center justify-between px-4">
+              <span class="text-caption text-muted tracking-tight">순위</span>
+              <span class="text-caption text-muted tracking-tight">총자산 · 수익률</span>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <LeaderboardRankRow
+                v-for="item in rankings"
+                :key="item.userId ?? item.rank"
+                :rank="item.rank"
+                :nickname="item.nickname"
+                :persona-name="isPersonaTab ? null : item.personaName"
+                :total-asset="item.totalAsset"
+                :return-rate="item.returnRate"
+                :is-me="item.rank === myRank"
+              />
+            </div>
           </div>
         </template>
       </template>

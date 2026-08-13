@@ -33,8 +33,9 @@ const props = defineProps({
 
 const isTopRank = computed(() => Number(props.rank) <= 3);
 
-const rankClass = computed(() =>
-  isTopRank.value ? "text-h2 font-bold text-ink" : "text-body text-muted",
+// 상위 3위는 크림 톤 배지로만 절제해 강조한다(별도 금·은·동 표현 없음).
+const rankBadgeClass = computed(() =>
+  isTopRank.value ? "bg-cream-soft text-ink font-bold" : "bg-surface text-muted font-semibold",
 );
 
 const rateColorClass = computed(() => {
@@ -48,27 +49,32 @@ const rateColorClass = computed(() => {
 <template>
   <BaseCard :color="isMe ? 'pink' : 'white'" :elevation="isMe ? 'default' : 'flat'">
     <div class="flex items-center gap-4">
-      <span :class="[rankClass, 'w-8 shrink-0 text-center tabular-nums']">
+      <span
+        :class="[
+          rankBadgeClass,
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-body tabular-nums',
+        ]"
+      >
         {{ rank }}
       </span>
 
       <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex items-center gap-2">
-          <span class="min-w-0 truncate text-body font-semibold text-ink">
+          <span class="min-w-0 truncate text-body font-semibold text-ink tracking-tight">
             {{ formatNullableText(nickname) }}
           </span>
           <BasePill v-if="isMe" label="나" color="pink" variant="outline" />
         </div>
-        <p v-if="personaName" class="truncate text-caption text-muted">
+        <p v-if="personaName" class="truncate text-caption text-muted tracking-tight">
           {{ formatNullableText(personaName) }}
         </p>
       </div>
 
       <div class="flex shrink-0 flex-col items-end gap-2">
-        <span class="text-body text-ink tabular-nums">
-          총자산 {{ formatCurrency(totalAsset) }}
+        <span class="text-body font-semibold text-ink tabular-nums">
+          {{ formatCurrency(totalAsset) }}
         </span>
-        <span :class="[rateColorClass, 'text-caption tabular-nums']">
+        <span :class="[rateColorClass, 'text-caption font-semibold tabular-nums']">
           {{ formatRate(returnRate) }}
         </span>
       </div>
