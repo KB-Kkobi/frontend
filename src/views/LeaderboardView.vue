@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { fetchMyInfo } from "@/api/authApi";
 import { fetchFriendLeaderboard, fetchPersonaLeaderboard } from "@/api/leaderboardApi";
 import { fetchPersonas } from "@/api/personaApi";
 import BaseCard from "@/components/common/BaseCard.vue";
@@ -31,6 +32,8 @@ const tabStates = reactive({
 // 리더보드 응답에는 imagePath가 없어 성향 목록에서 한 번만 찾아 캐싱한다.
 const personaImagePath = ref(null);
 const loadedImagePersonaId = ref(null);
+// 동순위(rank 동률)가 존재할 수 있어 myRank 대신 userId로 내 행을 판별한다.
+const myUserId = ref(null);
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentState = computed(() => tabStates[activeTab.value]);
@@ -94,6 +97,13 @@ watch(personaId, (nextPersonaId) => {
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   loadTab(activeTab.value);
+  fetchMyInfo()
+    .then((info) => {
+      myUserId.value = info?.userId ?? null;
+    })
+    .catch(() => {
+      myUserId.value = null;
+    });
 });
 </script>
 
@@ -170,7 +180,7 @@ onMounted(() => {
                 :persona-name="isPersonaTab ? null : item.personaName"
                 :total-asset="item.totalAsset"
                 :return-rate="item.returnRate"
-                :is-me="item.rank === myRank"
+                :is-me="myUserId !== null && item.userId === myUserId"
               />
             </div>
           </div>
