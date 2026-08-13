@@ -13,11 +13,11 @@ import {
 import { isMarketOpen } from "@/utils/market";
 
 const props = defineProps({
-  code: { type: String, default: "005930" },
-  name: { type: String, default: "삼성전자" },
-  market: { type: String, default: "KOSPI" },
+  code: { type: String, required: true },
+  name: { type: String, required: true },
+  market: { type: String, default: "" },
   type: { type: String, default: null },
-  kisSupported: { type: Boolean, default: true },
+  kisSupported: { type: Boolean, required: true },
   price: { type: Number, default: null },
   change: { type: Number, default: null },
   changeRate: { type: Number, default: null },

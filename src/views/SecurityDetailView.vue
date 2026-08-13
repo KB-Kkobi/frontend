@@ -8,6 +8,7 @@ import HoldingCard from "@/components/security/HoldingCard.vue";
 import SecurityInsightCard from "@/components/security/SecurityInsightCard.vue";
 import SecuritySummaryCard from "@/components/security/SecuritySummaryCard.vue";
 import { fetchSecurityDetail, fetchSecurityQuotes } from "@/api/securityApi";
+import { fetchHoldings } from "@/api/trade";
 import { ApiError } from "@/api/http";
 import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
 import { subscribeTick } from "@/api/stockSocket";
@@ -24,14 +25,29 @@ let pollingTimer = null;
 let activeTicker = null;
 let unsubscribeTick = null;
 
-// 보유 종목 mock. 나중에 API(fetchHolding(code))로 교체.
-const MOCK_HOLDINGS = {
-  "005930": { quantity: 10, avgPrice: 70000 },
-};
+async function loadHolding(ticker) {
+  holding.value = null;
 
-function loadHolding(ticker) {
-  const found = MOCK_HOLDINGS[ticker];
-  holding.value = found && found.quantity > 0 ? found : null;
+  try {
+    const response = await fetchHoldings();
+    if (activeTicker !== ticker) return;
+
+    const holdings = Array.isArray(response?.holdings)
+      ? response.holdings
+      : Array.isArray(response)
+        ? response
+        : [];
+    const found = holdings.find((item) => item.ticker === ticker);
+    const quantity = Number(found?.quantity);
+    const avgPrice = Number(found?.averagePrice ?? found?.avgPrice);
+
+    holding.value =
+      quantity > 0 && Number.isFinite(avgPrice)
+        ? { quantity, avgPrice }
+        : null;
+  } catch {
+    if (activeTicker === ticker) holding.value = null;
+  }
 }
 
 function getDetailErrorMessage(error) {
@@ -74,7 +90,7 @@ async function loadSecurity(ticker) {
   isLoading.value = true;
   activeTicker = ticker;
   stopPolling();
-  loadHolding(ticker);
+  void loadHolding(ticker);
 
   try {
     const detail = await fetchSecurityDetail(ticker);

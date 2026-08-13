@@ -27,7 +27,6 @@ import {
   getProductTypeLabel,
   normalizeProductType,
 } from "@/constants/product";
-import { PRODUCT_EXAMPLE_ITEMS } from "@/constants/productExamples";
 import {
   SECURITY_LIST_DEFAULTS,
   SECURITY_TYPE_FILTER_OPTIONS,
@@ -137,7 +136,6 @@ const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
 const isPersonaImageAvailable = ref(true);
 const isFilterOpen = ref(false);
-const isShowingExamples = ref(false);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -229,14 +227,7 @@ async function loadProducts() {
     sort: selectedSort.value,
   });
 
-  const shouldShowExamples = props.standalone && response.content.length === 0;
-  products.value = shouldShowExamples
-    ? PRODUCT_EXAMPLE_ITEMS.map((product) => ({
-        ...product,
-        productType: activeTab.value,
-      }))
-    : response.content;
-  isShowingExamples.value = shouldShowExamples;
+  products.value = response.content;
   securities.value = [];
   currentPage.value = response.page;
   totalElements.value = response.totalElements;
@@ -343,23 +334,14 @@ async function loadList() {
       await loadProducts();
     }
   } catch (error) {
-    const shouldShowExamples = props.standalone && !isSecurityTab.value;
-    products.value = shouldShowExamples
-      ? PRODUCT_EXAMPLE_ITEMS.map((product) => ({
-          ...product,
-          productType: activeTab.value,
-        }))
-      : [];
+    products.value = [];
     securities.value = [];
     quotesByTicker.value = {};
     totalElements.value = 0;
     totalPages.value = 0;
-    isShowingExamples.value = shouldShowExamples;
-    errorMessage.value = shouldShowExamples
-      ? ""
-      : isSecurityTab.value
-        ? getSecurityErrorMessage(error)
-        : getProductErrorMessage(error);
+    errorMessage.value = isSecurityTab.value
+      ? getSecurityErrorMessage(error)
+      : getProductErrorMessage(error);
   } finally {
     isLoading.value = false;
   }
@@ -857,9 +839,6 @@ onMounted(() => {
       v-else-if="!isSecurityTab && products.length"
       class="flex flex-col gap-4"
     >
-      <p v-if="isShowingExamples" class="text-caption text-muted">
-        화면 확인을 위한 예시 상품이에요.
-      </p>
       <ProductListCard
         v-for="product in products"
         :key="product.productId"
