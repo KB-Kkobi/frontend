@@ -27,6 +27,10 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  maxAmount: {
+    type: Number,
+    default: null,
+  },
   step: {
     type: Number,
     required: true,
@@ -44,6 +48,12 @@ const ratio = computed(() =>
   Math.round((props.amount / props.totalAmount) * 100),
 );
 
+const sliderMaximum = computed(() =>
+  props.maxAmount === null
+    ? props.totalAmount
+    : Math.min(props.maxAmount, props.totalAmount),
+);
+
 const colorClasses = computed(() => ({
   yellow: "text-yellow",
   blue: "text-blue",
@@ -57,7 +67,9 @@ const progressClasses = computed(() => ({
 })[props.color]);
 
 function handleInput(event) {
-  emit("update:amount", Number(event.target.value));
+  const nextAmount = Math.min(Number(event.target.value), sliderMaximum.value);
+  event.target.value = String(nextAmount);
+  emit("update:amount", nextAmount);
 }
 </script>
 

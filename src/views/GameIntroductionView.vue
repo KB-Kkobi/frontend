@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { fetchMyInfo } from '@/api/authApi';
 import { fetchGameStatus } from '@/api/gameApi';
 import { ApiError } from '@/api/http';
+import BackButton from '@/components/common/BackButton.vue';
 import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BasePill from '@/components/common/BasePill.vue';
@@ -123,6 +124,10 @@ onMounted(loadGameStatus);
     </div>
 
     <div v-else class="flex flex-col gap-6 py-6">
+      <div>
+        <BackButton />
+      </div>
+
       <header class="flex flex-col gap-2">
         <p class="text-caption text-muted">
           {{ nickname ? `${nickname}님` : '회원님' }}, 반가워요

@@ -9,7 +9,6 @@ import BottomButton from '@/components/common/BottomButton.vue';
 import PageContainer from '@/components/common/PageContainer.vue';
 import GameAssetSlider from '@/components/game/GameAssetSlider.vue';
 import {
-  GAME_ALLOCATION_ADJUSTMENT_PRIORITY,
   GAME_ALLOCATION_STEP,
   GAME_DEPOSIT_INTEREST_RATE,
   GAME_DEPOSIT_MONTHS,
@@ -35,35 +34,31 @@ const assetRatios = computed(() => ({
   stock: (allocation.stock / GAME_SEED_MONEY) * 100,
 }));
 
-function adjustOtherAssets(assetType, adjustmentAmount, shouldIncrease) {
-  const assetPriority = GAME_ALLOCATION_ADJUSTMENT_PRIORITY[assetType];
-  let remainingAdjustment = adjustmentAmount;
+const allocatedAmount = computed(() =>
+  allocation.cash + allocation.deposit + allocation.stock,
+);
 
-  assetPriority.forEach((otherAssetType) => {
-    if (remainingAdjustment === 0) return;
+const remainingAmount = computed(() =>
+  Math.max(GAME_SEED_MONEY - allocatedAmount.value, 0),
+);
 
-    const availableAmount = shouldIncrease
-      ? GAME_SEED_MONEY - allocation[otherAssetType]
-      : allocation[otherAssetType];
-    const appliedAmount = Math.min(remainingAdjustment, availableAmount);
+const remainingRatio = computed(() =>
+  calculateAssetRatio(remainingAmount.value),
+);
 
-    allocation[otherAssetType] += shouldIncrease
-      ? appliedAmount
-      : -appliedAmount;
-    remainingAdjustment -= appliedAmount;
-  });
+const isAllocationComplete = computed(() =>
+  allocatedAmount.value === GAME_SEED_MONEY,
+);
+
+function getMaximumAllocation(assetType) {
+  return allocation[assetType] + remainingAmount.value;
 }
 
 function updateAllocation(assetType, nextAmount) {
-  const changedAmount = nextAmount - allocation[assetType];
-
-  if (changedAmount > 0) {
-    adjustOtherAssets(assetType, changedAmount, false);
-  } else if (changedAmount < 0) {
-    adjustOtherAssets(assetType, Math.abs(changedAmount), true);
-  }
-
-  allocation[assetType] = nextAmount;
+  allocation[assetType] = Math.min(
+    Math.max(nextAmount, 0),
+    getMaximumAllocation(assetType),
+  );
 }
 
 function calculateAssetRatio(amount) {
@@ -83,7 +78,7 @@ function getGameStartErrorMessage(error) {
 }
 
 async function handleStartGame() {
-  if (isSubmitting.value) return;
+  if (isSubmitting.value || !isAllocationComplete.value) return;
 
   isSubmitting.value = true;
   errorMessage.value = '';
@@ -185,6 +180,7 @@ async function handleStartGame() {
             color="yellow"
             :amount="allocation.cash"
             :total-amount="GAME_SEED_MONEY"
+            :max-amount="getMaximumAllocation('cash')"
             :step="GAME_ALLOCATION_STEP"
             @update:amount="updateAllocation('cash', $event)"
           />
@@ -197,6 +193,7 @@ async function handleStartGame() {
             color="blue"
             :amount="allocation.deposit"
             :total-amount="GAME_SEED_MONEY"
+            :max-amount="getMaximumAllocation('deposit')"
             :step="GAME_ALLOCATION_STEP"
             @update:amount="updateAllocation('deposit', $event)"
           />
@@ -208,6 +205,7 @@ async function handleStartGame() {
             color="pink"
             :amount="allocation.stock"
             :total-amount="GAME_SEED_MONEY"
+            :max-amount="getMaximumAllocation('stock')"
             :step="GAME_ALLOCATION_STEP"
             @update:amount="updateAllocation('stock', $event)"
           />
@@ -215,11 +213,36 @@ async function handleStartGame() {
         </div>
       </BaseCard>
 
+      <BaseCard :color="isAllocationComplete ? 'green' : 'yellow'">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex flex-col gap-2">
+            <strong class="text-h2 text-ink">
+              {{ isAllocationComplete ? '배분 완료' : '배분이 아직 부족해요' }}
+            </strong>
+            <p class="text-caption text-muted">
+              <template v-if="isAllocationComplete">
+                시작 자산 100%를 모두 배분했습니다.
+              </template>
+              <template v-else>
+                남은 비율 {{ remainingRatio.toFixed(0) }}%를 원하는 자산에 배분해 주세요.
+              </template>
+            </p>
+          </div>
+          <strong class="shrink-0 text-h2 text-ink tabular-nums">
+            {{ formatCurrency(remainingAmount) }} 남음
+          </strong>
+        </div>
+      </BaseCard>
+
       <p v-if="errorMessage" class="text-caption text-error" role="alert">
         {{ errorMessage }}
       </p>
 
-      <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+      <BottomButton
+        type="submit"
+        color="yellow"
+        :disabled="isSubmitting || !isAllocationComplete"
+      >
         {{ isSubmitting ? '게임을 준비하고 있어요' : '성향 진단 시작하기' }}
       </BottomButton>
     </form>
