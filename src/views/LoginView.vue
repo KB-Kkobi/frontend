@@ -14,8 +14,7 @@ import {
   validateLoginData,
 } from "@/utils/authValidation";
 
-/** @type {import("vue-router").Router} */
-const router = useRouter();
+const { push: pushRoute, replace: replaceRoute } = useRouter();
 const authStore = useAuthStore();
 
 const email = ref("");
@@ -43,7 +42,7 @@ function getLoginErrorMessage(error) {
 }
 
 async function redirectAfterLogin() {
-  await router.replace({ name: "home" });
+  await replaceRoute({ name: "home" });
 }
 
 async function handleLogin() {
@@ -85,11 +84,11 @@ async function handleLogin() {
 }
 
 function handleSignup() {
-  router.push({ name: "signup" });
+  pushRoute({ name: "signup" });
 }
 
 function handleFindPassword() {
-  router.push({ name: "password-reset" });
+  pushRoute({ name: "password-reset" });
 }
 </script>
 
