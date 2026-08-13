@@ -62,7 +62,18 @@ function updateAllocation(assetType, nextAmount) {
 }
 
 function calculateAssetRatio(amount) {
-  return (amount / GAME_SEED_MONEY) * 100;
+  return Math.round((amount / GAME_SEED_MONEY) * 100);
+}
+
+function createGameStartRatios() {
+  const stockRatio = calculateAssetRatio(allocation.stock);
+  const depositRatio = calculateAssetRatio(allocation.deposit);
+
+  return {
+    cashRatio: 100 - stockRatio - depositRatio,
+    stockRatio,
+    depositRatio,
+  };
 }
 
 function getGameStartErrorMessage(error) {
@@ -84,11 +95,7 @@ async function handleStartGame() {
   errorMessage.value = '';
 
   try {
-    const gameStart = await startGame({
-      cashRatio: calculateAssetRatio(allocation.cash),
-      stockRatio: calculateAssetRatio(allocation.stock),
-      depositRatio: calculateAssetRatio(allocation.deposit),
-    });
+    const gameStart = await startGame(createGameStartRatios());
     clearGameCompletionSession();
     saveGameStartSession(gameStart);
     await router.replace({ name: 'game' });
