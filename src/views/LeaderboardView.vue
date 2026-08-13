@@ -45,8 +45,10 @@ const personaId = computed(() => currentState.value.data?.personaId ?? null);
 const personaName = computed(() => currentState.value.data?.personaName ?? null);
 const isPersonaTab = computed(() => activeTab.value === "persona");
 const showPersonaEmptyState = computed(() => isPersonaTab.value && !personaId.value);
+// 나를 제외한 비교 대상이 없을 때만 친구 없음 안내를 보여준다.
+const otherRankings = computed(() => rankings.value.filter((item) => !isMyRow(item)));
 const showFriendsEmptyNotice = computed(
-  () => !isPersonaTab.value && rankings.value.length <= 1,
+  () => !isPersonaTab.value && otherRankings.value.length === 0,
 );
 const participantCount = computed(() => rankings.value.length);
 
@@ -67,6 +69,26 @@ async function loadTab(tabKey) {
   } finally {
     state.isLoading = false;
   }
+}
+
+// 내 행 판별용 userId. 실패해도 순위 비교로 대체되므로 화면 흐름을 막지 않는다.
+async function loadMyUserId() {
+  try {
+    const info = await fetchMyInfo();
+    myUserId.value = info?.userId ?? null;
+  } catch {
+    myUserId.value = null;
+  }
+}
+
+// 수익률이 같으면 서버가 동순위를 부여하므로(assignRanks) userId로 내 행을 판별한다.
+// 내 정보를 못 받아온 경우에만 순위 비교로 대체한다(동순위면 중복 표시될 수 있음).
+function isMyRow(item) {
+  const rowUserId = item?.userId ?? null;
+  if (myUserId.value !== null && rowUserId !== null) {
+    return rowUserId === myUserId.value;
+  }
+  return myRank.value !== null && item?.rank === myRank.value;
 }
 
 // 성향 이미지는 보조 시각 요소이므로 실패해도 화면 흐름을 막지 않는다.
@@ -97,13 +119,7 @@ watch(personaId, (nextPersonaId) => {
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
   loadTab(activeTab.value);
-  fetchMyInfo()
-    .then((info) => {
-      myUserId.value = info?.userId ?? null;
-    })
-    .catch(() => {
-      myUserId.value = null;
-    });
+  loadMyUserId();
 });
 </script>
 
@@ -180,7 +196,7 @@ onMounted(() => {
                 :persona-name="isPersonaTab ? null : item.personaName"
                 :total-asset="item.totalAsset"
                 :return-rate="item.returnRate"
-                :is-me="myUserId !== null && item.userId === myUserId"
+                :is-me="isMyRow(item)"
               />
             </div>
           </div>
