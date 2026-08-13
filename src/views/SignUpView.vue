@@ -202,7 +202,7 @@ async function handleSignup() {
             {{ formError }}
           </p>
 
-          <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+          <BottomButton type="submit" color="pink" :disabled="isSubmitting">
             {{ isSubmitting ? "회원가입 처리 중" : "회원가입" }}
           </BottomButton>
         </div>

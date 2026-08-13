@@ -24,7 +24,7 @@ const hasReserveType = computed(
 </script>
 
 <template>
-  <BaseCard color="white">
+  <BaseCard color="white" elevation="flat">
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-4">
         <span class="text-caption text-muted">가입 기간</span>

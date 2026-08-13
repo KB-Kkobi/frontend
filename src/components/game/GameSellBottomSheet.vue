@@ -140,7 +140,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
       ></button>
 
       <section
-        class="game-sell-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-base px-5 pb-5 pt-3"
+        class="game-sell-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pb-5 pt-3 shadow-popup"
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-sell-title"

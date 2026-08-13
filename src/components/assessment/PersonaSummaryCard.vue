@@ -39,7 +39,7 @@ const axisBadges = computed(() =>
 </script>
 
 <template>
-  <BaseCard color="white">
+  <BaseCard color="white" elevation="highlight">
     <div class="flex flex-col items-center gap-4 text-center">
       <p v-if="feature" class="text-caption text-muted">{{ feature }}</p>
 

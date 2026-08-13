@@ -185,7 +185,7 @@ loadOrderable().finally(() => {
     </div>
 
     <!-- 매수/매도 토글 -->
-    <BaseCard color="white">
+    <BaseCard color="white" elevation="flat">
       <TradeSideToggle :side="side" @update:side="(v) => (side = v)" />
     </BaseCard>
 

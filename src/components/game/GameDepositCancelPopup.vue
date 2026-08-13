@@ -67,7 +67,7 @@ function confirmCancel() {
       ></button>
 
       <section
-        class="fixed inset-x-5 top-1/2 z-50 mx-auto flex max-h-[90dvh] max-w-[390px] -translate-y-1/2 flex-col gap-6 overflow-y-auto rounded-3xl bg-white px-5 py-7 shadow-card"
+        class="fixed inset-x-5 top-1/2 z-50 mx-auto flex max-h-[90dvh] max-w-[390px] -translate-y-1/2 flex-col gap-6 overflow-y-auto rounded-3xl bg-white px-5 py-7 shadow-popup"
         role="dialog"
         aria-modal="true"
         aria-labelledby="deposit-cancel-title"

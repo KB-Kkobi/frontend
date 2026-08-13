@@ -47,7 +47,7 @@ function handlePeriodSelect(key) {
 </script>
 
 <template>
-  <BaseCard>
+  <BaseCard elevation="highlight">
     <div class="flex flex-col gap-4">
       <!-- 헤더: 종목명 · 시장 · 코드 -->
       <div class="flex flex-col gap-2">

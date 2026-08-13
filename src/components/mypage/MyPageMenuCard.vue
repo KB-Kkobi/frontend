@@ -16,22 +16,22 @@ function handleSelect(item) {
 </script>
 
 <template>
-  <BaseCard color="white">
-    <ul class="flex flex-col gap-2">
+  <BaseCard color="white" elevation="flat">
+    <ul class="flex flex-col">
       <li
         v-for="(item, index) in items"
         :key="item.id"
-        :class="index ? 'border-t border-line' : ''"
+        :class="index ? 'border-t border-line-soft' : ''"
       >
         <button
           type="button"
-          class="flex w-full items-center gap-4 py-3 text-left"
+          class="flex min-h-12 w-full items-center gap-4 py-3 text-left"
           @click="handleSelect(item)"
         >
           <span class="shrink-0 text-muted" aria-hidden="true">
             <svg
               v-if="item.icon === 'report'"
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -39,7 +39,7 @@ function handleSelect(item) {
             </svg>
             <svg
               v-else-if="item.icon === 'notification'"
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -47,19 +47,8 @@ function handleSelect(item) {
               <path d="M10 20H14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
             </svg>
             <svg
-              v-else-if="item.icon === 'friends'"
-              class="h-6 w-6"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.75" />
-              <circle cx="17" cy="10" r="2" stroke="currentColor" stroke-width="1.75" />
-              <path d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-              <path d="M15 15C17.8 15 20 17.2 20 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            </svg>
-            <svg
               v-else-if="item.icon === 'notice'"
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -68,7 +57,7 @@ function handleSelect(item) {
             </svg>
             <svg
               v-else-if="item.icon === 'support'"
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -76,7 +65,7 @@ function handleSelect(item) {
             </svg>
             <svg
               v-else-if="item.icon === 'policy'"
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -84,7 +73,7 @@ function handleSelect(item) {
             </svg>
             <svg
               v-else
-              class="h-6 w-6"
+              class="h-5 w-5"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -93,7 +82,7 @@ function handleSelect(item) {
             </svg>
           </span>
 
-          <span class="min-w-0 flex-1 text-body font-semibold text-ink">
+          <span class="min-w-0 flex-1 text-body text-ink">
             {{ item.label }}
           </span>
 
@@ -106,12 +95,18 @@ function handleSelect(item) {
 
           <svg
             v-else
-            class="h-6 w-6 shrink-0 text-muted"
+            class="h-5 w-5 shrink-0 text-muted"
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"
           >
-            <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M9 6L15 12L9 18"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </button>
       </li>

@@ -94,7 +94,7 @@ function handleFindPassword() {
 
 <template>
   <PageContainer>
-    <div class="flex flex-1 flex-col justify-center gap-6 py-6">
+    <div class="flex flex-1 flex-col justify-end gap-12 py-6">
       <div
         class="flex items-center justify-center"
         aria-label="서비스 로고 영역"
@@ -102,49 +102,60 @@ function handleFindPassword() {
         <img
           :src="naruLogoImage"
           alt="나루 로고"
-          class="w-2/3 object-contain"
+          class="w-1/2 object-contain"
         />
       </div>
 
       <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
         <BaseCard color="white">
-          <div class="flex flex-col gap-4">
-            <BaseTextField
-              id="login-email"
-              v-model="email"
-              label="이메일"
-              type="email"
-              placeholder="이메일을 입력해주세요"
-              autocomplete="email"
-              inputmode="email"
-              icon="email"
-              :error-message="emailError"
-              reserve-message-space
-            />
+          <div class="flex flex-col gap-6">
+            <div class="flex flex-col gap-4">
+              <BaseTextField
+                id="login-email"
+                v-model="email"
+                label="이메일"
+                type="email"
+                placeholder="이메일을 입력해주세요"
+                autocomplete="email"
+                inputmode="email"
+                icon="email"
+                :error-message="emailError"
+                :show-message="false"
+              />
 
-            <BaseTextField
-              id="login-password"
-              v-model="password"
-              label="비밀번호"
-              type="password"
-              placeholder="비밀번호를 입력해주세요"
-              autocomplete="current-password"
-              icon="password"
-              :error-message="passwordError"
-              reserve-message-space
-            />
+              <div class="flex flex-col gap-2">
+                <BaseTextField
+                  id="login-password"
+                  v-model="password"
+                  label="비밀번호"
+                  type="password"
+                  placeholder="비밀번호를 입력해주세요"
+                  autocomplete="current-password"
+                  icon="password"
+                  :error-message="passwordError"
+                  :show-message="false"
+                />
 
-            <div class="flex justify-end">
-              <button
-                type="button"
-                class="text-caption text-muted"
-                @click="handleFindPassword"
-              >
-                비밀번호 찾기 ›
-              </button>
+              <div class="flex items-start justify-between gap-2">
+                <p class="min-w-0 flex-1 text-caption text-error" role="alert" aria-live="polite">
+                  <span v-if="emailError || passwordError">
+                    {{ emailError || passwordError }}
+                  </span>
+                  <span v-else aria-hidden="true">&nbsp;</span>
+                </p>
+
+                <button
+                  type="button"
+                  class="shrink-0 text-caption text-muted"
+                  @click="handleFindPassword"
+                >
+                  비밀번호 찾기 ›
+                </button>
+              </div>
+              </div>
             </div>
 
-            <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+            <BottomButton type="submit" color="pink" :disabled="isSubmitting">
               {{ isSubmitting ? "로그인 중" : "로그인" }}
             </BottomButton>
           </div>

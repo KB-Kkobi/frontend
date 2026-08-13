@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import HomePersonaSummaryCard from "@/components/home/HomePersonaSummaryCard.vue";
 import HomeAssessmentIntroCard from "@/components/home/HomeAssessmentIntroCard.vue";
 import { fetchMyInfo } from "@/api/authApi";
@@ -33,14 +34,14 @@ onMounted(loadHomeData);
 </script>
 
 <template>
-  <PageContainer color="page-warm">
+  <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <header class="flex flex-col gap-1">
+      <PageHeader>
         <h1 class="text-h1 text-ink">
           안녕하세요<span v-if="nickname">, {{ nickname }}님</span>! 👋
         </h1>
         <p class="text-caption text-muted">오늘도 현명한 투자를 응원해요! 💛</p>
-      </header>
+      </PageHeader>
 
       <BaseCard v-if="isLoading" color="white">
         <div class="flex flex-col gap-2" role="status">
@@ -49,7 +50,7 @@ onMounted(loadHomeData);
         </div>
       </BaseCard>
 
-      <BaseCard v-else-if="errorMessage" color="pink">
+      <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
         <div class="flex flex-col gap-2" role="alert">
           <h2 class="text-h2 text-ink">정보를 불러오지 못했어요</h2>
           <p class="text-caption text-muted">{{ errorMessage }}</p>

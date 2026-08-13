@@ -33,7 +33,8 @@
 | 보조 텍스트              | `text-muted`                                                         |
 | 테두리·구분선            | `border-line` · `border-line-soft`(BaseCard 흰색 전용, 크림톤)       |
 | 카드 배경                | `bg-surface`                                                         |
-| 페이지 배경              | `bg-page`(그라데이션) · `bg-page-warm`(리포트류 warm 그라데이션) · `bg-base`(단색) |
+| 세그먼트 트랙 배경       | `bg-segment`                                                         |
+| 페이지 배경              | `bg-page` · `bg-page-warm`(옅은 아이보리→흰색 그라데이션) · `bg-base`(옅은 아이보리 단색) |
 
 ## 타이포그래피
 
@@ -62,7 +63,8 @@
 | 컴포넌트        | 용도                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
-| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color` prop(`white`/`pink`/`blue`/`green`/`yellow`/`lavender`/`cream`)으로 배경 선택 |
+| `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop                              |
+| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color`로 배경, `elevation`(`flat`/`default`/`highlight`)으로 흰 카드 깊이 선택 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText` prop, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
@@ -83,7 +85,8 @@
 | `SecurityInsightCard` | `security/SecurityInsightCard.vue` | "알아두면 좋아요" 인사이트 카드. `period`, `productName`, `averageDailyMove`, `maxDrawdown`, `description` props |
 | `PriceChart`          | `security/PriceChart.vue`          | 캔들스틱 차트(lightweight-charts). `code`(6자리) + `period`(D/W/M) props, 기간에 따라 자동 재조회 |
 | `TransactionCard`     | `transaction/TransactionCard.vue`  | 거래 내역·대기 주문 공통 카드. `name`/`subLabel`/`pill`/`datetime`/`stats`/`isCancelable`/`cancelText` props, `@cancel` emit |
-| `MyPageMenuCard`      | `mypage/MyPageMenuCard.vue`         | 마이페이지의 아이콘·라벨·이동 화살표 메뉴 목록. `items` prop, `@select` emit                    |
+| `MyPageMenuCard`      | `mypage/MyPageMenuCard.vue`         | 마이페이지의 아이콘·라벨 메뉴 목록. `items` prop, `@select` emit                                |
+| `MyPagePersonaCard`   | `mypage/MyPagePersonaCard.vue`      | 마이페이지의 성향 요약 이동 카드. 캐릭터·성향명·3축 배지를 표시하고 `@select` emit              |
 | `TradeSideToggle`     | `trade/TradeSideToggle.vue`         | 매수/매도 전체 폭 세그먼트 토글. `side`('buy'\|'sell') prop, `@update:side` emit. 매수=bg-pink, 매도=bg-surface |
 | `TradeStockHeader`    | `trade/TradeStockHeader.vue`        | 종목 헤더 카드(BaseCard). `name`/`code`/`currentPrice`/`changeRate` props. name=종목명(text-h2), code=종목코드(text-caption text-muted, 선택). 등락률 양수=text-profit, 음수=text-loss |
 | `TradeMethodToggle`   | `trade/TradeMethodToggle.vue`       | 시장가/지정가 세그먼트 토글. `method`('market'\|'limit') prop, `@update:method` emit. 선택=bg-yellow |
@@ -152,3 +155,42 @@ src/
 ---
 
 > 토큰 값의 원본은 `tailwind.config.js`. 토큰이 바뀌면 이 파일과 함께 업데이트.
+
+## 확정 디자인 시스템
+
+성향 진단 리포트의 차분한 아이보리 배경과 흰색 카드 조합을 전체 앱의 기준으로 사용한다. 색상 비중은 따뜻한 거의 흰색 배경 60%, 흰색 또는 옅은 틴트 카드 30%, 핑크 행동 강조 10%를 원칙으로 한다.
+
+### 배경과 카드
+
+- 앱 외부 배경은 `bg-white`, 앱 내부 페이지 배경은 `bg-page`(`#FDFDFD`)를 사용한다.
+- `bg-page-warm`은 기존 화면 호환용 별칭이다. 새 화면에서는 사용하지 않는다.
+- 일반 흰색 카드는 `<BaseCard color="white">`를 사용한다. 기본값은 윤곽선 없이 `shadow-card`를 사용한다.
+- elevation이 필요 없는 단순 목록은 `<BaseCard color="white" elevation="flat">`을 사용하며 `border-line-soft` 윤곽선만 표시한다.
+- 핵심 요약 카드에만 `<BaseCard color="white" elevation="highlight">`을 허용한다. 한 화면에 반복 사용하지 않는다.
+- 정보·성공·경고 카드는 각각 `blue-soft`, `green-soft`, `yellow-soft`를 의미가 있을 때만 사용하며 그림자를 적용하지 않는다.
+- `pink-soft`는 브랜드 선택이나 제한적인 강조에만 사용한다. 넓은 페이지 영역이나 반복 카드 배경으로 사용하지 않는다.
+- 팝업은 `bg-white shadow-popup`을 사용한다. `shadow-popup`은 일반 콘텐츠 카드에 사용하지 않는다.
+
+### 경계와 그림자
+
+- `border-line`은 입력창과 버튼처럼 조작 경계가 분명해야 하는 요소에 사용한다.
+- `border-line-soft`는 카드 외곽선과 카드 내부 구분선에 사용한다.
+- `shadow-card`는 `develop` 기준의 크림 톤 그림자다.
+- `shadow-highlight`는 화면의 핵심 카드 한정이며 `develop`과 같은 그림자 값을 사용한다.
+- `shadow-popup`은 모달과 팝업 레이어 전용이며 `develop`과 같은 그림자 값을 사용한다.
+- 그림자가 적용된 카드에는 윤곽선을 사용하지 않는다.
+
+### 텍스트와 행동
+
+- 페이지 제목은 `text-h1 text-ink`, 섹션 제목은 `text-h2 text-ink`를 사용한다.
+- 본문은 `text-body text-ink`, 보조 문구는 `text-caption text-muted`를 사용한다.
+- `text-navy`는 성향 리포트의 핵심 유형명처럼 제한된 강조 제목에만 사용한다.
+- 주요 행동은 `<BottomButton color="pink">`, 보조 행동은 `<BottomButton color="white">`를 사용한다.
+- 블루·그린·옐로우 버튼은 각각 손실·매도, 성공, 경고처럼 색 의미가 명확한 경우에만 사용한다.
+- 오류에는 `text-error`, 수익과 손실 수치에는 각각 `text-profit`, `text-loss`를 사용한다. 핑크 틴트 카드를 오류 표현으로 대체하지 않는다.
+
+### 공통 컴포넌트
+
+- 최상위 탭 화면의 중앙 제목과 설명은 `PageHeader`를 사용한다.
+- 상세 화면의 뒤로가기 헤더는 `PageHeader`를 변형하지 않고 별도 상세 헤더 구조를 유지한다.
+- 공통 컴포넌트를 사용하는 화면에서 배경, 그림자, 윤곽선, radius를 임의 클래스로 덮어쓰지 않는다.

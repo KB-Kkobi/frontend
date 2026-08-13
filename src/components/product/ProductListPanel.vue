@@ -16,6 +16,7 @@ import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
@@ -26,6 +27,7 @@ import {
   getProductTypeLabel,
   normalizeProductType,
 } from "@/constants/product";
+import { PRODUCT_EXAMPLE_ITEMS } from "@/constants/productExamples";
 import {
   SECURITY_LIST_DEFAULTS,
   SECURITY_TYPE_FILTER_OPTIONS,
@@ -94,7 +96,7 @@ function parseInitialOptionValues(value, options) {
 }
 
 const initialQuery = route.query;
-const defaultTab = props.standalone ? LIST_TABS.SECURITY : LIST_TABS.DEPOSIT;
+const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.DEPOSIT;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 if (!props.standalone && initialSavingTerms.length === 0) {
   initialSavingTerms.push(12);
@@ -135,6 +137,7 @@ const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
 const isPersonaImageAvailable = ref(true);
 const isFilterOpen = ref(false);
+const isShowingExamples = ref(false);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -226,7 +229,14 @@ async function loadProducts() {
     sort: selectedSort.value,
   });
 
-  products.value = response.content;
+  const shouldShowExamples = props.standalone && response.content.length === 0;
+  products.value = shouldShowExamples
+    ? PRODUCT_EXAMPLE_ITEMS.map((product) => ({
+        ...product,
+        productType: activeTab.value,
+      }))
+    : response.content;
+  isShowingExamples.value = shouldShowExamples;
   securities.value = [];
   currentPage.value = response.page;
   totalElements.value = response.totalElements;
@@ -333,14 +343,23 @@ async function loadList() {
       await loadProducts();
     }
   } catch (error) {
-    products.value = [];
+    const shouldShowExamples = props.standalone && !isSecurityTab.value;
+    products.value = shouldShowExamples
+      ? PRODUCT_EXAMPLE_ITEMS.map((product) => ({
+          ...product,
+          productType: activeTab.value,
+        }))
+      : [];
     securities.value = [];
     quotesByTicker.value = {};
     totalElements.value = 0;
     totalPages.value = 0;
-    errorMessage.value = isSecurityTab.value
-      ? getSecurityErrorMessage(error)
-      : getProductErrorMessage(error);
+    isShowingExamples.value = shouldShowExamples;
+    errorMessage.value = shouldShowExamples
+      ? ""
+      : isSecurityTab.value
+        ? getSecurityErrorMessage(error)
+        : getProductErrorMessage(error);
   } finally {
     isLoading.value = false;
   }
@@ -512,14 +531,14 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-6" :class="standalone ? 'py-6' : ''">
-    <header v-if="standalone" class="flex flex-col gap-2 text-center">
+    <PageHeader v-if="standalone">
       <h1 class="text-h1 text-ink">상품</h1>
       <p class="text-caption text-muted">
         나에게 맞는 예금·적금·증권 상품을 확인해 보세요.
       </p>
-    </header>
+    </PageHeader>
 
-    <BaseCard v-if="standalone" color="white">
+    <BaseCard v-if="standalone" color="white" elevation="highlight">
       <div v-if="isAssessmentLoading" class="flex flex-col gap-2" role="status">
         <p class="text-caption text-muted">성향</p>
         <h2 class="text-h2 text-ink">나의 투자 성향을 불러오는 중이에요</h2>
@@ -807,7 +826,7 @@ onMounted(() => {
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">
@@ -838,6 +857,9 @@ onMounted(() => {
       v-else-if="!isSecurityTab && products.length"
       class="flex flex-col gap-4"
     >
+      <p v-if="isShowingExamples" class="text-caption text-muted">
+        화면 확인을 위한 예시 상품이에요.
+      </p>
       <ProductListCard
         v-for="product in products"
         :key="product.productId"

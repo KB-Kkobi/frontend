@@ -67,7 +67,7 @@ function handleSelect() {
     @keydown.enter="handleSelect"
     @keydown.space.prevent="handleSelect"
   >
-    <BaseCard color="white">
+    <BaseCard color="white" elevation="flat">
       <div class="flex items-start justify-between gap-4">
         <div class="flex min-w-0 flex-col gap-2">
           <div class="flex items-center gap-2">

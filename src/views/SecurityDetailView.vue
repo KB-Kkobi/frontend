@@ -161,7 +161,7 @@ function handleTrade(side) {
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-2" role="alert">
         <h2 class="text-h2 text-ink">증권 정보를 불러오지 못했어요</h2>
         <p class="text-caption text-muted">{{ errorMessage }}</p>

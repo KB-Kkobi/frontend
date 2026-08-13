@@ -22,8 +22,8 @@ const COLOR_CLASSES = {
   blue: "bg-blue text-white",
   green: "bg-green text-white",
   yellow: "bg-yellow text-ink",
-  white: "bg-surface text-ink border border-line",
-  danger: "bg-white text-error border border-line",
+  white: "border border-line bg-white text-ink",
+  danger: "border border-line bg-white text-error",
 };
 
 const SHAPE_CLASSES = {
