@@ -41,7 +41,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <BaseCard color="white">
+  <BaseCard color="white" elevation="flat">
     <div class="flex flex-col gap-4">
       <div class="flex justify-between items-start">
         <div class="flex flex-col gap-2">

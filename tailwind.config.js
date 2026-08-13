@@ -40,17 +40,13 @@ export default {
       // ── 중립색 (회색 4 + 배경 1) ──
       ink: "#1F2430", // 제목·본문 텍스트
       muted: "#8B8A85", // 보조 텍스트·placeholder
-      line: { DEFAULT: "#E4E3E0", soft: "#FFF5E6" }, // 테두리(soft = 카드용 크림톤)
+      line: { DEFAULT: "#E4E3E0", soft: "#ECEEF1" }, // 중성 윤곽선과 카드 내부 구분선
       surface: "#F5F4F2", // 카드 배경
-      base: "#FBFBFB", // 페이지 배경(단색)
+      segment: "#F5F5F5", // 세그먼트 선택바 트랙 배경
+      base: "#FDFDFD", // 앱 내부 단색 페이지 배경
     },
 
     extend: {
-      spacing: {
-        "pill-y": "8px",
-        "pill-x": "16px",
-      },
-
       fontFamily: {
         sans: ["Pretendard", "system-ui", "-apple-system", "sans-serif"],
       },
@@ -70,10 +66,10 @@ export default {
       },
 
       backgroundImage: {
-        // 페이지 배경 그라데이션 (흰색 → 크림)
-        page: "linear-gradient(180deg, #FDFAE9 0%,  #FFFFFF 100%)",
-        // 리포트류 화면 전용 warm 그라데이션 (연회색 → 크림)
-        "page-warm": "linear-gradient(180deg, #FCFCFC 0%, #FFFAE5 100%)",
+        // 페이지 배경 그라데이션 (옅은 아이보리 → 흰색)
+        page: "linear-gradient(180deg, #FDFDFD 0%, #FDFDFD 100%)",
+        // 리포트류 화면도 동일한 배경 톤 사용
+        "page-warm": "linear-gradient(180deg, #FDFDFD 0%, #FDFDFD 100%)",
       },
 
       spacing: {
@@ -83,8 +79,10 @@ export default {
       },
 
       boxShadow: {
-        // BaseCard(color="white") 전용 크림 톤 elevation
-        card: "0 10px 26px 0 rgba(214, 180, 90, 0.16)",
+        // 흰색 카드와 팝업이 배경에서 부드럽게 분리되는 중성 elevation
+        card: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
+        highlight: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
+        popup: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
       },
     },
   },

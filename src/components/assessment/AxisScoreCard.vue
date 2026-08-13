@@ -35,14 +35,14 @@ const orderedAxes = computed(() =>
         <AxisRadarChart :axes="orderedAxes" />
       </div>
 
-      <div class="grid grid-cols-3 divide-x divide-white/40 rounded-2xl bg-pink p-4">
+      <div class="grid grid-cols-3 divide-x divide-line rounded-2xl bg-pink-soft p-4">
         <div
           v-for="axis in orderedAxes"
           :key="axis.key"
           class="flex flex-col items-center gap-2"
         >
-          <span class="text-caption text-white">{{ axis.label }}</span>
-          <span class="text-h2 text-white tabular-nums">{{ axis.value }}</span>
+          <span class="text-caption text-muted">{{ axis.label }}</span>
+          <span class="text-h1 font-bold text-pink tabular-nums">{{ axis.value }}</span>
         </div>
       </div>
     </div>

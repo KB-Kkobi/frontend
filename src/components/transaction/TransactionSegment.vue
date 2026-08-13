@@ -13,8 +13,8 @@ const SEGMENTS = [
   { key: 'pending', label: '대기중 주문' },
 ]
 
-const SELECTED_CLASSES = 'bg-yellow text-ink font-semibold'
-const UNSELECTED_CLASSES = 'text-muted font-normal'
+const SELECTED_CLASSES = 'bg-pink text-white'
+const UNSELECTED_CLASSES = 'text-ink'
 
 function handleSelect(key) {
   emit('update:modelValue', key)
@@ -22,13 +22,13 @@ function handleSelect(key) {
 </script>
 
 <template>
-  <div class="flex rounded-full bg-surface p-segment-p">
+  <div class="flex rounded-3xl bg-segment p-segment-p">
     <button
       v-for="segment in SEGMENTS"
       :key="segment.key"
       type="button"
       :class="[
-        'flex-1 rounded-full py-pill-y px-pill-x text-body tracking-tight text-center',
+        'flex-1 rounded-3xl px-4 py-3 text-center text-button',
         modelValue === segment.key ? SELECTED_CLASSES : UNSELECTED_CLASSES,
       ]"
       @click="handleSelect(segment.key)"

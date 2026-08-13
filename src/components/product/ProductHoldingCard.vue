@@ -48,7 +48,7 @@ function handleSelect() {
     @keydown.enter.prevent="handleSelect"
     @keydown.space.prevent="handleSelect"
   >
-    <BaseCard color="white">
+    <BaseCard color="white" elevation="flat">
       <article class="flex flex-col gap-4">
         <div class="flex items-start justify-between gap-4">
           <div class="flex flex-col gap-2">

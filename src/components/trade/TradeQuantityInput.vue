@@ -94,7 +94,7 @@ function isQuickSelected(opt) {
         :class="[
           'flex-1 rounded-full py-pill-y px-pill-x text-caption text-center transition-colors',
           isQuickSelected(opt)
-            ? 'bg-yellow text-ink font-semibold'
+            ? 'bg-pink-soft text-pink font-semibold'
             : 'bg-surface text-muted font-normal',
         ]"
         @click="handleQuickSelect(opt)"

@@ -1,6 +1,5 @@
 <script setup>
 import BaseCard from "@/components/common/BaseCard.vue";
-import BasePill from "@/components/common/BasePill.vue";
 import {
   formatCurrency,
   formatInterestRate,
@@ -27,47 +26,34 @@ function handleSelect() {
 </script>
 
 <template>
-  <article
-    role="button"
-    tabindex="0"
-    :aria-label="`${formatNullableText(product.productName)} 상세 보기`"
-    @click="handleSelect"
-    @keydown.enter="handleSelect"
-    @keydown.space.prevent="handleSelect"
-  >
-    <BaseCard color="white">
+  <article class="relative">
+    <BaseCard color="white" elevation="flat">
       <div v-if="variant === 'catalog'" class="flex items-center gap-4">
         <div class="flex min-w-0 flex-1 flex-col gap-2">
           <p class="text-caption text-muted">
             {{ formatNullableText(product.financialCompanyName) }}
           </p>
-          <h3 class="text-h2 text-ink">
+          <h3 class="text-h2 text-navy">
             {{ formatNullableText(product.productName) }}
           </h3>
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center text-caption text-muted tabular-nums">
             <span class="text-caption text-muted tabular-nums">
-              {{ product.savingTerm ? `${product.savingTerm}개월` : "—" }}
+              {{ product.savingTerm ? `${product.savingTerm}개월` : "-" }}
             </span>
-            <BasePill
-              v-if="product.reserveTypeName"
-              :label="product.reserveTypeName"
-              color="blue"
-              variant="ghost"
-            />
           </div>
         </div>
 
         <dl class="flex shrink-0">
-          <div class="flex flex-col gap-2 pr-4">
+          <div class="flex flex-col items-center gap-2 pr-4 text-center">
             <dt class="text-caption text-muted">기본금리</dt>
             <dd class="text-h2 text-profit tabular-nums">
-              {{ formatInterestRate(product.interestRate) }}
+              연 {{ formatInterestRate(product.interestRate) }}
             </dd>
           </div>
-          <div class="flex flex-col gap-2 border-l border-line pl-4">
+          <div class="flex flex-col items-center gap-2 border-l border-line pl-4 text-center">
             <dt class="text-caption text-muted">최고금리</dt>
             <dd class="text-h2 text-profit tabular-nums">
-              {{ formatInterestRate(product.maximumInterestRate) }}
+              연 {{ formatInterestRate(product.maximumInterestRate) }}
             </dd>
           </div>
         </dl>
@@ -118,5 +104,11 @@ function handleSelect() {
         </p>
       </div>
     </BaseCard>
+    <button
+      type="button"
+      class="absolute inset-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink"
+      :aria-label="`${formatNullableText(product.productName)} 상세 보기`"
+      @click="handleSelect"
+    />
   </article>
 </template>

@@ -102,7 +102,7 @@ onMounted(loadGameStatus);
       class="flex flex-1 items-center justify-center py-6"
       role="alert"
     >
-      <BaseCard color="pink">
+      <BaseCard color="white" elevation="flat">
         <div class="flex flex-col gap-4">
           <div class="flex items-start gap-4">
             <BaseAlertIcon class="h-6 w-6 shrink-0 text-error" />
@@ -206,7 +206,7 @@ onMounted(loadGameStatus);
         </BaseCard>
       </section>
 
-      <BaseCard color="pink">
+      <BaseCard color="yellow">
         <div class="flex items-start gap-4">
           <BaseAlertIcon class="h-6 w-6 shrink-0 text-pink" />
           <div class="flex flex-col gap-2">

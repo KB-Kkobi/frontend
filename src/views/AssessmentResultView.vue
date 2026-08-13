@@ -47,7 +47,7 @@ onMounted(loadAssessmentResult);
 </script>
 
 <template>
-  <PageContainer color="page-warm">
+  <PageContainer>
     <div class="flex flex-col gap-6 py-6">
       <div class="flex items-center gap-2">
         <BackButton />
@@ -75,7 +75,7 @@ onMounted(loadAssessmentResult);
         </div>
       </BaseCard>
 
-      <BaseCard v-else-if="errorMessage" color="pink">
+      <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
         <div class="flex flex-col gap-2" role="alert">
           <h2 class="text-h2 text-ink">진단 결과를 불러오지 못했어요</h2>
           <p class="text-caption text-muted">{{ errorMessage }}</p>

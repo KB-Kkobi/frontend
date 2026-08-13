@@ -133,7 +133,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">상품 상세를 확인할 수 없어요</h2>
@@ -144,7 +144,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
     </BaseCard>
 
     <template v-else-if="holding">
-      <BaseCard color="white">
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
             <div class="flex items-center gap-4">
@@ -287,7 +287,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
         </div>
       </BaseCard>
 
-      <BaseCard v-if="!isSaving" color="pink">
+      <BaseCard v-if="!isSaving" color="yellow">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-profit">아직 만기가 아니에요</h2>
           <p class="text-caption text-muted">

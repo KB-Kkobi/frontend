@@ -4,6 +4,12 @@ import {
   saveAuthSession,
 } from "@/utils/authStorage";
 
+/**
+ * @typedef {Object} ApiErrorData
+ * @property {Record<string, string>=} fieldErrors
+ * @property {{ code?: string, message?: string }=} error
+ */
+
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const AUTH_REFRESH_PATH = "/api/auth/refresh";
 let refreshRequest = null;
@@ -15,6 +21,11 @@ export function resolveApiUrl(path) {
 }
 
 export class ApiError extends Error {
+  /**
+   * @param {string} message
+   * @param {number} status
+   * @param {ApiErrorData|null} data
+   */
   constructor(message, status, data = null) {
     super(message);
     this.name = "ApiError";

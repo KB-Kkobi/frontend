@@ -21,7 +21,7 @@ function handleSelect(value) {
       :class="[
         'flex-1 rounded-xl py-3 text-button transition-colors',
         props.method === 'market'
-          ? 'bg-yellow text-ink font-semibold'
+          ? 'bg-pink-soft text-pink font-semibold'
           : 'bg-transparent text-muted font-normal',
       ]"
       @click="handleSelect('market')"
@@ -33,7 +33,7 @@ function handleSelect(value) {
       :class="[
         'flex-1 rounded-xl py-3 text-button transition-colors',
         props.method === 'limit'
-          ? 'bg-yellow text-ink font-semibold'
+          ? 'bg-pink-soft text-pink font-semibold'
           : 'bg-transparent text-muted font-normal',
       ]"
       @click="handleSelect('limit')"

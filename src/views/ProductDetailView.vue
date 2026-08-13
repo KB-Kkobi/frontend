@@ -131,7 +131,7 @@ watch(
         </div>
       </BaseCard>
 
-      <BaseCard v-else-if="errorState" color="pink">
+      <BaseCard v-else-if="errorState" color="white" elevation="flat">
         <div class="flex flex-col gap-4" role="alert">
           <div class="flex flex-col gap-2">
             <h2 class="text-h2 text-ink">{{ errorState.title }}</h2>
@@ -146,7 +146,7 @@ watch(
       </BaseCard>
 
       <template v-else-if="product">
-        <BaseCard color="white">
+        <BaseCard color="white" elevation="highlight">
           <div class="flex flex-col gap-4">
             <div class="flex flex-col gap-2">
               <p class="text-caption font-semibold text-pink">
@@ -209,7 +209,7 @@ watch(
         <section class="flex flex-col gap-4">
           <h2 class="text-h2 text-ink">상품 안내</h2>
 
-          <BaseCard color="pink">
+          <BaseCard color="blue">
             <div class="flex flex-col gap-2">
               <h3 class="text-h2 text-ink">우대 조건</h3>
               <p class="whitespace-pre-line text-body text-ink">

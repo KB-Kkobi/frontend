@@ -83,7 +83,7 @@ onMounted(loadHoldings);
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">보유 상품을 불러오지 못했어요</h2>

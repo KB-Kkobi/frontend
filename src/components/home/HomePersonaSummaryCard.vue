@@ -69,7 +69,7 @@ function handleViewDetail() {
 </script>
 
 <template>
-  <BaseCard color="white">
+  <BaseCard color="white" elevation="highlight">
     <div class="flex flex-col gap-4">
       <h2 class="text-h2 text-ink">내 투자 성향</h2>
 

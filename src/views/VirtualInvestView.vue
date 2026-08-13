@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageContainer from '@/components/common/PageContainer.vue'
+import PageHeader from '@/components/common/PageHeader.vue'
 import TabBar from '@/components/common/TabBar.vue'
 
 const route = useRoute()
@@ -32,9 +33,9 @@ function handleTabChange(key) {
   <PageContainer>
     <div
       v-if="isTabBarVisible"
-      class="sticky top-0 z-10 -mx-5 flex flex-col gap-4 bg-base px-5 pb-4 pt-6"
+      class="sticky top-0 z-10 -mx-5 flex flex-col gap-4 bg-page px-5 pb-4 pt-6"
     >
-      <h1 class="text-h1 text-ink">가상투자</h1>
+      <PageHeader title="가상투자" />
       <TabBar :model-value="activeTab" :tabs="tabs" @update:model-value="handleTabChange" />
     </div>
     <RouterView v-slot="{ Component }">

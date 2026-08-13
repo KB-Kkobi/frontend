@@ -39,7 +39,7 @@ function handleCancel() {
       @click.self="handleCancel"
     >
       <div
-        class="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-base pt-8 px-4 pb-4"
+        class="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white pt-8 px-4 pb-4 shadow-popup"
       >
         <p class="text-h2 text-ink text-center tracking-tight">
           {{ message }}

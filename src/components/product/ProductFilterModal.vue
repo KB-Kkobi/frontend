@@ -90,7 +90,7 @@ watch(
       @click.self="handleClose"
     >
       <section
-        class="flex max-h-screen w-full max-w-[430px] flex-col gap-6 overflow-y-auto rounded-t-3xl bg-base pt-8 px-4 pb-4"
+        class="flex max-h-screen w-full max-w-[430px] flex-col gap-6 overflow-y-auto rounded-t-3xl bg-white pt-8 px-4 pb-4 shadow-popup"
         role="dialog"
         aria-modal="true"
         aria-labelledby="product-filter-title"

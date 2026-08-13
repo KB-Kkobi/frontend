@@ -5,8 +5,8 @@ import { formatCurrency, formatRate } from "@/utils/format";
 import { calcProfitRate } from "@/utils/evaluation";
 
 const props = defineProps({
-  quantity: { type: Number, default: 10 },
-  avgPrice: { type: Number, default: 70000 },
+  quantity: { type: Number, required: true },
+  avgPrice: { type: Number, required: true },
   currentPrice: { type: Number, default: null },
 });
 

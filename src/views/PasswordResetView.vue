@@ -125,7 +125,7 @@ async function handleResetPassword() {
             />
 
             <BottomButton
-              color="yellow"
+              color="pink"
               :disabled="isSendingCode"
               @click="handleSendCode"
             >
@@ -175,7 +175,7 @@ async function handleResetPassword() {
             {{ formError }}
           </p>
 
-          <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+          <BottomButton type="submit" color="pink" :disabled="isSubmitting">
             {{ isSubmitting ? "비밀번호 변경 중" : "비밀번호 변경하기" }}
           </BottomButton>
         </div>

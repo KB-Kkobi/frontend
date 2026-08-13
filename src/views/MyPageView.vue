@@ -1,23 +1,21 @@
 <script setup>
-import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { fetchMyInfo, logoutUser } from "@/api/authApi";
-import { fetchLatestAssessment } from "@/api/assessmentApi";
+import { logoutUser } from "@/api/authApi";
 import BaseCard from "@/components/common/BaseCard.vue";
-import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const nickname = ref("");
-const personaName = ref("");
 
-const ACTIVITY_ITEMS = [
-  { id: "assessment", label: "내 성향 리포트", icon: "report" },
+const REPORT_ITEMS = [
+  { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
+];
+
+const SETTING_ITEMS = [
   { id: "notifications", label: "알림 설정", icon: "notification" },
-  { id: "friends", label: "친구 관리", icon: "friends" },
 ];
 
 const SUPPORT_ITEMS = [
@@ -26,42 +24,15 @@ const SUPPORT_ITEMS = [
   { id: "policies", label: "약관 · 개인정보처리방침", icon: "policy" },
 ];
 
-const APP_INFO_ITEMS = [
-  {
-    id: "version",
-    label: "앱 버전 정보",
-    icon: "version",
-    trailingText: "v1.0.0",
-  },
-];
-
-async function loadMyPageProfile() {
-  const [userResult, assessmentResult] = await Promise.allSettled([
-    fetchMyInfo(),
-    fetchLatestAssessment(),
-  ]);
-
-  if (userResult.status === "fulfilled") {
-    nickname.value = userResult.value?.nickname ?? "";
-  }
-  if (assessmentResult.status === "fulfilled") {
-    personaName.value = assessmentResult.value?.typeName ?? "";
-  }
-}
-
 function handleProfile() {
   console.log("프로필 정보");
 }
 
+function handleAssessmentSelect() {
+  router.push({ name: "assessment-result" });
+}
+
 function handleMenuSelect(item) {
-  if (item.id === "assessment") {
-    router.push({ name: "assessment-result" });
-    return;
-  }
-  if (item.id === "friends") {
-    router.push({ name: "friend-management" });
-    return;
-  }
   console.log("마이페이지 메뉴:", item.id);
 }
 
@@ -74,16 +45,15 @@ async function handleLogout() {
   }
 }
 
-onMounted(loadMyPageProfile);
 </script>
 
 <template>
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <h1 class="text-h1 text-ink">마이페이지</h1>
+      <PageHeader title="마이페이지" />
 
       <section>
-        <BaseCard color="pink">
+        <BaseCard color="white">
           <button
             type="button"
             class="flex w-full items-center gap-4 text-left"
@@ -97,10 +67,8 @@ onMounted(loadMyPageProfile);
             </span>
 
             <span class="flex min-w-0 flex-1 flex-col gap-2">
-              <strong class="text-h2 text-ink">{{ nickname || "회원" }}</strong>
-              <span class="text-caption text-muted">
-                {{ personaName || "성향 진단 전" }}
-              </span>
+              <strong class="text-h2 text-ink">꼬비</strong>
+              <span class="text-caption text-muted">불꽃 추격자</span>
             </span>
 
             <svg
@@ -116,31 +84,30 @@ onMounted(loadMyPageProfile);
       </section>
 
       <section class="flex flex-col gap-4">
-        <h2 class="text-h2 text-muted">내 활동</h2>
-        <MyPageMenuCard :items="ACTIVITY_ITEMS" @select="handleMenuSelect" />
+        <h2 class="text-h2 text-ink">투자 성향</h2>
+        <MyPageMenuCard :items="REPORT_ITEMS" @select="handleAssessmentSelect" />
       </section>
 
       <section class="flex flex-col gap-4">
-        <h2 class="text-h2 text-muted">고객 지원</h2>
+        <h2 class="text-h2 text-ink">설정</h2>
+        <MyPageMenuCard :items="SETTING_ITEMS" @select="handleMenuSelect" />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-h2 text-ink">고객지원</h2>
         <MyPageMenuCard :items="SUPPORT_ITEMS" @select="handleMenuSelect" />
       </section>
 
-      <MyPageMenuCard :items="APP_INFO_ITEMS" @select="handleMenuSelect" />
-
-      <BottomButton color="danger" @click="handleLogout">
+      <button
+        type="button"
+        class="flex items-center justify-center gap-2 px-4 py-3 text-button text-error"
+        @click="handleLogout"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M10 5H5V19H10M14 8L18 12L14 16M8 12H18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
         로그아웃
-      </BottomButton>
-
-      <footer class="flex justify-center">
-        <a
-          href="https://www.tradingview.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-caption text-muted"
-        >
-          Charts by TradingView
-        </a>
-      </footer>
+      </button>
     </div>
   </PageContainer>
 </template>

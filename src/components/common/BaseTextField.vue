@@ -34,6 +34,10 @@ defineProps({
     type: Boolean,
     default: false,
   },
+  showMessage: {
+    type: Boolean,
+    default: true,
+  },
   autocomplete: {
     type: String,
     default: "off",
@@ -83,7 +87,12 @@ function handlePasswordVisibility() {
       {{ label }}
     </label>
 
-    <div class="flex items-center gap-2 rounded-2xl border border-line bg-white px-4 focus-within:border-pink">
+    <div
+      :class="[
+        'flex items-center gap-2 rounded-2xl border bg-white px-4 focus-within:border-pink',
+        errorMessage ? 'border-error' : 'border-line',
+      ]"
+    >
       <svg
         v-if="icon === 'email'"
         class="h-6 w-6 shrink-0 text-muted"
@@ -138,7 +147,7 @@ function handlePasswordVisibility() {
         :autocomplete="autocomplete"
         :inputmode="inputmode"
         :maxlength="maxlength"
-        :aria-describedby="hint || errorMessage ? `${id}-message` : undefined"
+        :aria-describedby="showMessage && (hint || errorMessage) ? `${id}-message` : undefined"
         :aria-invalid="Boolean(errorMessage)"
         class="min-w-0 flex-1 bg-white py-3 text-body text-ink outline-none placeholder:text-muted"
         @input="handleInput"
@@ -174,7 +183,7 @@ function handlePasswordVisibility() {
     </div>
 
     <p
-      v-if="hint || errorMessage || reserveMessageSpace"
+      v-if="showMessage && (hint || errorMessage || reserveMessageSpace)"
       :id="`${id}-message`"
       :class="['text-caption', errorMessage ? 'text-pink' : 'text-muted']"
       :role="errorMessage ? 'alert' : undefined"

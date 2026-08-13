@@ -41,7 +41,7 @@ const rateColorClass = computed(() => {
 </script>
 
 <template>
-  <BaseCard>
+  <BaseCard elevation="highlight">
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-2">
         <span class="text-h2 text-ink tracking-tight">{{ props.name }}</span>

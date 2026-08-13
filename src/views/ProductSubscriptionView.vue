@@ -302,7 +302,7 @@ watch(
         </div>
       </BaseCard>
 
-      <BaseCard v-else-if="loadErrorMessage" color="pink">
+      <BaseCard v-else-if="loadErrorMessage" color="white" elevation="flat">
         <div class="flex flex-col gap-4" role="alert">
           <div class="flex flex-col gap-2">
             <h2 class="text-h2 text-ink">상품 정보를 불러오지 못했어요</h2>
@@ -539,7 +539,7 @@ watch(
         </p>
 
         <BottomButton
-          :color="isSaving ? 'pink' : 'yellow'"
+          color="pink"
           :disabled="isSubmitting || isEstimating || !productOptions.length"
           @click="handleOpenConfirmation"
         >

@@ -16,6 +16,7 @@ import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
@@ -94,7 +95,7 @@ function parseInitialOptionValues(value, options) {
 }
 
 const initialQuery = route.query;
-const defaultTab = props.standalone ? LIST_TABS.SECURITY : LIST_TABS.DEPOSIT;
+const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.DEPOSIT;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 if (!props.standalone && initialSavingTerms.length === 0) {
   initialSavingTerms.push(12);
@@ -512,14 +513,14 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-6" :class="standalone ? 'py-6' : ''">
-    <header v-if="standalone" class="flex flex-col gap-2 text-center">
+    <PageHeader v-if="standalone">
       <h1 class="text-h1 text-ink">상품</h1>
       <p class="text-caption text-muted">
         나에게 맞는 예금·적금·증권 상품을 확인해 보세요.
       </p>
-    </header>
+    </PageHeader>
 
-    <BaseCard v-if="standalone" color="white">
+    <BaseCard v-if="standalone" color="white" elevation="highlight">
       <div v-if="isAssessmentLoading" class="flex flex-col gap-2" role="status">
         <p class="text-caption text-muted">성향</p>
         <h2 class="text-h2 text-ink">나의 투자 성향을 불러오는 중이에요</h2>
@@ -807,7 +808,7 @@ onMounted(() => {
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">

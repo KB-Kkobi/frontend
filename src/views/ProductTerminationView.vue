@@ -139,7 +139,7 @@ watch(
       </div>
     </BaseCard>
 
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">해지 예상 정보를 확인할 수 없어요</h2>
@@ -152,7 +152,7 @@ watch(
     </BaseCard>
 
     <template v-else-if="estimate">
-      <BaseCard color="white">
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
             <div class="flex min-w-0 items-center gap-4">
@@ -200,7 +200,7 @@ watch(
         </div>
       </BaseCard>
 
-      <BaseCard color="pink">
+      <BaseCard color="yellow">
         <div class="flex gap-4">
           <span class="text-h2 text-error" aria-hidden="true">!</span>
           <div class="flex flex-col gap-2">

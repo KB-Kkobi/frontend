@@ -82,7 +82,7 @@ onActivated(loadAssets)
     </BaseCard>
 
     <!-- 에러 -->
-    <BaseCard v-else-if="errorMessage" color="pink">
+    <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">자산 현황을 확인할 수 없어요</h2>
@@ -97,11 +97,11 @@ onActivated(loadAssets)
       <BaseCard color="white">
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <p class="text-caption font-semibold text-yellow">처음이신가요?</p>
+            <p class="text-caption font-semibold text-navy">처음이신가요?</p>
             <h2 class="text-h2 text-ink">가상투자 계좌를 먼저 만들어 주세요</h2>
             <p class="text-caption text-muted">초기 자산과 매월 투자할 금액을 정하면 실제 데이터가 저장된 연습 계좌를 준비해 드려요.</p>
           </div>
-          <BottomButton color="yellow" @click="handleStart">가상투자 시작하기</BottomButton>
+          <BottomButton color="pink" @click="handleStart">가상투자 시작하기</BottomButton>
         </div>
       </BaseCard>
     </template>
@@ -129,7 +129,7 @@ onActivated(loadAssets)
       </BaseCard>
 
       <!-- 계좌 요약 -->
-      <BaseCard color="blue">
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between gap-4">
             <h2 class="text-h2 text-ink">내 가상투자 계좌</h2>
@@ -169,7 +169,7 @@ onActivated(loadAssets)
       <!-- 보유 종목 -->
       <section class="flex flex-col gap-4">
         <h2 class="text-h2 text-ink">보유 종목</h2>
-        <BaseCard v-if="stockHoldings.length === 0" color="white">
+        <BaseCard v-if="stockHoldings.length === 0" color="white" elevation="flat">
           <div class="flex flex-col gap-2">
             <p class="text-body text-muted tracking-tight">보유 중인 종목이 없어요</p>
             <p class="text-caption text-muted tracking-tight">상품 탭에서 종목을 찾아 투자해 보세요.</p>
@@ -179,6 +179,7 @@ onActivated(loadAssets)
           v-for="holding in stockHoldings"
           :key="holding.securityId ?? holding.ticker"
           color="white"
+          elevation="flat"
         >
           <div class="flex flex-col gap-4">
             <div class="flex items-start justify-between">
@@ -251,7 +252,7 @@ onActivated(loadAssets)
     </template>
 
     <!-- 안내 배너 -->
-    <BaseCard color="pink">
+    <BaseCard color="blue">
       <div class="flex flex-col gap-2">
         <h2 class="text-h2 text-ink">실제 돈은 사용되지 않아요</h2>
         <p class="text-caption text-muted">가상의 자산과 실제 상품 정보로 투자 감각을 익히는 연습 서비스예요.</p>
