@@ -24,12 +24,13 @@ export const SECURITY_LIST_MAX_SIZE = 100;
 export const SECURITY_LIST_DEFAULTS = Object.freeze({
   page: 1,
   size: SECURITY_LIST_SIZE_OPTIONS[0],
+  sort: "match",
 });
 
 export const SECURITY_SORT_OPTIONS = Object.freeze([
-  { value: "name,asc", label: "종목명순" },
-  { value: "marketCap,desc", label: "시가총액 높은순" },
-  { value: "marketCap,asc", label: "시가총액 낮은순" },
+  { value: "match",  label: "매칭순" },
+  { value: "volume", label: "거래량순" },
+  { value: "name",   label: "종목명순" },
 ]);
 
 export const SECURITY_FILTER_TYPE_OPTIONS = Object.freeze([

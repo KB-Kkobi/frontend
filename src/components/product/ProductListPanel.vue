@@ -30,9 +30,11 @@ import {
   normalizeProductType,
 } from "@/constants/product";
 import {
+  SECURITY_FILTER_TYPE_OPTIONS,
   SECURITY_LIST_DEFAULTS,
+  SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
-import { buildSavingsFilterGroups } from "@/constants/productFilters";
+import { SECURITY_FILTER_GROUPS, buildSavingsFilterGroups } from "@/constants/productFilters";
 
 const props = defineProps({
   /**
@@ -125,7 +127,15 @@ const selectedPreferentialConditions = ref(
 const selectedSort = ref(
   String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort),
 );
-const selectedSecurityType = ref(String(initialQuery.securityType ?? ""));
+const selectedSecurityTypes = ref(
+  parseInitialOptionValues(
+    initialQuery.securityTypes,
+    SECURITY_FILTER_TYPE_OPTIONS,
+  ),
+);
+const selectedSecuritySort = ref(
+  String(initialQuery.securitySort ?? SECURITY_LIST_DEFAULTS.sort),
+);
 const currentPage = ref(
   parseInitialInt(initialQuery.page, PRODUCT_LIST_DEFAULTS.page),
 );
@@ -141,6 +151,7 @@ const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
 const isPersonaImageAvailable = ref(true);
 const isFilterOpen = ref(false);
+const isSecurityFilterOpen = ref(false);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -177,6 +188,11 @@ const activeFilterCount = computed(
     selectedPreferentialConditions.value.length,
 );
 const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
+const securityActiveFilterCount = computed(() => selectedSecurityTypes.value.length);
+const hasAppliedSecurityFilters = computed(() => securityActiveFilterCount.value > 0);
+const securityFilterModelValue = computed(() => ({
+  securityTypes: selectedSecurityTypes.value,
+}));
 const filterGroups = computed(() => buildSavingsFilterGroups(isSaving.value));
 const filterModelValue = computed(() => ({
   savingTerms: selectedSavingTerms.value,
@@ -319,10 +335,11 @@ async function loadSecurityQuotes(items) {
 
 async function loadSecurities() {
   const response = await fetchSecurityList({
-    type: selectedSecurityType.value,
+    types: selectedSecurityTypes.value,
     keyword: appliedSecurityKeyword.value,
     page: currentPage.value,
     size: SECURITY_LIST_DEFAULTS.size,
+    sort: selectedSecuritySort.value,
   });
 
   securities.value = response.content;
@@ -368,7 +385,7 @@ function handleSelectTab(tabKey) {
   searchInput.value = "";
   appliedKeyword.value = "";
   selectedReserveTypes.value = [];
-  selectedSecurityType.value = "";
+  selectedSecurityTypes.value = [];
   securitySearchInput.value = "";
   appliedSecurityKeyword.value = "";
   resetPage();
@@ -384,13 +401,17 @@ function handleSecuritySearch() {
   resetPage();
 }
 
-function handleSelectSecurityType(securityType) {
-  selectedSecurityType.value = securityType;
-  resetPage();
-}
-
 function handleOpenFilter() {
   isFilterOpen.value = true;
+}
+
+function handleOpenSecurityFilter() {
+  isSecurityFilterOpen.value = true;
+}
+
+function handleApplySecurityFilters(filters) {
+  selectedSecurityTypes.value = [...(filters.securityTypes ?? [])];
+  resetPage();
 }
 
 function handleApplyFilters(filters) {
@@ -463,8 +484,12 @@ function buildQueryFromState() {
   if (selectedSort.value !== PRODUCT_LIST_DEFAULTS.sort) {
     query.sort = selectedSort.value;
   }
-  if (selectedSecurityType.value)
-    query.securityType = selectedSecurityType.value;
+  if (selectedSecurityTypes.value.length) {
+    query.securityTypes = [...selectedSecurityTypes.value];
+  }
+  if (selectedSecuritySort.value !== SECURITY_LIST_DEFAULTS.sort) {
+    query.securitySort = selectedSecuritySort.value;
+  }
   if (currentPage.value !== PRODUCT_LIST_DEFAULTS.page) {
     query.page = String(currentPage.value);
   }
@@ -500,7 +525,8 @@ watch(
     selectedReserveTypes.value,
     selectedPreferentialConditions.value,
     selectedSort.value,
-    selectedSecurityType.value,
+    selectedSecurityTypes.value,
+    selectedSecuritySort.value,
     currentPage.value,
   ],
   () => {
@@ -755,13 +781,51 @@ onMounted(() => {
         @search="handleSecuritySearch"
       />
 
+      <ListToolbar
+        :filter-active="hasAppliedSecurityFilters"
+        :filter-count="securityActiveFilterCount"
+        @filter="handleOpenSecurityFilter"
+      >
+        <p class="text-caption text-muted tabular-nums">
+          {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
+        </p>
+        <template #sort>
+          <label
+            class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>정렬</span>
+            <select
+              v-model="selectedSecuritySort"
+              class="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="종목 정렬"
+              @change="resetPage"
+            >
+              <option
+                v-for="sortOption in SECURITY_SORT_OPTIONS"
+                :key="sortOption.value"
+                :value="sortOption.value"
+              >
+                {{ sortOption.label }}
+              </option>
+            </select>
+          </label>
+        </template>
+      </ListToolbar>
     </template>
-
-    <ListToolbar v-if="isSecurityTab">
-      <p class="text-caption text-muted tabular-nums">
-        {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
-      </p>
-    </ListToolbar>
 
     <BaseCard v-if="isLoading" color="blue">
       <div class="flex flex-col gap-2" role="status">
@@ -897,6 +961,13 @@ onMounted(() => {
       :model-value="filterModelValue"
       :groups="filterGroups"
       @apply="handleApplyFilters"
+    />
+
+    <FilterSheet
+      v-model:open="isSecurityFilterOpen"
+      :model-value="securityFilterModelValue"
+      :groups="SECURITY_FILTER_GROUPS"
+      @apply="handleApplySecurityFilters"
     />
   </div>
 </template>

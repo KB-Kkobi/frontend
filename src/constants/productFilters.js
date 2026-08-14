@@ -3,6 +3,7 @@ import {
   RESERVE_TYPE_OPTIONS,
   PREFERENTIAL_CONDITION_OPTIONS,
 } from '@/constants/product'
+import { SECURITY_FILTER_TYPE_OPTIONS } from '@/constants/security'
 
 export const SAVING_TERM_FILTER_GROUP = Object.freeze({
   key: 'savingTerms',
@@ -36,3 +37,14 @@ export function buildSavingsFilterGroups(isSaving) {
     ? [SAVING_TERM_FILTER_GROUP, RESERVE_TYPE_FILTER_GROUP, PREFERENTIAL_CONDITION_FILTER_GROUP]
     : [SAVING_TERM_FILTER_GROUP, PREFERENTIAL_CONDITION_FILTER_GROUP]
 }
+
+export const SECURITY_TYPE_FILTER_GROUP = Object.freeze({
+  key: 'securityTypes',
+  label: '자산 유형',
+  options: SECURITY_FILTER_TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+  multiple: true,
+  color: 'pink',
+  cols: 3,
+})
+
+export const SECURITY_FILTER_GROUPS = Object.freeze([SECURITY_TYPE_FILTER_GROUP])
