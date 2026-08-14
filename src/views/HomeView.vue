@@ -5,6 +5,7 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import HomePersonaSummaryCard from "@/components/home/HomePersonaSummaryCard.vue";
 import HomeAssessmentIntroCard from "@/components/home/HomeAssessmentIntroCard.vue";
+import HomeRecommendationCard from "@/components/home/HomeRecommendationCard.vue";
 import { fetchMyInfo } from "@/api/authApi";
 import { fetchAssessmentResult } from "@/api/assessmentApi";
 import { ApiError } from "@/api/http";
@@ -73,6 +74,8 @@ onMounted(loadHomeData);
       />
 
       <HomeAssessmentIntroCard v-else />
+
+      <HomeRecommendationCard />
     </div>
   </PageContainer>
 </template>
