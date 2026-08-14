@@ -258,6 +258,22 @@ const canEstimate = computed(() => {
   return true;
 });
 
+// 서버가 금액·납입일 없이는 예상금리 계산을 거부하므로, 우대조건을 선택해도
+// 값이 안 바뀌는 이유를 알려준다. 프론트에서 임의로 금리를 계산하지는 않는다.
+const estimateHint = computed(() => {
+  if (canEstimate.value || !selectedOption.value) return "";
+
+  const missingFields = [];
+  if (!joinAmount.value || joinAmount.value <= 0) {
+    missingFields.push(amountLabel.value);
+  }
+  if (isSaving.value && !paymentDay.value) missingFields.push("납입일");
+
+  return missingFields.length
+    ? `${missingFields.join(", ")}을 입력하면 정확한 예상 적용금리를 확인할 수 있어요.`
+    : "";
+});
+
 // estimate/subscribe 양쪽에서 재사용. 요청 도중 입력이 바뀌면(token 불일치)
 // 오래된 응답으로 최신 상태를 덮어쓰지 않는다.
 async function fetchEstimate() {
@@ -610,11 +626,16 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="flex items-center justify-between gap-4 border-t border-line pt-4">
-              <span class="text-caption text-muted">예상 적용금리</span>
-              <strong class="text-h2 text-profit tabular-nums">
-                {{ formatInterestRate(previewAppliedRate) }}
-              </strong>
+            <div class="flex flex-col gap-2 border-t border-line pt-4">
+              <div class="flex items-center justify-between gap-4">
+                <span class="text-caption text-muted">예상 적용금리</span>
+                <strong class="text-h2 text-profit tabular-nums">
+                  {{ formatInterestRate(previewAppliedRate) }}
+                </strong>
+              </div>
+              <p v-if="estimateHint" class="text-caption text-muted">
+                {{ estimateHint }}
+              </p>
             </div>
 
             <div class="flex items-center justify-between gap-4">
