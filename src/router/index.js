@@ -21,6 +21,7 @@ import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
 import GameView from '@/views/GameView.vue'
 import AssessmentResultView from '@/views/AssessmentResultView.vue'
+import PersonaTypesView from '@/views/PersonaTypesView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import PasswordResetView from '@/views/PasswordResetView.vue'
@@ -149,6 +150,12 @@ const router = createRouter({
       path: '/assessment/result',
       name: 'assessment-result',
       component: AssessmentResultView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assessment/personas',
+      name: 'persona-types',
+      component: PersonaTypesView,
       meta: { requiresAuth: true },
     },
   ],

@@ -56,7 +56,7 @@ function toggle() {
             v-if="imageUrl"
             :src="imageUrl"
             :alt="personaName"
-            class="h-12 w-12 shrink-0 rounded-full object-cover"
+            class="h-12 w-12 shrink-0 object-contain"
           />
 
           <div class="flex min-w-0 flex-1 flex-col gap-1">
