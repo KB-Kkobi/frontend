@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ApiError } from "@/api/http";
 import {
@@ -21,10 +21,12 @@ import ProductSubscriptionOptionCard from "@/components/product/ProductSubscript
 import {
   PRODUCT_AMOUNT_OPTIONS,
   PRODUCT_PAYMENT_DAYS,
+  PRODUCT_SUBSCRIPTION_ESTIMATE_DEBOUNCE_MS,
   PRODUCT_TYPES,
   getProductTypeLabel,
   normalizeProductType,
 } from "@/constants/product";
+import { debounce } from "@/utils/debounce";
 import { formatLocalDate } from "@/utils/date";
 import {
   formatCurrency,
@@ -42,7 +44,7 @@ const product = ref(null);
 const selectedOptionId = ref(null);
 const joinAmountInput = ref("");
 const paymentDay = ref("");
-const preferentialRateApplied = ref(false);
+const selectedPreferentialRateConditionIds = ref([]);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isEstimating = ref(false);
@@ -52,6 +54,7 @@ const paymentDayErrorMessage = ref("");
 const formErrorMessage = ref("");
 const isConfirmationOpen = ref(false);
 const subscriptionEstimate = ref(null);
+const estimateRequestToken = ref(0);
 
 const productType = computed(() =>
   normalizeProductType(product.value?.productType ?? route.params.productType),
@@ -91,21 +94,38 @@ const maximumInterestRate = computed(() => {
   return rates.length ? Math.max(...rates) : null;
 });
 
-const hasPreferentialRate = computed(
-  () =>
-    selectedOption.value?.maximumInterestRate !== null &&
-    selectedOption.value?.maximumInterestRate !== undefined,
-);
-
-const preferentialRateDifference = computed(() => {
-  if (!selectedOption.value) return null;
-  const difference =
-    Number(selectedOption.value.maximumInterestRate) -
-    Number(selectedOption.value.interestRate);
-  return Number.isFinite(difference) && difference > 0 ? difference : 0;
+const preferentialRateConditions = computed(() => {
+  const conditions = selectedOption.value?.preferentialRateConditions;
+  if (!Array.isArray(conditions)) return [];
+  return [...conditions].sort(
+    (a, b) =>
+      (a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+      a.preferentialRateConditionId - b.preferentialRateConditionId,
+  );
 });
 
+const selectableConditions = computed(() =>
+  preferentialRateConditions.value.filter((condition) => condition.selectable),
+);
+
+const nonSelectableConditions = computed(() =>
+  preferentialRateConditions.value.filter((condition) => !condition.selectable),
+);
+
 const appliedRate = computed(() => subscriptionEstimate.value?.appliedRate ?? null);
+
+// 실제 선택으로 인해 기본 금리 대비 얼마나 올랐는지(서버 계산 결과 기준).
+const appliedRateUplift = computed(() => {
+  const baseRate = Number(selectedOption.value?.interestRate);
+  if (appliedRate.value === null || !Number.isFinite(baseRate)) return null;
+  const uplift = Number(appliedRate.value) - baseRate;
+  return Number.isFinite(uplift) && uplift > 0 ? uplift : 0;
+});
+
+// 예상조회 응답이 오기 전에는 기본 금리를 임시로 보여준다.
+const previewAppliedRate = computed(
+  () => appliedRate.value ?? selectedOption.value?.interestRate ?? null,
+);
 const expectedMaturityDate = computed(
   () => subscriptionEstimate.value?.maturityDate ?? null,
 );
@@ -150,11 +170,17 @@ function getLoadErrorMessage(error) {
   return "상품 정보를 불러오지 못했습니다.";
 }
 
+function formatAdditionalRate(additionalRate) {
+  return `+${Number(additionalRate).toFixed(2)}%p`;
+}
+
 function handleSelectOption(option) {
   selectedOptionId.value = option.productOptionId;
-  preferentialRateApplied.value = false;
+  // 옵션마다 선택 가능한 우대조건 ID가 다르므로 이전 선택은 초기화한다.
+  selectedPreferentialRateConditionIds.value = [];
   subscriptionEstimate.value = null;
   formErrorMessage.value = "";
+  refreshLiveEstimateDebounced();
 }
 
 function handleAmountInput(value) {
@@ -162,16 +188,22 @@ function handleAmountInput(value) {
   subscriptionEstimate.value = null;
   amountErrorMessage.value = "";
   formErrorMessage.value = "";
+  refreshLiveEstimateDebounced();
 }
 
 function handleSelectAmount(amount) {
   handleAmountInput(String(amount));
 }
 
-function handlePreferentialRate(value) {
-  if (value && !hasPreferentialRate.value) return;
-  preferentialRateApplied.value = value;
+function handleTogglePreferentialCondition(conditionId) {
+  selectedPreferentialRateConditionIds.value =
+    selectedPreferentialRateConditionIds.value.includes(conditionId)
+      ? selectedPreferentialRateConditionIds.value.filter(
+          (id) => id !== conditionId,
+        )
+      : [...selectedPreferentialRateConditionIds.value, conditionId];
   subscriptionEstimate.value = null;
+  refreshLiveEstimateDebounced();
 }
 
 function validateForm() {
@@ -210,22 +242,63 @@ function createSubscriptionRequest() {
   const request = {
     productOptionId: selectedOption.value.productOptionId,
     joinAmount: joinAmount.value,
-    preferentialRateApplied: preferentialRateApplied.value,
+    selectedPreferentialRateConditionIds: [
+      ...selectedPreferentialRateConditionIds.value,
+    ],
   };
   if (isSaving.value) request.paymentDay = Number(paymentDay.value);
   return request;
 }
 
+// 폼이 아직 예상조회를 보낼 만큼 유효하지 않으면 불필요한 요청을 막는다.
+const canEstimate = computed(() => {
+  if (!selectedOption.value) return false;
+  if (!joinAmount.value || joinAmount.value <= 0) return false;
+  if (isSaving.value && !paymentDay.value) return false;
+  return true;
+});
+
+// estimate/subscribe 양쪽에서 재사용. 요청 도중 입력이 바뀌면(token 불일치)
+// 오래된 응답으로 최신 상태를 덮어쓰지 않는다.
+async function fetchEstimate() {
+  const token = ++estimateRequestToken.value;
+  const estimate = await estimateProductSubscription(createSubscriptionRequest());
+  return token === estimateRequestToken.value ? estimate : null;
+}
+
+async function refreshLiveEstimate() {
+  if (!canEstimate.value) {
+    subscriptionEstimate.value = null;
+    return;
+  }
+
+  try {
+    const estimate = await fetchEstimate();
+    if (!estimate) return;
+    subscriptionEstimate.value = estimate;
+    formErrorMessage.value = "";
+  } catch (error) {
+    subscriptionEstimate.value = null;
+    formErrorMessage.value = getRequestErrorMessage(error);
+  }
+}
+
+const refreshLiveEstimateDebounced = debounce(
+  refreshLiveEstimate,
+  PRODUCT_SUBSCRIPTION_ESTIMATE_DEBOUNCE_MS,
+);
+
 async function handleOpenConfirmation() {
   if (!validateForm() || isEstimating.value) return;
 
+  refreshLiveEstimateDebounced.cancel();
   isEstimating.value = true;
   formErrorMessage.value = "";
 
   try {
-    subscriptionEstimate.value = await estimateProductSubscription(
-      createSubscriptionRequest(),
-    );
+    const estimate = await fetchEstimate();
+    if (!estimate) return;
+    subscriptionEstimate.value = estimate;
     isConfirmationOpen.value = true;
   } catch (error) {
     formErrorMessage.value = getRequestErrorMessage(error);
@@ -258,7 +331,9 @@ async function loadProduct() {
   loadErrorMessage.value = "";
   product.value = null;
   selectedOptionId.value = null;
+  selectedPreferentialRateConditionIds.value = [];
   subscriptionEstimate.value = null;
+  estimateRequestToken.value += 1;
 
   try {
     product.value = await fetchProductDetail(
@@ -279,6 +354,7 @@ async function loadProduct() {
 watch(paymentDay, () => {
   subscriptionEstimate.value = null;
   paymentDayErrorMessage.value = "";
+  refreshLiveEstimateDebounced();
 });
 
 watch(
@@ -286,6 +362,10 @@ watch(
   loadProduct,
   { immediate: true },
 );
+
+onBeforeUnmount(() => {
+  refreshLiveEstimateDebounced.cancel();
+});
 </script>
 
 <template>
@@ -451,28 +531,97 @@ watch(
 
         <BaseCard color="white">
           <div class="flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-h2 text-ink">받을 수 있는 우대조건</h2>
-              <p class="whitespace-pre-line text-caption text-muted">
-                {{ formatNullableText(product.preferentialConditions) }}
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-caption text-muted">기본금리</span>
+              <strong class="text-body text-ink tabular-nums">
+                {{ formatInterestRate(selectedOption?.interestRate) }}
+              </strong>
+            </div>
+
+            <div class="flex flex-col gap-4 border-t border-line pt-4">
+              <h2 class="text-h2 text-ink">우대조건</h2>
+
+              <p
+                v-if="!preferentialRateConditions.length"
+                class="text-caption text-muted"
+              >
+                선택 가능한 우대조건이 없어요.
               </p>
+
+              <div v-else class="flex flex-col gap-4">
+                <div
+                  v-if="selectableConditions.length"
+                  class="flex flex-col gap-2"
+                  role="group"
+                  aria-label="선택 가능한 우대조건"
+                >
+                  <label
+                    v-for="condition in selectableConditions"
+                    :key="condition.preferentialRateConditionId"
+                    class="flex items-center justify-between gap-4 py-2"
+                  >
+                    <span class="flex items-center gap-2 text-body text-ink">
+                      <input
+                        type="checkbox"
+                        class="h-4 w-4 shrink-0 accent-pink"
+                        :checked="
+                          selectedPreferentialRateConditionIds.includes(
+                            condition.preferentialRateConditionId,
+                          )
+                        "
+                        @change="
+                          handleTogglePreferentialCondition(
+                            condition.preferentialRateConditionId,
+                          )
+                        "
+                      />
+                      {{ condition.conditionName }}
+                    </span>
+                    <span
+                      v-if="condition.additionalRate !== null && condition.additionalRate !== undefined"
+                      class="shrink-0 text-body text-profit tabular-nums"
+                    >
+                      {{ formatAdditionalRate(condition.additionalRate) }}
+                    </span>
+                  </label>
+                </div>
+
+                <div
+                  v-if="nonSelectableConditions.length"
+                  class="flex flex-col gap-2 rounded-2xl bg-blue-soft p-4"
+                >
+                  <p class="text-caption text-muted">
+                    해당 조건의 우대금리는 상품 조건에 따라 적용돼요.
+                  </p>
+                  <div
+                    v-for="condition in nonSelectableConditions"
+                    :key="condition.preferentialRateConditionId"
+                    class="flex items-center justify-between gap-4"
+                  >
+                    <span class="text-body text-ink">{{ condition.conditionName }}</span>
+                    <span
+                      v-if="condition.additionalRate !== null && condition.additionalRate !== undefined"
+                      class="shrink-0 text-caption text-muted tabular-nums"
+                    >
+                      {{ formatAdditionalRate(condition.additionalRate) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="flex items-center justify-between gap-4 border-t border-line pt-4">
-              <div class="flex flex-col gap-2">
-                <p class="text-body font-semibold text-ink">우대 조건 충족</p>
-                <p class="text-caption text-muted">충족 여부에 따라 적용 금리가 달라져요.</p>
-              </div>
-              <BasePill
-                as="button"
-                type="button"
-                :label="preferentialRateApplied ? '적용 중' : '적용 안 함'"
-                color="pink"
-                :variant="preferentialRateApplied ? 'filled' : 'ghost'"
-                :disabled="!hasPreferentialRate"
-                :aria-pressed="preferentialRateApplied"
-                @click="handlePreferentialRate(!preferentialRateApplied)"
-              />
+              <span class="text-caption text-muted">예상 적용금리</span>
+              <strong class="text-h2 text-profit tabular-nums">
+                {{ formatInterestRate(previewAppliedRate) }}
+              </strong>
+            </div>
+
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-caption text-muted">최고금리</span>
+              <strong class="text-body text-ink tabular-nums">
+                {{ formatInterestRate(selectedOption?.maximumInterestRate) }}
+              </strong>
             </div>
           </div>
         </BaseCard>
@@ -490,7 +639,7 @@ watch(
               <div class="flex items-center justify-between gap-4">
                 <dt class="text-caption text-muted">우대 금리</dt>
                 <dd class="text-body text-profit tabular-nums">
-                  +{{ formatInterestRate(preferentialRateDifference) }}
+                  +{{ formatInterestRate(appliedRateUplift) }}
                 </dd>
               </div>
               <div class="flex items-center justify-between gap-4">
