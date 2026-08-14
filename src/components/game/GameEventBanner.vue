@@ -1,5 +1,5 @@
 <script setup>
-import BaseAlertIcon from "@/components/common/BaseAlertIcon.vue";
+import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
 
 defineProps({
   event: {
@@ -10,10 +10,7 @@ defineProps({
 </script>
 
 <template>
-  <div
-    v-if="event"
-    class="flex items-center gap-4 rounded-2xl bg-error/10 p-3"
-  >
+  <div v-if="event" class="flex items-center gap-4 rounded-2xl bg-error/10 p-3">
     <span
       class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-error text-white"
     >

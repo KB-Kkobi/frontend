@@ -81,7 +81,7 @@ function confirmCancel() {
         </div>
 
         <div class="flex flex-col items-center gap-2 text-center">
-          <h2 id="deposit-cancel-title" class="text-amount text-ink">
+          <h2 id="deposit-cancel-title" class="text-amount text-navy">
             아직 만기가 아니에요
           </h2>
           <p class="text-body text-muted">
@@ -92,16 +92,16 @@ function confirmCancel() {
         </div>
 
         <div class="flex flex-col gap-3">
-          <div class="flex flex-col gap-3 rounded-2xl bg-green-soft p-4">
+          <div class="flex flex-col gap-3 rounded-2xl bg-pink-soft p-4">
             <div class="flex items-center justify-between gap-3">
               <strong class="text-h2 text-ink">
                 {{ GAME_DEPOSIT_MONTHS }}개월 채우고 만기까지 가면
               </strong>
-              <BaseBadge color="green">
+              <BaseBadge color="pink">
                 연 {{ GAME_DEPOSIT_INTEREST_RATE.toFixed(2) }}%
               </BaseBadge>
             </div>
-            <strong class="text-amount text-success tabular-nums">
+            <strong class="text-amount text-pink tabular-nums">
               {{ formatCurrency(maturityAmount) }}
             </strong>
             <span class="text-caption text-muted tabular-nums">
@@ -128,7 +128,7 @@ function confirmCancel() {
           </div>
 
           <div
-            class="flex items-center justify-between gap-4 rounded-xl bg-pink-soft p-3"
+            class="flex items-center justify-between gap-4 rounded-xl bg-error/10 p-3"
           >
             <span class="text-body font-semibold text-error"
               >못 받게 되는 이자</span
@@ -162,7 +162,7 @@ function confirmCancel() {
             {{ isSubmitting ? '해지 처리 중...' : '해지하기' }}
           </BottomButton>
           <BottomButton
-            color="yellow"
+            color="pink"
             :disabled="isSubmitting"
             @click="closePopup"
           >

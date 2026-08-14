@@ -60,7 +60,8 @@ const stockProfitAmount = computed(() => {
   return stockEvaluationAmount.value - props.stockPrincipal;
 });
 const stockProfitRate = computed(() => {
-  if (stockProfitAmount.value === null || props.stockPrincipal <= 0) return null;
+  if (stockProfitAmount.value === null || props.stockPrincipal <= 0)
+    return null;
   return (stockProfitAmount.value / props.stockPrincipal) * 100;
 });
 const totalAssetAmount = computed(
@@ -106,10 +107,12 @@ const depositStatusText = computed(() => {
   <section class="flex flex-col gap-6 py-2" aria-labelledby="portfolio-title">
     <h2 id="portfolio-title" class="sr-only">현재 자산 현황</h2>
 
-    <div class="flex flex-col gap-2 rounded-2xl bg-yellow-soft p-4">
+    <div
+      class="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4"
+    >
       <div class="flex items-center justify-between gap-4">
         <strong class="text-h2 text-ink">현재 총자산</strong>
-        <strong class="text-amount text-ink tabular-nums">
+        <strong class="text-amount text-navy tabular-nums">
           {{ formatCurrency(totalAssetAmount) }}
         </strong>
       </div>
@@ -119,7 +122,9 @@ const depositStatusText = computed(() => {
           {{ formatCurrency(GAME_SEED_MONEY) }}
         </span>
       </div>
-      <div class="flex items-center justify-between gap-4 border-t border-line pt-2">
+      <div
+        class="flex items-center justify-between gap-4 border-t border-line pt-2"
+      >
         <span class="text-caption text-muted">전체 손익</span>
         <span
           :class="[

@@ -56,7 +56,7 @@ function confirmMaturity() {
         </div>
 
         <div class="flex flex-col items-center gap-2 text-center">
-          <h2 id="deposit-maturity-title" class="text-amount text-ink">
+          <h2 id="deposit-maturity-title" class="text-amount text-navy">
             {{ GAME_DEPOSIT_MONTHS }}개월 예금이 <br />만기가 되었어요
           </h2>
           <p class="text-body text-muted">
@@ -93,7 +93,7 @@ function confirmMaturity() {
           </div>
         </div>
 
-        <BottomButton color="yellow" @click="confirmMaturity">
+        <BottomButton color="green" @click="confirmMaturity">
           확인
         </BottomButton>
       </section>

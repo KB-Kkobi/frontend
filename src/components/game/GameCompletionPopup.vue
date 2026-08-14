@@ -73,11 +73,11 @@ const profitColorClass = computed(() => {
         aria-labelledby="game-completion-title"
       >
         <div class="flex justify-center">
-          <BaseBadge color="yellow">투자 게임 완료</BaseBadge>
+          <BaseBadge color="pink">투자 게임 완료</BaseBadge>
         </div>
 
         <div class="flex flex-col items-center gap-2 text-center">
-          <h2 id="game-completion-title" class="text-amount text-ink">
+          <h2 id="game-completion-title" class="text-amount text-navy">
             12개월간의 투자가 끝났어요
           </h2>
           <p class="text-body text-muted">
@@ -85,12 +85,16 @@ const profitColorClass = computed(() => {
           </p>
         </div>
 
-        <div class="flex flex-col gap-3 rounded-2xl bg-yellow-soft p-5">
+        <div
+          class="flex flex-col gap-3 rounded-2xl border border-line bg-white p-5"
+        >
           <span class="text-body text-muted">최종 총자산</span>
           <strong class="text-amount text-ink tabular-nums">
             {{ formatCurrency(totalAssetAmount) }}
           </strong>
-          <div class="flex items-start justify-between gap-4 border-t border-line pt-3">
+          <div
+            class="flex items-start justify-between gap-4 border-t border-line pt-3"
+          >
             <span class="text-caption text-muted">시작 자산 대비</span>
             <strong
               :class="[
@@ -99,7 +103,9 @@ const profitColorClass = computed(() => {
               ]"
             >
               <span>{{ formatSignedCurrency(totalProfitAmount) }}</span>
-              <span class="text-caption">({{ formatRate(totalProfitRate) }})</span>
+              <span class="text-caption"
+                >({{ formatRate(totalProfitRate) }})</span
+              >
             </strong>
           </div>
         </div>
@@ -110,7 +116,10 @@ const profitColorClass = computed(() => {
             aria-label="최종 자산 비율"
           >
             <span class="bg-yellow" :style="{ width: `${cashRatio}%` }"></span>
-            <span class="bg-blue" :style="{ width: `${depositRatio}%` }"></span>
+            <span
+              class="bg-green"
+              :style="{ width: `${depositRatio}%` }"
+            ></span>
             <span class="bg-pink" :style="{ width: `${stockRatio}%` }"></span>
           </div>
 
@@ -120,7 +129,7 @@ const profitColorClass = computed(() => {
               현금 {{ cashRatio.toFixed(0) }}%
             </span>
             <span class="flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full bg-blue"></span>
+              <span class="h-2 w-2 rounded-full bg-green"></span>
               예금 {{ depositRatio.toFixed(0) }}%
             </span>
             <span class="flex items-center gap-2">
@@ -132,7 +141,7 @@ const profitColorClass = computed(() => {
           <div class="border-t border-line"></div>
 
           <div class="flex items-center justify-between gap-4">
-            <span class="text-body text-muted">주식 평가금액</span>
+            <span class="text-body text-muted">주식</span>
             <strong class="text-h2 text-ink tabular-nums">
               {{ formatCurrency(stockAmount) }}
             </strong>
@@ -152,7 +161,7 @@ const profitColorClass = computed(() => {
         </div>
 
         <p class="text-body text-muted">
-          성향 결과에서 RT·LH·RP 점수와 추천 자산 배분을 확인해 보세요.
+          성향 진단 리포트에서 나의 투자 성향과 추천 자산 배분을 확인해 보세요.
         </p>
 
         <p v-if="errorMessage" class="text-caption text-error" role="alert">
@@ -160,7 +169,7 @@ const profitColorClass = computed(() => {
         </p>
 
         <BottomButton
-          color="yellow"
+          color="pink"
           :disabled="isLoading"
           @click="errorMessage ? emit('retry') : emit('view-result')"
         >
