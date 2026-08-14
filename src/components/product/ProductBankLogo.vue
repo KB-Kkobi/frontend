@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
+import { bankLogoMap } from "@/assets/banks/bankLogoMap";
 
 const props = defineProps({
   name: {
@@ -8,49 +9,45 @@ const props = defineProps({
   },
 });
 
-// pink-soft는 반복 카드 배경으로 쓰지 않으므로 은행 배지 팔레트에서 제외한다.
-const COLOR_KEYS = ["blue", "green", "yellow", "lavender", "cream"];
-
-const BG_CLASSES = {
-  blue: "bg-blue-soft",
-  green: "bg-green-soft",
-  yellow: "bg-yellow-soft",
-  lavender: "bg-lavender-soft",
-  cream: "bg-cream-soft",
-};
-
-const TEXT_CLASSES = {
-  blue: "text-blue",
-  green: "text-green",
-  yellow: "text-yellow",
-  lavender: "text-lavender",
-  cream: "text-cream",
-};
-
-function pickColorKey(name) {
-  let hash = 0;
-  for (let index = 0; index < name.length; index += 1) {
-    hash = (hash + name.charCodeAt(index)) % COLOR_KEYS.length;
-  }
-  return COLOR_KEYS[hash];
-}
-
-// "주식회사 케이뱅크"처럼 법인 형태 접두어만 다르고 실제 은행명이 뒤에 오는
-// 경우 이니셜이 전부 "주"로 겹치므로 접두어를 제거한 이름을 기준으로 삼는다.
-const displayName = computed(() =>
-  props.name.trim().replace(/^주식회사\s*/, ""),
+const logoSrc = computed(() => bankLogoMap[props.name.trim()] ?? null);
+const altText = computed(() =>
+  props.name.trim() ? `${props.name.trim()} 로고` : "은행 로고",
 );
 
-const colorKey = computed(() => pickColorKey(displayName.value));
-const initial = computed(() => displayName.value.charAt(0) || "금");
+// asset 파일이 손상되었거나 형식이 잘못된 경우에도 깨진 이미지 아이콘 대신
+// 기본 금융기관 아이콘으로 대체한다.
+const hasLoadError = ref(false);
+watch(logoSrc, () => {
+  hasLoadError.value = false;
+});
 </script>
 
 <template>
   <span
-    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-body font-semibold"
-    :class="[BG_CLASSES[colorKey], TEXT_CLASSES[colorKey]]"
-    aria-hidden="true"
+    class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface"
   >
-    {{ initial }}
+    <img
+      v-if="logoSrc && !hasLoadError"
+      :src="logoSrc"
+      :alt="altText"
+      class="h-full w-full object-contain"
+      @error="hasLoadError = true"
+    />
+    <svg
+      v-else
+      class="h-5 w-5 text-muted"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      role="img"
+      :aria-label="altText"
+    >
+      <path
+        d="M4 10.5 12 5l8 5.5M5 10.5V19h14v-8.5M9 19v-5h6v5M3 19h18"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
   </span>
 </template>
