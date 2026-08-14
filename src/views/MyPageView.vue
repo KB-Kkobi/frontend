@@ -6,6 +6,7 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
 import { useAuthStore } from "@/stores/auth";
+import { clearGameSession } from "@/utils/gameStorage";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -40,6 +41,7 @@ async function handleLogout() {
   try {
     await logoutUser();
   } finally {
+    clearGameSession();
     authStore.logout();
     await router.replace({ name: "login" });
   }
