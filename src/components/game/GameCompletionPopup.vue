@@ -89,7 +89,7 @@ const profitColorClass = computed(() => {
           class="flex flex-col gap-3 rounded-2xl border border-line bg-white p-5"
         >
           <span class="text-body text-muted">최종 총자산</span>
-          <strong class="text-amount text-ink tabular-nums">
+          <strong class="text-amount text-navy tabular-nums">
             {{ formatCurrency(totalAssetAmount) }}
           </strong>
           <div

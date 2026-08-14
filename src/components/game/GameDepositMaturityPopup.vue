@@ -52,7 +52,7 @@ function confirmMaturity() {
         aria-labelledby="deposit-maturity-title"
       >
         <div class="flex justify-center">
-          <BaseBadge color="green">예금 만기</BaseBadge>
+          <BaseBadge color="pink">예금 만기</BaseBadge>
         </div>
 
         <div class="flex flex-col items-center gap-2 text-center">
@@ -66,7 +66,7 @@ function confirmMaturity() {
           </p>
         </div>
 
-        <div class="flex flex-col gap-4 rounded-2xl bg-green-soft p-5">
+        <div class="flex flex-col gap-4 rounded-2xl bg-pink-soft p-5">
           <div class="flex items-center justify-between gap-4">
             <span class="text-body text-muted">납입 원금</span>
             <strong class="text-h1 text-ink tabular-nums">
@@ -80,20 +80,20 @@ function confirmMaturity() {
                 약속된 연 {{ GAME_DEPOSIT_INTEREST_RATE.toFixed(2) }}% 반영
               </span>
             </div>
-            <strong class="text-h1 text-green tabular-nums">
+            <strong class="text-h1 text-pink tabular-nums">
               {{ formatSignedCurrency(afterTaxInterest) }}
             </strong>
           </div>
           <div class="border-t border-line"></div>
           <div class="flex items-center justify-between gap-4">
             <span class="text-h2 text-ink">만기 수령액 합계</span>
-            <strong class="text-amount text-ink tabular-nums">
+            <strong class="text-amount text-navy tabular-nums">
               {{ formatCurrency(maturityAmount) }}
             </strong>
           </div>
         </div>
 
-        <BottomButton color="green" @click="confirmMaturity">
+        <BottomButton color="pink" @click="confirmMaturity">
           확인
         </BottomButton>
       </section>
