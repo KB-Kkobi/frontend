@@ -72,6 +72,17 @@ function handleSelect(item) {
               <path d="M12 3L20 6V11C20 16 16.6 20.1 12 21C7.4 20.1 4 16 4 11V6L12 3Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" />
             </svg>
             <svg
+              v-else-if="item.icon === 'friend'"
+              class="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.75" />
+              <path d="M3 20C3 16.7 5.7 14 9 14C12.3 14 15 16.7 15 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M16 5.5C17.7 5.8 19 7.3 19 9C19 10.7 17.7 12.2 16 12.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+              <path d="M17 14.3C19.4 14.8 21 16.9 21 20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </svg>
+            <svg
               v-else
               class="h-5 w-5"
               viewBox="0 0 24 24"
