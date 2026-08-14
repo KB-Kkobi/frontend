@@ -1,21 +1,38 @@
 <script setup>
-import { computed, onActivated, onMounted } from 'vue'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseCard from '@/components/common/BaseCard.vue'
+import BaseToast from '@/components/common/BaseToast.vue'
 import BottomButton from '@/components/common/BottomButton.vue'
 import AssetCompositionCard from '@/components/virtual/AssetCompositionCard.vue'
 import ProductHoldingCard from '@/components/product/ProductHoldingCard.vue'
+import { INITIAL_SEED_MONEY } from '@/constants/account'
 import { formatCurrency, formatRate, formatSignedCurrency } from '@/utils/format'
 import { useVirtualAssets } from '@/composables/useVirtualAssets'
+
+// 완료 직후 쿼리로 전달되는 알림. 한 번에 하나만 노출된다.
+const COMPLETION_TOASTS = {
+  started: {
+    title: '가상투자 계좌가 만들어졌어요',
+    description: `초기 자산 ${formatCurrency(INITIAL_SEED_MONEY)}이 계좌에 반영됐습니다.`,
+  },
+  subscribed: {
+    title: '상품 가입이 완료됐어요',
+    description: '사용 가능한 현금과 보유 예금·적금 목록을 서버에서 다시 불러왔습니다.',
+  },
+  terminated: {
+    title: '상품 해지가 완료됐어요',
+    description: '반환 금액과 변경된 자산 비중을 서버에서 다시 불러왔습니다.',
+  },
+}
 
 const route = useRoute()
 const router = useRouter()
 
 const { account, stockHoldings, productHoldings, isLoading, isAccountMissing, errorMessage, loadAssets } = useVirtualAssets()
 
-const hasJustStarted = computed(() => route.query.started === 'true')
-const hasJustSubscribed = computed(() => route.query.subscribed === 'true')
-const hasJustTerminated = computed(() => route.query.terminated === 'true')
+const isToastVisible = ref(false)
+const toastContent = ref({ title: '', description: '' })
 
 const profitColorClass = computed(() => {
   const profit = Number(account.value?.totalProfit)
@@ -25,8 +42,24 @@ const profitColorClass = computed(() => {
   return 'text-muted'
 })
 
-function handleStart() {
-  router.push({ name: 'virtual-start' })
+// 계좌가 없는 사용자는 자산현황 대신 가상투자 시작 화면을 먼저 보여준다.
+watch(isAccountMissing, (missing) => {
+  if (missing) router.replace({ name: 'virtual-start' })
+})
+
+// 완료 알림을 한 번만 띄우고, 재진입 시 다시 뜨지 않도록 쿼리를 정리한다.
+function showCompletionToastIfNeeded() {
+  const toastKey = Object.keys(COMPLETION_TOASTS).find(
+    (key) => route.query[key] === 'true',
+  )
+  if (!toastKey) return
+
+  toastContent.value = COMPLETION_TOASTS[toastKey]
+  isToastVisible.value = true
+
+  const query = { ...route.query }
+  delete query[toastKey]
+  router.replace({ query })
 }
 
 function handleBrowseProducts() {
@@ -67,8 +100,15 @@ function holdingProfitColorClass(holding) {
   return 'text-muted'
 }
 
-onMounted(loadAssets)
-onActivated(loadAssets)
+onMounted(() => {
+  loadAssets()
+  showCompletionToastIfNeeded()
+})
+
+onActivated(() => {
+  loadAssets()
+  showCompletionToastIfNeeded()
+})
 </script>
 
 <template>
@@ -92,49 +132,14 @@ onActivated(loadAssets)
       </div>
     </BaseCard>
 
-    <!-- 계좌 없을 때 -->
-    <template v-else-if="isAccountMissing">
-      <BaseCard color="white">
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <p class="text-caption font-semibold text-navy">처음이신가요?</p>
-            <h2 class="text-h2 text-ink">가상투자 계좌를 먼저 만들어 주세요</h2>
-            <p class="text-caption text-muted">초기 자산과 매월 투자할 금액을 정하면 실제 데이터가 저장된 연습 계좌를 준비해 드려요.</p>
-          </div>
-          <BottomButton color="pink" @click="handleStart">가상투자 시작하기</BottomButton>
-        </div>
-      </BaseCard>
-    </template>
+    <!-- 계좌 없을 때는 가상투자 시작 화면으로 이동하므로 별도 렌더링하지 않는다 -->
 
     <!-- 계좌 있을 때 -->
     <template v-else-if="account">
-      <!-- 가입/해지 완료 알림 -->
-      <BaseCard v-if="hasJustStarted" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">가상투자 계좌가 만들어졌어요</h2>
-          <p class="text-caption text-muted">입력한 초기 자산이 계좌에 반영됐습니다.</p>
-        </div>
-      </BaseCard>
-      <BaseCard v-if="hasJustSubscribed" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">상품 가입이 완료됐어요</h2>
-          <p class="text-caption text-muted">사용 가능한 현금과 보유 예금·적금 목록을 서버에서 다시 불러왔습니다.</p>
-        </div>
-      </BaseCard>
-      <BaseCard v-if="hasJustTerminated" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">상품 해지가 완료됐어요</h2>
-          <p class="text-caption text-muted">반환 금액과 변경된 자산 비중을 서버에서 다시 불러왔습니다.</p>
-        </div>
-      </BaseCard>
-
       <!-- 계좌 요약 -->
       <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between gap-4">
-            <h2 class="text-h2 text-ink">내 가상투자 계좌</h2>
-            <span class="rounded-xl bg-blue px-pill-x py-pill-y text-caption font-semibold text-white">연습 계좌</span>
-          </div>
+          <h2 class="text-h2 text-ink">내 가상투자 계좌</h2>
           <div class="flex flex-col gap-2">
             <span class="text-caption text-muted">총 자산</span>
             <strong class="text-amount text-ink tabular-nums">{{ formatCurrency(account.totalAsset) }}</strong>
@@ -258,5 +263,13 @@ onActivated(loadAssets)
         <p class="text-caption text-muted">가상의 자산과 실제 상품 정보로 투자 감각을 익히는 연습 서비스예요.</p>
       </div>
     </BaseCard>
+
+    <!-- 계좌 생성·상품 가입·해지 완료 토스트 -->
+    <BaseToast
+      v-model="isToastVisible"
+      :title="toastContent.title"
+      :description="toastContent.description"
+      offset="header"
+    />
   </div>
 </template>

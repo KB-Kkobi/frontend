@@ -1,25 +1,3 @@
-export const INVESTMENT_PERIOD_MONTHS = 12;
-
-export const ACCOUNT_AMOUNT_LIMITS = Object.freeze({
-  seedMoney: 1_000_000_000,
-  monthlyInvestAmount: 10_000_000,
-});
-
-export const ACCOUNT_SETUP_DEFAULTS = Object.freeze({
-  seedMoney: 10_000_000,
-  monthlyInvestAmount: 300_000,
-});
-
-export const SEED_MONEY_OPTIONS = Object.freeze([
-  { label: "1,000만원", value: 10_000_000 },
-  { label: "3,000만원", value: 30_000_000 },
-  { label: "5,000만원", value: 50_000_000 },
-  { label: "1억원", value: 100_000_000 },
-]);
-
-export const MONTHLY_INVESTMENT_OPTIONS = Object.freeze([
-  { label: "10만원", value: 100_000 },
-  { label: "30만원", value: 300_000 },
-  { label: "50만원", value: 500_000 },
-  { label: "100만원", value: 1_000_000 },
-]);
+// 가상투자 계좌 생성 시 서버가 고정으로 지급하는 초기 투자금.
+// 실제 값은 백엔드에서 설정되며, 화면 안내 문구 표시용으로만 사용한다.
+export const INITIAL_SEED_MONEY = 5_000_000;

@@ -70,6 +70,7 @@
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |
 | `BottomTabBar`  | 하단 탭 네비게이션                                                                                        |
+| `BaseToast`     | 일정 시간 뒤 자동으로 사라지는 완료 알림. `v-model` + `title`/`description`/`duration`(기본 3000ms) + `offset`(`page` 기본값 / `header`=상단 고정 헤더 아래) prop. 화면 상단에 고정되며 클릭을 막지 않음 |
 | `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `disabled` prop. `ghost`=`bg-surface text-muted font-normal` |
 
 - 새 컴포넌트를 만들기 전에 이 목록부터 확인.
