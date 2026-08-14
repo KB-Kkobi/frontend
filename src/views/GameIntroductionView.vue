@@ -10,6 +10,7 @@ import BaseCard from '@/components/common/BaseCard.vue';
 import BasePill from '@/components/common/BasePill.vue';
 import BottomButton from '@/components/common/BottomButton.vue';
 import PageContainer from '@/components/common/PageContainer.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import MarketLineChart from '@/components/game/MarketLineChart.vue';
 import { GAME_INTRO_PREVIEW_PRICES, GAME_INTRO_STEPS } from '@/constants/game';
 import { useAuthStore } from '@/stores/auth';
@@ -128,38 +129,38 @@ onMounted(loadGameStatus);
         <BackButton />
       </div>
 
-      <header class="flex flex-col gap-2">
+      <PageHeader>
         <p class="text-caption text-muted">
-          {{ nickname ? `${nickname}님` : '회원님' }}, 반가워요
+          <strong class="font-semibold text-navy">
+            {{ nickname ? nickname : '회원' }}
+          </strong>
+          님, 반가워요
         </p>
-        <h1 class="text-amount text-ink">
-          3분만 직접<br />
-          투자해볼까요?
-        </h1>
-        <p class="text-body text-muted">
+        <h1 class="text-amount text-ink">3분만 직접 투자해볼까요?</h1>
+        <p class="text-caption text-muted tracking-tight">
           주식이
-          <strong class="font-semibold text-ink">실시간으로 오르내리는 3분</strong>
-          동안<br />
-          당신의 선택으로 성향을 알아봐요.
+          <strong class="font-semibold text-navy"
+            >실시간으로 오르내리는 3분</strong
+          >
+          동안<br />당신의 선택으로 성향을 알아봐요.
         </p>
-      </header>
+      </PageHeader>
 
-      <BaseCard>
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-2">
             <div class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
                 <h2 class="text-h2 text-ink">시장종합지수</h2>
-                <BasePill label="미리보기" color="yellow" />
               </div>
               <p class="text-caption text-muted">
                 종목 A 가격은 이 지수를 그대로 따라가요
               </p>
             </div>
-            <BasePill label="8개월차" color="pink" variant="outline" />
+            <BasePill label="미리보기" color="pink" />
           </div>
 
-          <div class="text-blue" aria-label="시장종합지수 예시 차트">
+          <div class="text-pink" aria-label="시장종합지수 예시 차트">
             <MarketLineChart
               :prices="GAME_INTRO_PREVIEW_PRICES"
               :total-ticks="GAME_INTRO_PREVIEW_PRICES.length"
@@ -185,7 +186,7 @@ onMounted(loadGameStatus);
           게임은 이렇게 진행돼요
         </h2>
 
-        <BaseCard color="yellow">
+        <BaseCard color="white" elevation="flat">
           <ol class="flex flex-col gap-4">
             <li
               v-for="(step, index) in GAME_INTRO_STEPS"
@@ -193,7 +194,7 @@ onMounted(loadGameStatus);
               class="flex items-start gap-4"
             >
               <span
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow text-caption font-bold text-ink"
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-pink text-caption font-bold text-white"
               >
                 {{ index + 1 }}
               </span>
@@ -208,9 +209,9 @@ onMounted(loadGameStatus);
 
       <BaseCard color="yellow">
         <div class="flex items-start gap-4">
-          <BaseAlertIcon class="h-6 w-6 shrink-0 text-pink" />
+          <BaseAlertIcon class="h-6 w-6 shrink-0 text-yellow" />
           <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-ink">시작하기 전에 확인해 주세요</h2>
+            <h2 class="text-h2 text-navy">시작하기 전에 확인해 주세요</h2>
             <p class="text-caption text-ink">
               게임 결과는 상품 추천과 가상투자 서비스의 기준으로 사용돼요.
               신중하게 선택해 주세요.
@@ -226,7 +227,7 @@ onMounted(loadGameStatus);
         </div>
       </BaseCard>
 
-      <BottomButton color="yellow" @click="handleOpenAllocation">
+      <BottomButton color="pink" @click="handleOpenAllocation">
         시작 자산 정하기
       </BottomButton>
     </div>

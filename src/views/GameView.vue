@@ -1,30 +1,31 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
-import { completeGame, fetchScenario, saveGameAction } from "@/api/gameApi";
-import { ApiError } from "@/api/http";
-import BaseCard from "@/components/common/BaseCard.vue";
-import PageContainer from "@/components/common/PageContainer.vue";
-import GameBuyBottomSheet from "@/components/game/GameBuyBottomSheet.vue";
-import GameCompletionPopup from "@/components/game/GameCompletionPopup.vue";
-import GameDepositCancelPopup from "@/components/game/GameDepositCancelPopup.vue";
-import GameDepositMaturityPopup from "@/components/game/GameDepositMaturityPopup.vue";
-import GameEventPopup from "@/components/game/GameEventPopup.vue";
-import GamePortfolioPanel from "@/components/game/GamePortfolioPanel.vue";
-import GameSellBottomSheet from "@/components/game/GameSellBottomSheet.vue";
-import MarketIndexCard from "@/components/game/MarketIndexCard.vue";
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { completeGame, fetchScenario, saveGameAction } from '@/api/gameApi';
+import { ApiError } from '@/api/http';
+import BaseCard from '@/components/common/BaseCard.vue';
+import PageContainer from '@/components/common/PageContainer.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
+import GameBuyBottomSheet from '@/components/game/GameBuyBottomSheet.vue';
+import GameCompletionPopup from '@/components/game/GameCompletionPopup.vue';
+import GameDepositCancelPopup from '@/components/game/GameDepositCancelPopup.vue';
+import GameDepositMaturityPopup from '@/components/game/GameDepositMaturityPopup.vue';
+import GameEventPopup from '@/components/game/GameEventPopup.vue';
+import GamePortfolioPanel from '@/components/game/GamePortfolioPanel.vue';
+import GameSellBottomSheet from '@/components/game/GameSellBottomSheet.vue';
+import MarketIndexCard from '@/components/game/MarketIndexCard.vue';
 import {
   DEFAULT_SCENARIO_ID,
   GAME_DEPOSIT_MONTHS,
   GAME_EVENT_RESUME_DELAY_MS,
-} from "@/constants/game";
-import { useGameTick } from "@/composables/useGameTick";
+} from '@/constants/game';
+import { useGameTick } from '@/composables/useGameTick';
 import {
   readGameCompletionSession,
   readGameStartSession,
   saveGameCompletionSession,
   saveGameStartSession,
-} from "@/utils/gameStorage";
+} from '@/utils/gameStorage';
 
 const {
   currentTick,
@@ -41,7 +42,7 @@ const {
 const router = useRouter();
 
 const isLoading = ref(true);
-const errorMessage = ref("");
+const errorMessage = ref('');
 const eventsByTick = ref(new Map());
 const shownEventTicks = ref(new Set());
 const activeEvent = ref(null);
@@ -53,13 +54,13 @@ const isDepositMaturityPopupOpen = ref(false);
 const isGameCompletionPopupOpen = ref(false);
 const hasResolvedDepositMaturity = ref(false);
 const isCompletingGame = ref(false);
-const gameCompletionErrorMessage = ref("");
+const gameCompletionErrorMessage = ref('');
 const isBuying = ref(false);
 const isSelling = ref(false);
 const isCancellingDeposit = ref(false);
-const buyErrorMessage = ref("");
-const sellErrorMessage = ref("");
-const depositCancelErrorMessage = ref("");
+const buyErrorMessage = ref('');
+const sellErrorMessage = ref('');
+const depositCancelErrorMessage = ref('');
 const gameStart = ref(readGameStartSession());
 const initialStockPrice = ref(0);
 const averageStockPrice = ref(0);
@@ -77,7 +78,7 @@ const totalAssetAmount = computed(
   () =>
     cashAmount.value +
     depositAmount.value +
-    ((currentTick.value?.price ?? 0) * stockQuantity.value),
+    (currentTick.value?.price ?? 0) * stockQuantity.value,
 );
 const depositRatio = computed(() => {
   if (totalAssetAmount.value === 0) return 0;
@@ -104,15 +105,16 @@ function buildEventsByTick(events) {
 
 async function loadScenario() {
   isLoading.value = true;
-  errorMessage.value = "";
+  errorMessage.value = '';
 
   try {
     const scenario = await fetchScenario(DEFAULT_SCENARIO_ID);
     initialStockPrice.value = scenario.ticks[0]?.price ?? scenario.basePrice;
-    averageStockPrice.value = gameStart.value?.averageStockPrice
-      ?? initialStockPrice.value;
-    stockQuantity.value = gameStart.value?.stockQuantity
-      ?? (initialStockPrice.value
+    averageStockPrice.value =
+      gameStart.value?.averageStockPrice ?? initialStockPrice.value;
+    stockQuantity.value =
+      gameStart.value?.stockQuantity ??
+      (initialStockPrice.value
         ? Math.floor(stockAmount.value / initialStockPrice.value)
         : 0);
     finalGameTick.value = scenario.ticks.at(-1)?.tick ?? null;
@@ -129,7 +131,7 @@ async function loadScenario() {
     errorMessage.value =
       error instanceof ApiError
         ? error.message
-        : "시나리오를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        : '시나리오를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
   } finally {
     isLoading.value = false;
   }
@@ -148,18 +150,18 @@ function handleCloseEvent() {
 
 function handleOpenBuySheet() {
   if (isGameFinished.value) return;
-  buyErrorMessage.value = "";
+  buyErrorMessage.value = '';
   isBuySheetOpen.value = true;
 }
 
 function handleOpenSellSheet() {
   if (isGameFinished.value) return;
-  sellErrorMessage.value = "";
+  sellErrorMessage.value = '';
   isSellSheetOpen.value = true;
 }
 
 function handleOpenDepositCancelPopup() {
-  depositCancelErrorMessage.value = "";
+  depositCancelErrorMessage.value = '';
   isDepositCancelPopupOpen.value = true;
 }
 
@@ -168,9 +170,10 @@ function openDepositMaturityPopup() {
     hasResolvedDepositMaturity.value ||
     activeEvent.value ||
     currentTick.value?.tick !== finalGameTick.value ||
-    gameStart.value?.depositStatus !== "ACTIVE" ||
+    gameStart.value?.depositStatus !== 'ACTIVE' ||
     depositAmount.value <= 0
-  ) return false;
+  )
+    return false;
 
   isDepositMaturityPopupOpen.value = true;
   pause();
@@ -182,7 +185,7 @@ function handleConfirmDepositMaturity(maturityAmount) {
   gameStart.value = {
     ...gameStart.value,
     depositAmount: maturityAmount,
-    depositStatus: "MATURED",
+    depositStatus: 'MATURED',
   };
   saveGameStartSession(gameStart.value);
   isDepositMaturityPopupOpen.value = false;
@@ -194,7 +197,7 @@ async function requestGameCompletion() {
 
   isGameCompletionPopupOpen.value = true;
   isCompletingGame.value = true;
-  gameCompletionErrorMessage.value = "";
+  gameCompletionErrorMessage.value = '';
 
   try {
     await completeGame();
@@ -206,9 +209,10 @@ async function requestGameCompletion() {
     saveGameStartSession(gameStart.value);
     isRestoredCompletedGame.value = true;
   } catch (error) {
-    gameCompletionErrorMessage.value = error instanceof ApiError
-      ? error.message
-      : "게임 결과 저장에 실패했습니다. 다시 시도해 주세요.";
+    gameCompletionErrorMessage.value =
+      error instanceof ApiError
+        ? error.message
+        : '게임 결과 저장에 실패했습니다. 다시 시도해 주세요.';
   } finally {
     isCompletingGame.value = false;
   }
@@ -216,20 +220,20 @@ async function requestGameCompletion() {
 
 function handleViewAssessmentResult() {
   saveGameCompletionSession();
-  router.push({ name: "assessment-result" });
+  router.push({ name: 'assessment-result' });
 }
 
 async function handleBuyStock({ quantity, orderAmount }) {
   if (isBuying.value || !currentTick.value || !gameStart.value) return;
 
   isBuying.value = true;
-  buyErrorMessage.value = "";
+  buyErrorMessage.value = '';
 
   try {
     const action = await saveGameAction({
       gameTick: currentTick.value.tick,
-      actionType: "BUY",
-      assetType: "STOCK",
+      actionType: 'BUY',
+      assetType: 'STOCK',
       actionAmount: orderAmount,
       currentCash: cashAmount.value - orderAmount,
       currentStockPrincipal: stockAmount.value + orderAmount,
@@ -238,10 +242,11 @@ async function handleBuyStock({ quantity, orderAmount }) {
 
     const previousQuantity = stockQuantity.value;
     const nextQuantity = previousQuantity + quantity;
-    averageStockPrice.value = nextQuantity === 0
-      ? 0
-      : ((averageStockPrice.value * previousQuantity) + orderAmount)
-        / nextQuantity;
+    averageStockPrice.value =
+      nextQuantity === 0
+        ? 0
+        : (averageStockPrice.value * previousQuantity + orderAmount) /
+          nextQuantity;
     stockQuantity.value = nextQuantity;
     gameStart.value = {
       ...gameStart.value,
@@ -254,9 +259,10 @@ async function handleBuyStock({ quantity, orderAmount }) {
     saveGameStartSession(gameStart.value);
     isBuySheetOpen.value = false;
   } catch (error) {
-    buyErrorMessage.value = error instanceof ApiError
-      ? error.message
-      : "매수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    buyErrorMessage.value =
+      error instanceof ApiError
+        ? error.message
+        : '매수 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.';
   } finally {
     isBuying.value = false;
   }
@@ -266,7 +272,7 @@ async function handleSellStock({ quantity, saleAmount }) {
   if (isSelling.value || !currentTick.value || !gameStart.value) return;
 
   isSelling.value = true;
-  sellErrorMessage.value = "";
+  sellErrorMessage.value = '';
 
   try {
     const isFullSale = quantity === stockQuantity.value;
@@ -276,8 +282,8 @@ async function handleSellStock({ quantity, saleAmount }) {
       : Math.max(stockAmount.value - soldStockPrincipal, 0);
     const action = await saveGameAction({
       gameTick: currentTick.value.tick,
-      actionType: "SELL",
-      assetType: "STOCK",
+      actionType: 'SELL',
+      assetType: 'STOCK',
       actionAmount: saleAmount,
       currentCash: cashAmount.value + saleAmount,
       currentStockPrincipal: nextStockPrincipal,
@@ -297,9 +303,10 @@ async function handleSellStock({ quantity, saleAmount }) {
     saveGameStartSession(gameStart.value);
     isSellSheetOpen.value = false;
   } catch (error) {
-    sellErrorMessage.value = error instanceof ApiError
-      ? error.message
-      : "매도 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    sellErrorMessage.value =
+      error instanceof ApiError
+        ? error.message
+        : '매도 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.';
   } finally {
     isSelling.value = false;
   }
@@ -311,17 +318,18 @@ async function handleCancelDeposit() {
     !currentTick.value ||
     !gameStart.value ||
     depositAmount.value <= 0
-  ) return;
+  )
+    return;
 
   isCancellingDeposit.value = true;
-  depositCancelErrorMessage.value = "";
+  depositCancelErrorMessage.value = '';
 
   try {
     const cancelledDepositAmount = depositAmount.value;
     const action = await saveGameAction({
       gameTick: currentTick.value.tick,
-      actionType: "DEPOSIT_CANCEL",
-      assetType: "DEPOSIT",
+      actionType: 'DEPOSIT_CANCEL',
+      assetType: 'DEPOSIT',
       actionAmount: cancelledDepositAmount,
       currentCash: cashAmount.value + cancelledDepositAmount,
       currentStockPrincipal: stockAmount.value,
@@ -338,9 +346,10 @@ async function handleCancelDeposit() {
     saveGameStartSession(gameStart.value);
     isDepositCancelPopupOpen.value = false;
   } catch (error) {
-    depositCancelErrorMessage.value = error instanceof ApiError
-      ? error.message
-      : "예금 해지 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    depositCancelErrorMessage.value =
+      error instanceof ApiError
+        ? error.message
+        : '예금 해지 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.';
   } finally {
     isCancellingDeposit.value = false;
   }
@@ -369,12 +378,17 @@ watch(
     isDepositMaturityPopupOpen,
   ],
   ([isBuyOpen, isSellOpen, isDepositCancelOpen, isDepositMaturityOpen]) => {
-  if (isBuyOpen || isSellOpen || isDepositCancelOpen || isDepositMaturityOpen) {
-    pause();
-    return;
-  }
+    if (
+      isBuyOpen ||
+      isSellOpen ||
+      isDepositCancelOpen ||
+      isDepositMaturityOpen
+    ) {
+      pause();
+      return;
+    }
 
-  if (!activeEvent.value) resume();
+    if (!activeEvent.value) resume();
   },
 );
 
@@ -397,7 +411,7 @@ onMounted(loadScenario);
           :price-max="priceMax"
           :banner-event="bannerEvent"
         />
-        <BaseCard v-if="gameStart">
+        <BaseCard v-if="gameStart" color="white">
           <GamePortfolioPanel
             :stock-quantity="stockQuantity"
             :average-stock-price="averageStockPrice"
