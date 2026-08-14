@@ -10,7 +10,10 @@ const props = defineProps({
 });
 
 // 가로형 CI와 세로형/정사각형 심볼 두 가지만 구분한다. 은행별 개별 px 값은 두지 않는다.
-const HORIZONTAL_LOGO_CLASS = "h-7 w-16 object-contain";
+// 두 유형 모두 높이(h-10)는 카드 행 높이에 맞춰 동일하게 유지하고, 가로형에만
+// 더 넓은 폭(w-16)을 허용한다 — 높이를 다르게 두면 정사각형 캔버스 로고가
+// 오히려 더 작게 렌더링되는 문제가 있어, "세로형은 높이 기준"을 공통 높이로 구현했다.
+const HORIZONTAL_LOGO_CLASS = "h-10 w-16 object-contain";
 const VERTICAL_LOGO_CLASS = "h-10 w-10 object-contain";
 
 const logoSrc = computed(() => bankLogoMap[props.name.trim()] ?? null);
