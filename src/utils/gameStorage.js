@@ -48,3 +48,11 @@ export function clearGameCompletionSession() {
     getSessionStorage()?.removeItem(GAME_COMPLETION_STORAGE_KEY);
   } catch {}
 }
+
+export function clearGameSession() {
+  try {
+    const storage = getSessionStorage();
+    storage?.removeItem(GAME_START_STORAGE_KEY);
+    storage?.removeItem(GAME_COMPLETION_STORAGE_KEY);
+  } catch {}
+}
