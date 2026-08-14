@@ -50,14 +50,28 @@ const imageUrl = computed(() => resolveAssetUrl(props.imagePath));
 const summarySentence = computed(() => getFirstSentence(props.description));
 const axisBadges = computed(() => getAxisBadgesFromScores(props.scores));
 
-const segments = computed(() =>
-  PORTFOLIO_SEGMENT_DEFINITIONS.map((segment) => ({
-    key: segment.key,
-    label: segment.label,
-    barClass: BAR_COLOR_CLASSES[segment.color],
-    value: props[segment.key],
-  })),
-);
+const segments = computed(() => {
+  let cumulative = 0;
+
+  return PORTFOLIO_SEGMENT_DEFINITIONS.map((segment, index) => {
+    const value = props[segment.key];
+    const center = cumulative + value / 2;
+    cumulative += value;
+
+    let align = "center";
+    if (index === 0) align = "start";
+    else if (index === PORTFOLIO_SEGMENT_DEFINITIONS.length - 1) align = "end";
+
+    return {
+      key: segment.key,
+      label: segment.label,
+      barClass: BAR_COLOR_CLASSES[segment.color],
+      value,
+      center,
+      align,
+    };
+  });
+});
 
 const barLabel = computed(() =>
   segments.value.map((segment) => `${segment.label} ${segment.value}%`).join(", "),
@@ -118,11 +132,17 @@ function handleViewDetail() {
         />
       </div>
 
-      <ul class="flex justify-between">
+      <ul class="relative h-12 w-full">
         <li
           v-for="segment in segments"
           :key="segment.key"
-          class="flex flex-col items-center gap-1"
+          class="absolute top-0 flex flex-col gap-1"
+          :class="[
+            segment.align === 'start' && 'left-0 items-start',
+            segment.align === 'end' && 'right-0 items-end',
+            segment.align === 'center' && '-translate-x-1/2 items-center',
+          ]"
+          :style="segment.align === 'center' ? { left: `${segment.center}%` } : {}"
         >
           <span class="text-caption text-muted">{{ segment.label }}</span>
           <span class="text-body font-semibold text-navy tabular-nums">{{ segment.value }}%</span>
