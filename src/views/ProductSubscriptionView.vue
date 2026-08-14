@@ -122,9 +122,41 @@ const appliedRateUplift = computed(() => {
   return Number.isFinite(uplift) && uplift > 0 ? uplift : 0;
 });
 
-// 예상조회 응답이 오기 전에는 기본 금리를 임시로 보여준다.
-const previewAppliedRate = computed(
-  () => appliedRate.value ?? selectedOption.value?.interestRate ?? null,
+// 화면 표시 전용 예상금리(선택 즉시 반영). 실제 가입/최종 확정에는 쓰지 않고,
+// 서버 예상조회가 아직 없거나 우대조건이 방금 바뀌어 무효화된 상태에서만 보여준다.
+// selectable=false·additionalRate=null 조건은 합산에서 제외한다.
+const localPreviewRate = computed(() => {
+  const baseRate = Number(selectedOption.value?.interestRate);
+  if (!Number.isFinite(baseRate)) return null;
+
+  const additionalRateSum = preferentialRateConditions.value
+    .filter(
+      (condition) =>
+        condition.selectable &&
+        condition.additionalRate !== null &&
+        condition.additionalRate !== undefined &&
+        selectedPreferentialRateConditionIds.value.includes(
+          condition.preferentialRateConditionId,
+        ),
+    )
+    .reduce((sum, condition) => sum + Number(condition.additionalRate), 0);
+
+  const rawRate = baseRate + additionalRateSum;
+  const maximumRate = Number(selectedOption.value?.maximumInterestRate);
+  return Number.isFinite(maximumRate) && rawRate > maximumRate
+    ? maximumRate
+    : rawRate;
+});
+
+// 서버 예상조회가 현재 선택 기준으로 확정됐는지 여부.
+const isEstimateConfirmed = computed(() => Boolean(subscriptionEstimate.value));
+
+// 확정 전엔 화면용 로컬 계산값을, 확정 후엔 서버 appliedRate를 보여준다.
+const displayRate = computed(() =>
+  isEstimateConfirmed.value ? appliedRate.value : localPreviewRate.value,
+);
+const displayRateLabel = computed(() =>
+  isEstimateConfirmed.value ? "예상 적용금리" : "선택 기준 예상금리",
 );
 const expectedMaturityDate = computed(
   () => subscriptionEstimate.value?.maturityDate ?? null,
@@ -258,20 +290,14 @@ const canEstimate = computed(() => {
   return true;
 });
 
-// 서버가 금액·납입일 없이는 예상금리 계산을 거부하므로, 우대조건을 선택해도
-// 값이 안 바뀌는 이유를 알려준다. 프론트에서 임의로 금리를 계산하지는 않는다.
+// 서버가 금액·납입일 없이는 예상금리 계산을 거부하므로, 만기 예상금액을
+// 보려면 무엇을 더 입력해야 하는지 안내한다(우대조건 선택 자체는 이미
+// localPreviewRate로 즉시 반영되므로 "왜 안 바뀌냐"는 안내는 아님).
 const estimateHint = computed(() => {
   if (canEstimate.value || !selectedOption.value) return "";
-
-  const missingFields = [];
-  if (!joinAmount.value || joinAmount.value <= 0) {
-    missingFields.push(amountLabel.value);
-  }
-  if (isSaving.value && !paymentDay.value) missingFields.push("납입일");
-
-  return missingFields.length
-    ? `${missingFields.join(", ")}을 입력하면 정확한 예상 적용금리를 확인할 수 있어요.`
-    : "";
+  return isSaving.value
+    ? "월 납입금액과 납입일을 입력하면 만기 예상금액을 확인할 수 있어요."
+    : "가입금액을 입력하면 만기 예상금액을 확인할 수 있어요.";
 });
 
 // estimate/subscribe 양쪽에서 재사용. 요청 도중 입력이 바뀌면(token 불일치)
@@ -628,9 +654,9 @@ onBeforeUnmount(() => {
 
             <div class="flex flex-col gap-2 border-t border-line pt-4">
               <div class="flex items-center justify-between gap-4">
-                <span class="text-caption text-muted">예상 적용금리</span>
+                <span class="text-caption text-muted">{{ displayRateLabel }}</span>
                 <strong class="text-h2 text-profit tabular-nums">
-                  {{ formatInterestRate(previewAppliedRate) }}
+                  {{ formatInterestRate(displayRate) }}
                 </strong>
               </div>
               <p v-if="estimateHint" class="text-caption text-muted">
