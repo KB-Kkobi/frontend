@@ -26,6 +26,18 @@ export const SECURITY_LIST_DEFAULTS = Object.freeze({
   size: SECURITY_LIST_SIZE_OPTIONS[0],
 });
 
+export const SECURITY_SORT_OPTIONS = Object.freeze([
+  { value: "name,asc", label: "종목명순" },
+  { value: "marketCap,desc", label: "시가총액 높은순" },
+  { value: "marketCap,asc", label: "시가총액 낮은순" },
+]);
+
+export const SECURITY_FILTER_TYPE_OPTIONS = Object.freeze([
+  { value: SECURITY_TYPES.STOCK, label: "주식" },
+  { value: SECURITY_TYPES.BOND_ETF, label: "채권형 ETF" },
+  { value: SECURITY_TYPES.EQUITY_ETF, label: "주식형 ETF" },
+]);
+
 export const SECURITY_QUOTE_MAX_TICKERS = 100;
 
 export const SECURITY_QUOTE_POLL_INTERVAL_MS = 7000;

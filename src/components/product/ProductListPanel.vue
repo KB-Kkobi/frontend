@@ -11,12 +11,13 @@ import {
 } from "@/api/productApi";
 import { fetchSecurityList, fetchSecurityQuotes } from "@/api/securityApi";
 import ProductListCard from "@/components/product/ProductListCard.vue";
-import ProductFilterModal from "@/components/product/ProductFilterModal.vue";
+import FilterSheet from "@/components/common/FilterSheet.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import ListToolbar from "@/components/common/ListToolbar.vue";
 import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
@@ -30,8 +31,8 @@ import {
 } from "@/constants/product";
 import {
   SECURITY_LIST_DEFAULTS,
-  SECURITY_TYPE_FILTER_OPTIONS,
 } from "@/constants/security";
+import { buildSavingsFilterGroups } from "@/constants/productFilters";
 
 const props = defineProps({
   /**
@@ -176,6 +177,12 @@ const activeFilterCount = computed(
     selectedPreferentialConditions.value.length,
 );
 const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
+const filterGroups = computed(() => buildSavingsFilterGroups(isSaving.value));
+const filterModelValue = computed(() => ({
+  savingTerms: selectedSavingTerms.value,
+  reserveTypes: selectedReserveTypes.value,
+  preferentialConditions: selectedPreferentialConditions.value,
+}));
 const activeFilterLabels = computed(() => {
   const labels = selectedSavingTerms.value.map(
     (savingTerm) => `${savingTerm}개월`,
@@ -382,30 +389,14 @@ function handleSelectSecurityType(securityType) {
   resetPage();
 }
 
-function handleSelectEmbeddedSavingTerm(savingTerm) {
-  selectedSavingTerms.value = [savingTerm];
-  resetPage();
-}
-
-function handleSelectEmbeddedReserveType(reserveType) {
-  selectedReserveTypes.value = reserveType ? [reserveType] : [];
-  resetPage();
-}
-
-function isEmbeddedReserveTypeSelected(reserveType) {
-  return reserveType
-    ? selectedReserveTypes.value.includes(reserveType)
-    : selectedReserveTypes.value.length === 0;
-}
-
 function handleOpenFilter() {
   isFilterOpen.value = true;
 }
 
 function handleApplyFilters(filters) {
-  selectedSavingTerms.value = [...filters.savingTerms];
-  selectedReserveTypes.value = [...filters.reserveTypes];
-  selectedPreferentialConditions.value = [...filters.preferentialConditions];
+  selectedSavingTerms.value = [...(filters.savingTerms ?? [])];
+  selectedReserveTypes.value = [...(filters.reserveTypes ?? [])];
+  selectedPreferentialConditions.value = [...(filters.preferentialConditions ?? [])];
   resetPage();
 }
 
@@ -585,28 +576,30 @@ onMounted(() => {
         />
 
         <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex min-w-0 items-center gap-2">
-              <svg
-                class="h-4 w-4 shrink-0 text-blue"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
-                <path
-                  class="text-white"
-                  d="M12 11v6M12 7.5v.5"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
-              </svg>
-              <p class="text-caption text-muted">
-                금리는 은행 사정에 따라 변동될 수 있어요.
-              </p>
-            </div>
-            <div class="flex shrink-0 items-center gap-2">
+          <ListToolbar
+            :filter-active="hasAppliedFilters"
+            :filter-count="activeFilterCount"
+            @filter="handleOpenFilter"
+          >
+            <svg
+              class="h-4 w-4 shrink-0 text-blue"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" fill="currentColor" />
+              <path
+                class="text-white"
+                d="M12 11v6M12 7.5v.5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p class="text-caption text-muted">
+              금리는 은행 사정에 따라 변동될 수 있어요.
+            </p>
+            <template #sort>
               <label
                 class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
               >
@@ -640,38 +633,8 @@ onMounted(() => {
                   </option>
                 </select>
               </label>
-              <button
-                type="button"
-                :class="[
-                  hasAppliedFilters ? 'text-pink' : 'text-ink',
-                  'flex items-center gap-2 py-pill-y text-caption',
-                ]"
-                :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
-                @click="handleOpenFilter"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M4 7h7m4 0h5M4 17h3m4 0h9"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                  />
-                  <circle cx="13" cy="7" r="2" stroke-width="1.8" />
-                  <circle cx="9" cy="17" r="2" stroke-width="1.8" />
-                </svg>
-                <span
-                  >필터{{
-                    activeFilterCount ? ` ${activeFilterCount}` : ""
-                  }}</span
-                >
-              </button>
-            </div>
-          </div>
+            </template>
+          </ListToolbar>
 
           <div
             v-if="hasAppliedFilters"
@@ -703,42 +666,83 @@ onMounted(() => {
           @search="handleSearch"
         />
 
-        <div class="flex flex-wrap gap-2" aria-label="가입 기간">
-          <button
-            v-for="savingTerm in SAVING_TERM_OPTIONS"
-            :key="savingTerm"
-            type="button"
-            :class="[
-              selectedSavingTerms.includes(savingTerm)
-                ? 'border-pink bg-pink-soft text-pink'
-                : 'border-line bg-white text-muted',
-              'rounded-2xl border px-4 py-3 text-caption font-semibold',
-            ]"
-            @click="handleSelectEmbeddedSavingTerm(savingTerm)"
+        <div class="flex flex-col gap-4">
+          <ListToolbar
+            :filter-active="hasAppliedFilters"
+            :filter-count="activeFilterCount"
+            @filter="handleOpenFilter"
           >
-            {{ savingTerm }}개월
-          </button>
-        </div>
+            <svg
+              class="h-4 w-4 shrink-0 text-blue"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" fill="currentColor" />
+              <path
+                class="text-white"
+                d="M12 11v6M12 7.5v.5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p class="text-caption text-muted">
+              금리는 은행 사정에 따라 변동될 수 있어요.
+            </p>
+            <template #sort>
+              <label
+                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>정렬</span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="상품 정렬"
+                  @change="resetPage"
+                >
+                  <option
+                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                    :key="sortOption.value"
+                    :value="sortOption.value"
+                  >
+                    {{ sortOption.label }}
+                  </option>
+                </select>
+              </label>
+            </template>
+          </ListToolbar>
 
-        <div
-          v-if="isSaving"
-          class="flex flex-wrap gap-2"
-          aria-label="적립 유형"
-        >
-          <button
-            v-for="reserveType in RESERVE_TYPE_OPTIONS"
-            :key="reserveType.value"
-            type="button"
-            :class="[
-              isEmbeddedReserveTypeSelected(reserveType.value)
-                ? 'border-blue bg-blue-soft text-blue'
-                : 'border-line bg-white text-muted',
-              'rounded-2xl border px-4 py-3 text-caption font-semibold',
-            ]"
-            @click="handleSelectEmbeddedReserveType(reserveType.value)"
-          >
-            {{ reserveType.label }}
-          </button>
+          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+            <BasePill
+              v-for="label in activeFilterLabels"
+              :key="label"
+              :label="label"
+              color="pink"
+              variant="outline"
+            />
+            <button
+              type="button"
+              class="py-pill-y text-caption font-semibold text-muted"
+              @click="handleClearFilters"
+            >
+              전체 초기화
+            </button>
+          </div>
         </div>
       </template>
     </template>
@@ -751,29 +755,13 @@ onMounted(() => {
         @search="handleSecuritySearch"
       />
 
-      <div class="flex flex-wrap gap-2" aria-label="증권 유형">
-        <button
-          v-for="option in SECURITY_TYPE_FILTER_OPTIONS"
-          :key="option.value || 'all'"
-          type="button"
-          :class="[
-            selectedSecurityType === option.value
-              ? 'border-pink bg-pink-soft text-pink'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectSecurityType(option.value)"
-        >
-          {{ option.label }}
-        </button>
-      </div>
     </template>
 
-    <div v-if="isSecurityTab" class="flex items-center justify-between gap-4">
+    <ListToolbar v-if="isSecurityTab">
       <p class="text-caption text-muted tabular-nums">
         {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
       </p>
-    </div>
+    </ListToolbar>
 
     <BaseCard v-if="isLoading" color="blue">
       <div class="flex flex-col gap-2" role="status">
@@ -904,13 +892,10 @@ onMounted(() => {
       </button>
     </nav>
 
-    <ProductFilterModal
-      v-if="standalone"
-      v-model="isFilterOpen"
-      :product-type="activeTab"
-      :saving-terms="selectedSavingTerms"
-      :reserve-types="selectedReserveTypes"
-      :preferential-conditions="selectedPreferentialConditions"
+    <FilterSheet
+      v-model:open="isFilterOpen"
+      :model-value="filterModelValue"
+      :groups="filterGroups"
       @apply="handleApplyFilters"
     />
   </div>
