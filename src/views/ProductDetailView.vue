@@ -6,6 +6,7 @@ import {
   ProductApiError,
   fetchProductDetail,
 } from "@/api/productApi";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import ProductInterestOptionCard from "@/components/product/ProductInterestOptionCard.vue";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
@@ -150,16 +151,19 @@ watch(
       <template v-else-if="product">
         <BaseCard color="white" elevation="highlight">
           <div class="flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <p class="text-caption font-semibold text-pink">
-                {{ productTypeLabel }}
-              </p>
-              <p class="text-caption text-muted">
-                {{ formatNullableText(product.financialCompanyName) }}
-              </p>
-              <h2 class="text-h1 text-ink">
-                {{ formatNullableText(product.productName) }}
-              </h2>
+            <div class="flex items-center gap-4">
+              <ProductBankLogo :name="product.financialCompanyName" />
+              <div class="flex min-w-0 flex-1 flex-col gap-2">
+                <p class="text-caption font-semibold text-pink">
+                  {{ productTypeLabel }}
+                </p>
+                <p class="text-caption text-muted">
+                  {{ formatNullableText(product.financialCompanyName) }}
+                </p>
+                <h2 class="text-h1 text-ink">
+                  {{ formatNullableText(product.productName) }}
+                </h2>
+              </div>
             </div>
 
             <dl class="flex flex-col gap-4 border-t border-line pt-4">

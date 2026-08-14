@@ -16,6 +16,7 @@ import BasePill from "@/components/common/BasePill.vue";
 import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import ProductSubscriptionOptionCard from "@/components/product/ProductSubscriptionOptionCard.vue";
 import {
   PRODUCT_AMOUNT_OPTIONS,
@@ -316,12 +317,8 @@ watch(
         <BaseCard color="white">
           <div class="flex flex-col gap-4">
             <div class="flex items-center gap-4">
-              <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pink-soft text-h2 text-pink"
-              >
-                {{ product.financialCompanyName?.charAt(0) || "금" }}
-              </span>
-              <div class="flex flex-col gap-2">
+              <ProductBankLogo :name="product.financialCompanyName" />
+              <div class="flex min-w-0 flex-1 flex-col gap-2">
                 <h2 class="text-h2 text-ink">{{ product.productName }}</h2>
                 <p class="text-caption text-muted">
                   {{ formatNullableText(product.financialCompanyName) }}
