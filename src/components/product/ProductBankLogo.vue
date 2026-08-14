@@ -23,6 +23,8 @@ const altText = computed(() =>
 const hasLoadError = ref(false);
 // 로드된 원본 비율에 따라 가로형/세로형 중 어느 공통 스타일을 적용할지 결정한다.
 const orientation = ref("vertical");
+// 실제 로고가 표시될 때는 배경을 비워, 투명 배경(누끼) PNG에 배경색이 비치지 않게 한다.
+const isShowingLogo = computed(() => Boolean(logoSrc.value) && !hasLoadError.value);
 
 watch(logoSrc, () => {
   hasLoadError.value = false;
@@ -41,10 +43,11 @@ function handleError() {
 
 <template>
   <span
-    class="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-surface"
+    class="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
+    :class="isShowingLogo ? '' : 'bg-surface'"
   >
     <img
-      v-if="logoSrc && !hasLoadError"
+      v-if="isShowingLogo"
       :src="logoSrc"
       :alt="altText"
       :class="orientation === 'horizontal' ? HORIZONTAL_LOGO_CLASS : VERTICAL_LOGO_CLASS"
