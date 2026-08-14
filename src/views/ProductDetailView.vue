@@ -98,6 +98,8 @@ function handleSubscribe() {
         productType: route.params.productType,
         productId: route.params.productId,
       },
+      // 가입 화면에서도 가상투자 바텀탭이 유지되도록 컨텍스트를 넘긴다.
+      query: { tradable: "true" },
     });
     return;
   }

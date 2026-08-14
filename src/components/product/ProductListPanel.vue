@@ -95,7 +95,8 @@ function parseInitialOptionValues(value, options) {
 }
 
 const initialQuery = route.query;
-const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.DEPOSIT;
+// 가상투자 상품 추천은 주식 탭을 먼저 보여준다.
+const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.SECURITY;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 if (!props.standalone && initialSavingTerms.length === 0) {
   initialSavingTerms.push(12);
@@ -481,9 +482,15 @@ function isQueryEqual(a, b) {
   return aKeys.every((key) => String(a[key]) === String(b[key]));
 }
 
+// 가상투자 모드는 상품 상세를 다녀와도 탭이 유지되도록 tab만 URL에 남긴다.
+function buildVirtualQueryFromState() {
+  return activeTab.value === defaultTab ? {} : { tab: activeTab.value };
+}
+
 function syncQueryFromState() {
-  if (!props.standalone) return;
-  const nextQuery = buildQueryFromState();
+  const nextQuery = props.standalone
+    ? buildQueryFromState()
+    : buildVirtualQueryFromState();
   if (isQueryEqual(route.query, nextQuery)) return;
   router.replace({ query: nextQuery });
 }
