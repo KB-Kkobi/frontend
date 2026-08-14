@@ -17,6 +17,7 @@ import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
@@ -120,7 +121,9 @@ const selectedPreferentialConditions = ref(
     PREFERENTIAL_CONDITION_OPTIONS,
   ),
 );
-const selectedSort = ref(String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort));
+const selectedSort = ref(
+  String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort),
+);
 const selectedSecurityType = ref(String(initialQuery.securityType ?? ""));
 const currentPage = ref(
   parseInitialInt(initialQuery.page, PRODUCT_LIST_DEFAULTS.page),
@@ -272,7 +275,8 @@ async function loadLatestAssessment() {
   } catch (error) {
     latestAssessment.value = null;
     assessmentMessage.value =
-      error instanceof ApiError && (error.status === 401 || error.status === 403)
+      error instanceof ApiError &&
+      (error.status === 401 || error.status === 403)
         ? "로그인 후 나의 투자 성향을 확인할 수 있어요."
         : "성향 진단을 완료하면 나에게 맞는 투자 성향이 표시돼요.";
   } finally {
@@ -468,7 +472,8 @@ function buildQueryFromState() {
   if (selectedSort.value !== PRODUCT_LIST_DEFAULTS.sort) {
     query.sort = selectedSort.value;
   }
-  if (selectedSecurityType.value) query.securityType = selectedSecurityType.value;
+  if (selectedSecurityType.value)
+    query.securityType = selectedSecurityType.value;
   if (currentPage.value !== PRODUCT_LIST_DEFAULTS.page) {
     query.page = String(currentPage.value);
   }
@@ -556,18 +561,13 @@ onMounted(() => {
       </div>
     </BaseCard>
 
-    <div
-      class="flex rounded-3xl bg-surface p-segment-p"
-      aria-label="상품 유형"
-    >
+    <div class="flex rounded-3xl bg-surface p-segment-p" aria-label="상품 유형">
       <button
         v-for="option in LIST_TAB_OPTIONS"
         :key="option.key"
         type="button"
         :class="[
-          activeTab === option.key
-            ? 'bg-pink text-white'
-            : 'text-ink',
+          activeTab === option.key ? 'bg-pink text-white' : 'text-ink',
           'flex-1 rounded-3xl px-4 py-3 text-button',
         ]"
         @click="handleSelectTab(option.key)"
@@ -578,34 +578,11 @@ onMounted(() => {
 
     <template v-if="!isSecurityTab">
       <template v-if="standalone">
-        <form
-          class="flex items-center gap-2 rounded-3xl bg-surface px-4"
-          role="search"
-          @submit.prevent="handleSearch"
-        >
-          <svg
-            class="h-5 w-5 shrink-0 text-muted"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" stroke-width="2" />
-            <path
-              d="m16 16 4 4"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-          <input
-            v-model="searchInput"
-            type="search"
-            class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
-            placeholder="은행명 또는 상품명 검색"
-            aria-label="은행명 또는 상품명 검색"
-            @keyup.enter="handleSearch"
-          />
-        </form>
+        <SearchInput
+          v-model="searchInput"
+          placeholder="은행명 또는 상품명 검색"
+          @search="handleSearch"
+        />
 
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between gap-2">
@@ -666,9 +643,7 @@ onMounted(() => {
               <button
                 type="button"
                 :class="[
-                  hasAppliedFilters
-                    ? 'text-pink'
-                    : 'text-ink',
+                  hasAppliedFilters ? 'text-pink' : 'text-ink',
                   'flex items-center gap-2 py-pill-y text-caption',
                 ]"
                 :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
@@ -689,12 +664,19 @@ onMounted(() => {
                   <circle cx="13" cy="7" r="2" stroke-width="1.8" />
                   <circle cx="9" cy="17" r="2" stroke-width="1.8" />
                 </svg>
-                <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
+                <span
+                  >필터{{
+                    activeFilterCount ? ` ${activeFilterCount}` : ""
+                  }}</span
+                >
               </button>
             </div>
           </div>
 
-          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+          <div
+            v-if="hasAppliedFilters"
+            class="flex flex-wrap items-center gap-2"
+          >
             <BasePill
               v-for="label in activeFilterLabels"
               :key="label"
@@ -714,21 +696,12 @@ onMounted(() => {
       </template>
 
       <template v-else>
-        <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
-          <input
-            v-model="searchInput"
-            type="search"
-            class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
-            placeholder="은행명 또는 상품명 검색"
-            aria-label="은행명 또는 상품명 검색"
-          />
-          <button
-            type="submit"
-            class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
-          >
-            검색
-          </button>
-        </form>
+        <SearchInput
+          v-model="searchInput"
+          variant="outline"
+          placeholder="은행명 또는 상품명 검색"
+          @search="handleSearch"
+        />
 
         <div class="flex flex-wrap gap-2" aria-label="가입 기간">
           <button
@@ -747,7 +720,11 @@ onMounted(() => {
           </button>
         </div>
 
-        <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
+        <div
+          v-if="isSaving"
+          class="flex flex-wrap gap-2"
+          aria-label="적립 유형"
+        >
           <button
             v-for="reserveType in RESERVE_TYPE_OPTIONS"
             :key="reserveType.value"
@@ -767,21 +744,12 @@ onMounted(() => {
     </template>
 
     <template v-else>
-      <form class="flex gap-2" role="search" @submit.prevent="handleSecuritySearch">
-        <input
-          v-model="securitySearchInput"
-          type="search"
-          class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
-          placeholder="종목명 또는 티커 검색"
-          aria-label="종목명 또는 티커 검색"
-        />
-        <button
-          type="submit"
-          class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
-        >
-          검색
-        </button>
-      </form>
+      <SearchInput
+        v-model="securitySearchInput"
+        variant="outline"
+        placeholder="종목명 검색"
+        @search="handleSecuritySearch"
+      />
 
       <div class="flex flex-wrap gap-2" aria-label="증권 유형">
         <button
@@ -902,9 +870,7 @@ onMounted(() => {
         :key="page"
         type="button"
         :class="[
-          currentPage === page
-            ? 'bg-pink text-white'
-            : 'bg-white text-muted',
+          currentPage === page ? 'bg-pink text-white' : 'bg-white text-muted',
           'flex h-10 w-10 items-center justify-center rounded-full text-button tabular-nums',
         ]"
         :aria-label="`${page}페이지`"
