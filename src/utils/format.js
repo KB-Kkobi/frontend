@@ -75,6 +75,22 @@ export function formatInterestRate(value) {
 }
 
 /**
+ * 은행명 표시용 포맷. 법인 표기("주식회사", "(주)")를 제거해 한 줄로
+ * 표시하기 쉽게 정리한다. 원본 데이터(API 응답)는 그대로 두고 화면
+ * 표시에만 사용한다.
+ * ex) "주식회사 카카오뱅크" → "카카오뱅크", "토스뱅크 주식회사" → "토스뱅크"
+ */
+export function formatBankName(value) {
+  if (value === null || value === undefined) return "—";
+  const text = String(value)
+    .replace(/\(주\)/g, "")
+    .replace(/주식회사/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || "—";
+}
+
+/**
  * 비어 있는 문자열을 공통 빈 값 기호로 표시.
  */
 export function formatNullableText(value) {
