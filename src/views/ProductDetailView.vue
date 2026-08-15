@@ -10,6 +10,7 @@ import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import ProductInterestOptionCard from "@/components/product/ProductInterestOptionCard.vue";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import { getProductTypeLabel } from "@/constants/product";
@@ -21,6 +22,7 @@ const router = useRouter();
 const product = ref(null);
 const isLoading = ref(false);
 const errorState = ref(null);
+const selectedOptionId = ref(null);
 
 const isVirtualInvestment = computed(() => route.query.tradable === "true");
 
@@ -31,10 +33,81 @@ const productTypeLabel = computed(() =>
 const productOptions = computed(() =>
   Array.isArray(product.value?.options) ? product.value.options : [],
 );
+// 가입기간 탭은 항상 오름차순으로 보여준다.
+const sortedProductOptions = computed(() =>
+  [...productOptions.value].sort(
+    (a, b) => (a.savingTerm ?? 0) - (b.savingTerm ?? 0),
+  ),
+);
+// 자유적립식/정액적립식처럼 같은 가입기간에 옵션이 여러 개 있는 상품도
+// 가입기간 탭에는 기간별로 한 번만 노출한다(탭 중복 방지).
+const optionGroupsByTerm = computed(() => {
+  const groups = [];
+  sortedProductOptions.value.forEach((option) => {
+    const lastGroup = groups[groups.length - 1];
+    if (lastGroup && lastGroup.savingTerm === option.savingTerm) {
+      lastGroup.options.push(option);
+      return;
+    }
+    groups.push({ savingTerm: option.savingTerm, options: [option] });
+  });
+  return groups;
+});
+const selectedOption = computed(
+  () =>
+    productOptions.value.find(
+      (option) => option.productOptionId === selectedOptionId.value,
+    ) ?? null,
+);
+// 선택된 기간에 속한 옵션들. 자유적립식/정액적립식처럼 옵션이 2개 이상이면
+// 적립유형을 고를 수 있는 보조 선택지를 보여준다.
+const selectedTermOptions = computed(() => {
+  if (!selectedOption.value) return [];
+  const group = optionGroupsByTerm.value.find(
+    (item) => item.savingTerm === selectedOption.value.savingTerm,
+  );
+  return group?.options ?? [];
+});
+const hasReserveTypeChoice = computed(() => selectedTermOptions.value.length > 1);
 
 const isSubscribeDisabled = computed(() =>
   isVirtualInvestment.value ? !productOptions.value.length : !product.value?.applyUrl,
 );
+
+// 목록에서 적용했던 기간 필터(savingTerms 쿼리)를 상세의 기본 선택 기준으로 쓴다.
+// 필터에 해당하는 기간이 상품에 없으면 가장 짧은 기간을 기본 선택한다.
+function parseFilterTerms() {
+  const raw = route.query.savingTerms;
+  if (raw === null || raw === undefined || raw === "") return [];
+  const values = Array.isArray(raw) ? raw : [raw];
+  return values
+    .flatMap((value) => String(value).split(","))
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
+function pickDefaultOptionId() {
+  const sorted = sortedProductOptions.value;
+  if (!sorted.length) return null;
+
+  const filterTerms = parseFilterTerms();
+  if (filterTerms.length) {
+    const matched = sorted.find((option) =>
+      filterTerms.includes(option.savingTerm),
+    );
+    if (matched) return matched.productOptionId;
+  }
+
+  return sorted[0].productOptionId;
+}
+
+function handleSelectTerm(group) {
+  selectedOptionId.value = group.options[0]?.productOptionId ?? null;
+}
+
+function handleSelectReserveType(option) {
+  selectedOptionId.value = option.productOptionId;
+}
 
 function getErrorState(error) {
   if (!(error instanceof ProductApiError)) {
@@ -78,12 +151,14 @@ async function loadProductDetail() {
   isLoading.value = true;
   product.value = null;
   errorState.value = null;
+  selectedOptionId.value = null;
 
   try {
     product.value = await fetchProductDetail(
       route.params.productType,
       route.params.productId,
     );
+    selectedOptionId.value = pickDefaultOptionId();
   } catch (error) {
     errorState.value = getErrorState(error);
   } finally {
@@ -194,13 +269,54 @@ watch(
         <section class="flex flex-col gap-4">
           <h2 class="text-h2 text-ink">금리 옵션</h2>
 
-          <div v-if="productOptions.length" class="flex flex-col gap-4">
-            <ProductInterestOptionCard
-              v-for="option in productOptions"
-              :key="option.productOptionId"
-              :option="option"
-            />
-          </div>
+          <template v-if="optionGroupsByTerm.length">
+            <div
+              class="flex flex-wrap gap-2"
+              role="tablist"
+              aria-label="가입 기간"
+            >
+              <BasePill
+                v-for="group in optionGroupsByTerm"
+                :key="group.savingTerm"
+                as="button"
+                type="button"
+                role="tab"
+                :label="`${group.savingTerm}개월`"
+                color="pink"
+                :variant="selectedOption?.savingTerm === group.savingTerm ? 'filled' : 'ghost'"
+                :aria-selected="selectedOption?.savingTerm === group.savingTerm"
+                @click="handleSelectTerm(group)"
+              />
+            </div>
+
+            <div
+              v-if="hasReserveTypeChoice"
+              class="flex flex-wrap gap-2"
+              role="tablist"
+              aria-label="적립 유형"
+            >
+              <BasePill
+                v-for="option in selectedTermOptions"
+                :key="option.productOptionId"
+                as="button"
+                type="button"
+                role="tab"
+                :label="option.reserveTypeName"
+                color="yellow"
+                :variant="selectedOptionId === option.productOptionId ? 'filled' : 'ghost'"
+                :aria-selected="selectedOptionId === option.productOptionId"
+                @click="handleSelectReserveType(option)"
+              />
+            </div>
+
+            <Transition name="term-option" mode="out-in">
+              <ProductInterestOptionCard
+                v-if="selectedOption"
+                :key="selectedOption.productOptionId"
+                :option="selectedOption"
+              />
+            </Transition>
+          </template>
 
           <BaseCard v-else color="blue">
             <div class="flex flex-col gap-2">
@@ -212,22 +328,13 @@ watch(
           </BaseCard>
         </section>
 
-        <section class="flex flex-col gap-4">
+        <section class="flex flex-col gap-2">
           <h2 class="text-h2 text-ink">상품 안내</h2>
 
           <BaseCard color="blue">
             <div class="flex flex-col gap-2">
-              <h3 class="text-h2 text-ink">우대 조건</h3>
-              <p class="whitespace-pre-line text-body text-ink">
-                {{ formatNullableText(product.preferentialConditions) }}
-              </p>
-            </div>
-          </BaseCard>
-
-          <BaseCard color="blue">
-            <div class="flex flex-col gap-2">
-              <h3 class="text-h2 text-ink">만기 후 이자율 안내</h3>
-              <p class="whitespace-pre-line text-body text-ink">
+              <h3 class="text-body font-semibold text-ink">만기 후 이자율 안내</h3>
+              <p class="whitespace-pre-line text-caption text-ink">
                 {{ formatNullableText(product.maturityInterestDescription) }}
               </p>
             </div>
@@ -235,8 +342,8 @@ watch(
 
           <BaseCard color="yellow">
             <div class="flex flex-col gap-2">
-              <h3 class="text-h2 text-ink">기타 유의사항</h3>
-              <p class="whitespace-pre-line text-body text-ink">
+              <h3 class="text-body font-semibold text-ink">기타 유의사항</h3>
+              <p class="whitespace-pre-line text-caption text-ink">
                 {{ formatNullableText(product.additionalNote) }}
               </p>
             </div>
@@ -253,3 +360,20 @@ watch(
     </div>
   </PageContainer>
 </template>
+
+<style scoped>
+.term-option-enter-active,
+.term-option-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.term-option-enter-from {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.term-option-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+</style>
