@@ -19,6 +19,7 @@ import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import ListToolbar from "@/components/common/ListToolbar.vue";
+import BasePagination from "@/components/common/BasePagination.vue";
 import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
@@ -62,8 +63,6 @@ const LIST_TAB_OPTIONS = Object.freeze([
   { key: LIST_TABS.DEPOSIT, label: "예금" },
   { key: LIST_TABS.SAVING, label: "적금" },
 ]);
-const VISIBLE_PAGE_COUNT = 4;
-
 const router = useRouter();
 const route = useRoute();
 
@@ -163,27 +162,6 @@ const activeTabLabel = computed(() =>
   isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
 );
 
-const pageGroupStart = computed(
-  () =>
-    Math.floor((currentPage.value - 1) / VISIBLE_PAGE_COUNT) *
-      VISIBLE_PAGE_COUNT +
-    1,
-);
-const hasPreviousPageGroup = computed(() => pageGroupStart.value > 1);
-const hasNextPageGroup = computed(
-  () => pageGroupStart.value + VISIBLE_PAGE_COUNT <= totalPages.value,
-);
-const visiblePageNumbers = computed(() => {
-  const pageCount = Math.min(
-    totalPages.value - pageGroupStart.value + 1,
-    VISIBLE_PAGE_COUNT,
-  );
-
-  return Array.from(
-    { length: pageCount },
-    (_, index) => pageGroupStart.value + index,
-  );
-});
 const activeFilterCount = computed(
   () =>
     selectedSavingTerms.value.length +
@@ -450,20 +428,6 @@ function handleSelectSecurity(security) {
     params: { pk: security.ticker },
     query: props.tradable ? { tradable: "true" } : undefined,
   });
-}
-
-function handlePreviousPageGroup() {
-  if (!hasPreviousPageGroup.value) return;
-  currentPage.value = Math.max(pageGroupStart.value - VISIBLE_PAGE_COUNT, 1);
-}
-
-function handleNextPageGroup() {
-  if (!hasNextPageGroup.value) return;
-  currentPage.value = pageGroupStart.value + VISIBLE_PAGE_COUNT;
-}
-
-function handleSelectPage(page) {
-  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 }
 
 // URL 쿼리 동기화 — standalone 모드에서만
@@ -953,72 +917,11 @@ onMounted(() => {
       </div>
     </BaseCard>
 
-    <nav
-      v-if="!isLoading && !errorMessage && totalPages > 0"
-      class="flex items-center justify-center gap-2"
-      aria-label="상품 목록 페이지"
-    >
-      <button
-        type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
-        aria-label="이전 페이지 묶음"
-        :disabled="!hasPreviousPageGroup"
-        @click="handlePreviousPageGroup"
-      >
-        <svg
-          class="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="m14 6-6 6 6 6"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-
-      <button
-        v-for="page in visiblePageNumbers"
-        :key="page"
-        type="button"
-        :class="[
-          currentPage === page ? 'bg-pink text-white' : 'bg-white text-muted',
-          'flex h-10 w-10 items-center justify-center rounded-full text-button tabular-nums',
-        ]"
-        :aria-label="`${page}페이지`"
-        :aria-current="currentPage === page ? 'page' : undefined"
-        @click="handleSelectPage(page)"
-      >
-        {{ page }}
-      </button>
-
-      <button
-        type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
-        aria-label="다음 페이지 묶음"
-        :disabled="!hasNextPageGroup"
-        @click="handleNextPageGroup"
-      >
-        <svg
-          class="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="m10 6 6 6-6 6"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-    </nav>
+    <BasePagination
+      v-if="!isLoading && !errorMessage && totalPages > 1"
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
     <FilterSheet
       v-model:open="isFilterOpen"

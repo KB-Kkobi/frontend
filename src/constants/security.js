@@ -17,7 +17,7 @@ export const SECURITY_TYPE_FILTER_OPTIONS = Object.freeze([
   { value: SECURITY_TYPES.EQUITY_ETF, label: SECURITY_TYPE_LABELS[SECURITY_TYPES.EQUITY_ETF] },
 ]);
 
-export const SECURITY_LIST_SIZE_OPTIONS = Object.freeze([20, 50, 100]);
+export const SECURITY_LIST_SIZE_OPTIONS = Object.freeze([10, 20, 50, 100]);
 
 export const SECURITY_LIST_MAX_SIZE = 100;
 
