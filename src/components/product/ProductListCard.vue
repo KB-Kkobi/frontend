@@ -1,11 +1,19 @@
 <script setup>
+import { computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import {
+  formatBankName,
   formatCurrency,
   formatInterestRate,
   formatNullableText,
 } from "@/utils/format";
+
+// 카드에 노출할 상품 특징 태그는 최대 이 개수까지만 표시한다.
+// 태그 줄이 두 줄로 넘어가면 카드 높이가 들쭉날쭉해지므로 한 줄에
+// 들어가는 개수로 제한한다.
+const MAX_PRODUCT_TAGS = 2;
 
 const props = defineProps({
   product: {
@@ -21,6 +29,20 @@ const props = defineProps({
 
 const emit = defineEmits(["select"]);
 
+// 실제 API 데이터에 근거한 태그만 노출한다(값이 없으면 생성하지 않음).
+// joinWay(가입 방법)에 "영업점"이 없으면 온라인 채널만 지원한다는 뜻이므로
+// "비대면 가입" 태그로 보여준다.
+const productTags = computed(() => {
+  const tags = [];
+  if (props.product.savingTerm) tags.push(`${props.product.savingTerm}개월`);
+  if (props.product.reserveTypeName) tags.push(props.product.reserveTypeName);
+
+  const joinWay = props.product.joinWay ?? props.product.joinway;
+  if (joinWay && !String(joinWay).includes("영업점")) tags.push("비대면 가입");
+
+  return tags.slice(0, MAX_PRODUCT_TAGS);
+});
+
 function handleSelect() {
   emit("select", props.product);
 }
@@ -31,32 +53,32 @@ function handleSelect() {
     <BaseCard color="white" elevation="flat">
       <div v-if="variant === 'catalog'" class="flex items-center gap-4">
         <ProductBankLogo :name="product.financialCompanyName" />
+
         <div class="flex min-w-0 flex-1 flex-col gap-2">
-          <p class="text-caption text-muted">
-            {{ formatNullableText(product.financialCompanyName) }}
+          <p class="truncate text-caption text-muted">
+            {{ formatBankName(product.financialCompanyName) }}
           </p>
-          <h3 class="text-h2 text-navy">
+          <h3 class="line-clamp-2 break-keep text-h2 text-ink">
             {{ formatNullableText(product.productName) }}
           </h3>
-          <p class="text-caption text-muted tabular-nums">
-            {{ product.savingTerm ? `${product.savingTerm}개월` : "-" }}
-          </p>
+          <div v-if="productTags.length" class="flex flex-wrap gap-2">
+            <BasePill
+              v-for="tag in productTags"
+              :key="tag"
+              :label="tag"
+              variant="ghost"
+            />
+          </div>
         </div>
 
-        <dl class="flex shrink-0">
-          <div class="flex flex-col items-center gap-2 pr-4 text-center">
-            <dt class="text-caption text-muted">기본금리</dt>
-            <dd class="text-h2 text-profit tabular-nums">
-              연 {{ formatInterestRate(product.interestRate) }}
-            </dd>
-          </div>
-          <div class="flex flex-col items-center gap-2 border-l border-line pl-4 text-center">
-            <dt class="text-caption text-muted">최고금리</dt>
-            <dd class="text-h2 text-profit tabular-nums">
-              연 {{ formatInterestRate(product.maximumInterestRate) }}
-            </dd>
-          </div>
-        </dl>
+        <div class="flex shrink-0 flex-col items-end gap-2">
+          <p class="whitespace-nowrap text-body font-semibold text-profit tabular-nums">
+            최고 {{ formatInterestRate(product.maximumInterestRate) }}
+          </p>
+          <p class="whitespace-nowrap text-caption text-muted tabular-nums">
+            기본 {{ formatInterestRate(product.interestRate) }}
+          </p>
+        </div>
       </div>
 
       <div v-else class="flex flex-col gap-4">

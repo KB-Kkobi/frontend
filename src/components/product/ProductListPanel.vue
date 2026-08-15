@@ -89,10 +89,17 @@ function parseInitialList(value) {
   ];
 }
 
+// 클릭 순서와 무관하게 항상 오름차순으로 유지한다(선택 pill 표시·API 요청 순서 포함).
+function sortSavingTerms(savingTerms) {
+  return [...savingTerms].sort((a, b) => a - b);
+}
+
 function parseInitialSavingTerms(query) {
-  return parseInitialList(query.savingTerms ?? query.savingTerm)
-    .map(Number)
-    .filter((savingTerm) => SAVING_TERM_OPTIONS.includes(savingTerm));
+  return sortSavingTerms(
+    parseInitialList(query.savingTerms ?? query.savingTerm)
+      .map(Number)
+      .filter((savingTerm) => SAVING_TERM_OPTIONS.includes(savingTerm)),
+  );
 }
 
 function parseInitialOptionValues(value, options) {
@@ -104,9 +111,6 @@ const initialQuery = route.query;
 // 가상투자 상품 추천은 주식 탭을 먼저 보여준다.
 const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.SECURITY;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
-if (!props.standalone && initialSavingTerms.length === 0) {
-  initialSavingTerms.push(12);
-}
 
 const activeTab = ref(parseInitialTab(initialQuery.tab, defaultTab));
 const searchInput = ref(String(initialQuery.keyword ?? ""));
@@ -227,9 +231,7 @@ async function loadProducts() {
     keyword: appliedKeyword.value,
     savingTerms: selectedSavingTerms.value.length
       ? selectedSavingTerms.value
-      : props.standalone
-        ? SAVING_TERM_OPTIONS
-        : [12],
+      : SAVING_TERM_OPTIONS,
     reserveTypes: isSaving.value ? selectedReserveTypes.value : [],
     preferentialConditions: selectedPreferentialConditions.value,
     page: currentPage.value,
@@ -405,7 +407,7 @@ function handleApplySecurityFilters(filters) {
 }
 
 function handleApplyFilters(filters) {
-  selectedSavingTerms.value = [...(filters.savingTerms ?? [])];
+  selectedSavingTerms.value = sortSavingTerms(filters.savingTerms ?? []);
   selectedReserveTypes.value = [...(filters.reserveTypes ?? [])];
   selectedPreferentialConditions.value = [...(filters.preferentialConditions ?? [])];
   resetPage();
@@ -420,13 +422,23 @@ function handleClearFilters() {
 
 function handleSelectProduct(product) {
   if (emit("select-product", product) === false) return;
+
+  // 상세 화면에서 가입기간 탭의 기본 선택값을 정할 때 쓰도록, 목록에 적용된
+  // 기간 필터를 그대로 넘겨준다. 상세는 이 값이 없거나 상품에 없는 기간이면
+  // 스스로 가장 짧은 기간을 기본 선택한다.
+  const query = {};
+  if (props.tradable) query.tradable = "true";
+  if (selectedSavingTerms.value.length) {
+    query.savingTerms = selectedSavingTerms.value.map(String);
+  }
+
   router.push({
     name: "product-detail",
     params: {
       productType: normalizeProductType(product.productType),
       productId: product.productId,
     },
-    query: props.tradable ? { tradable: "true" } : undefined,
+    query: Object.keys(query).length ? query : undefined,
   });
 }
 
