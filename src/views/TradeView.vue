@@ -31,7 +31,7 @@ const { currentPrice, changeRate, isFailed } = usePriceFeed({ securityId, ticker
 // ── 반응형 상태 ───────────────────────────────────────────────────────────────
 const side = ref(route.query.side === 'sell' ? 'sell' : 'buy')
 const securityName = ref('')
-const method = ref('market')
+const method = ref('limit')
 const quantity = ref(1)
 const limitPrice = ref(null)
 const isLoading = ref(false)
@@ -95,8 +95,14 @@ watch(maxQuantity, (newMax, oldMax) => {
   }
 })
 
+watch(currentPrice, (price) => {
+  if (price !== null) limitPrice.value = price
+}, { once: true })
+
 watch(method, () => {
-  limitPrice.value = null
+  if (method.value === 'limit' && limitPrice.value === null) {
+    limitPrice.value = currentPrice.value ?? null
+  }
   quantity.value = maxQuantity.value > 0 ? 1 : 0
   orderError.value = null
 })
