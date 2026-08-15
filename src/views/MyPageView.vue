@@ -15,6 +15,10 @@ const REPORT_ITEMS = [
   { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
 ];
 
+const FRIEND_ITEMS = [
+  { id: "friend-management", label: "친구 관리", icon: "friend" },
+];
+
 const SETTING_ITEMS = [
   { id: "notifications", label: "알림 설정", icon: "notification" },
 ];
@@ -31,6 +35,10 @@ function handleProfile() {
 
 function handleAssessmentSelect() {
   router.push({ name: "assessment-result" });
+}
+
+function handleFriendSelect() {
+  router.push({ name: "friend-management" });
 }
 
 function handleMenuSelect(item) {
@@ -88,6 +96,11 @@ async function handleLogout() {
       <section class="flex flex-col gap-4">
         <h2 class="text-h2 text-ink">투자 성향</h2>
         <MyPageMenuCard :items="REPORT_ITEMS" @select="handleAssessmentSelect" />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-h2 text-ink">친구</h2>
+        <MyPageMenuCard :items="FRIEND_ITEMS" @select="handleFriendSelect" />
       </section>
 
       <section class="flex flex-col gap-4">
