@@ -61,6 +61,7 @@ function normalizeSecurityListItem(item) {
     name: item?.name ?? "",
     type: item?.type ?? null,
     kisSupported: Boolean(item?.kisSupported),
+    matchScore: item?.matchScore != null ? Number(item.matchScore) : null,
   };
 }
 

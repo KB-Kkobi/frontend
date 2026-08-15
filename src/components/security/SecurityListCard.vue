@@ -32,6 +32,10 @@ const categoryPill = computed(() =>
 
 const showQuote = computed(() => props.security.kisSupported);
 
+const matchScore = computed(() =>
+  props.security.matchScore != null ? Math.round(props.security.matchScore) : null,
+);
+
 const priceLabel = computed(() =>
   props.quote && props.quote.price !== null
     ? formatCurrency(props.quote.price)
@@ -61,9 +65,10 @@ function handleSelect() {
 <template>
   <article class="relative">
     <BaseCard color="white" elevation="flat">
-      <div class="flex items-start justify-between gap-4">
-        <div class="flex min-w-0 flex-col gap-2">
-          <div class="flex items-center gap-2">
+      <div class="flex flex-col gap-2">
+        <!-- 행 1: 종목명 + 카테고리 | 현재가 -->
+        <div class="flex items-center gap-4">
+          <div class="flex min-w-0 flex-1 items-center gap-2">
             <h3 class="min-w-0 truncate text-h2 text-ink">{{ security.name }}</h3>
             <BasePill
               v-if="categoryPill"
@@ -73,21 +78,25 @@ function handleSelect() {
               variant="filled"
             />
           </div>
-          <p class="text-caption text-muted tabular-nums">
-            {{ security.ticker }} · {{ typeLabel }}
+          <p v-if="showQuote" class="shrink-0 text-body font-semibold text-ink tabular-nums">
+            {{ priceLabel }}
           </p>
+          <p v-else class="shrink-0 text-caption text-muted">실시간 시세 미지원</p>
         </div>
 
-        <div class="flex shrink-0 flex-col items-end gap-2">
-          <template v-if="showQuote">
-            <p class="text-body font-semibold text-ink tabular-nums">
-              {{ priceLabel }}
-            </p>
-            <p :class="[changeColorClass, 'text-caption tabular-nums']">
+        <!-- 행 2: 티커 · 유형 · 매칭도 | 등락률 -->
+        <div class="flex items-center gap-4">
+          <p class="min-w-0 flex-1 text-caption text-muted tabular-nums">
+            {{ security.ticker }} · {{ typeLabel }}<template v-if="matchScore !== null"> · <span class="text-ink font-semibold">매칭 {{ matchScore }}%</span></template>
+          </p>
+          <div class="flex shrink-0 items-center gap-2">
+            <p
+              v-if="showQuote"
+              :class="[changeColorClass, 'text-caption tabular-nums']"
+            >
               {{ changeLabel }}
             </p>
-          </template>
-          <p v-else class="text-caption text-muted">실시간 시세 미지원</p>
+          </div>
         </div>
       </div>
     </BaseCard>
