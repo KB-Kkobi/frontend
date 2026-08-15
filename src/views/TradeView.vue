@@ -32,7 +32,7 @@ const { currentPrice, changeRate, isFailed } = usePriceFeed({ securityId, ticker
 const side = ref(route.query.side === 'sell' ? 'sell' : 'buy')
 const securityName = ref('')
 const method = ref('market')
-const quantity = ref(0)
+const quantity = ref(1)
 const limitPrice = ref(null)
 const isLoading = ref(false)
 const isSubmitting = ref(false)
@@ -79,17 +79,25 @@ const buttonLabel = computed(() => (side.value === 'buy' ? '매수하기' : '매
 
 const buttonColor = computed(() => (side.value === 'buy' ? 'pink' : 'blue'))
 
-const isButtonDisabled = computed(() => isLoading.value || isSubmitting.value)
+const isButtonDisabled = computed(() => isLoading.value || isSubmitting.value || quantity.value === 0)
 
 // ── watch ────────────────────────────────────────────────────────────────────
 watch(side, () => {
-  quantity.value = 0
+  quantity.value = maxQuantity.value > 0 ? 1 : 0
   orderError.value = null
 })
 
+watch(maxQuantity, (newMax, oldMax) => {
+  if (newMax === 0) {
+    quantity.value = 0
+  } else if (oldMax === 0 && quantity.value === 0) {
+    quantity.value = 1
+  }
+})
+
 watch(method, () => {
-  quantity.value = 0
   limitPrice.value = null
+  quantity.value = maxQuantity.value > 0 ? 1 : 0
   orderError.value = null
 })
 
@@ -150,8 +158,8 @@ async function submitOrder() {
       router.push({ name: 'virtual-assets' })
     } else {
       // PENDING: 현재 화면 유지, 수량 리셋, fetchOrderable 재조회
-      quantity.value = 0
       limitPrice.value = null
+      quantity.value = maxQuantity.value > 0 ? 1 : 0
       await loadOrderable()
     }
   } catch (err) {

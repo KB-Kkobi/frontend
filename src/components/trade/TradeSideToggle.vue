@@ -33,7 +33,7 @@ function handleSelect(value) {
       :class="[
         'flex-1 rounded-xl py-3 text-button transition-colors',
         props.side === 'sell'
-          ? 'bg-surface text-ink font-semibold'
+          ? 'bg-blue text-white font-semibold'
           : 'bg-transparent text-muted font-normal',
       ]"
       @click="handleSelect('sell')"
