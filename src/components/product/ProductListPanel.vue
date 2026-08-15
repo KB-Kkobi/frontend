@@ -11,12 +11,16 @@ import {
 } from "@/api/productApi";
 import { fetchSecurityList, fetchSecurityQuotes } from "@/api/securityApi";
 import ProductListCard from "@/components/product/ProductListCard.vue";
-import ProductFilterModal from "@/components/product/ProductFilterModal.vue";
+import FilterSheet from "@/components/common/FilterSheet.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import ListToolbar from "@/components/common/ListToolbar.vue";
+import BasePagination from "@/components/common/BasePagination.vue";
+import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
@@ -29,9 +33,11 @@ import {
   normalizeProductType,
 } from "@/constants/product";
 import {
+  SECURITY_FILTER_TYPE_OPTIONS,
   SECURITY_LIST_DEFAULTS,
-  SECURITY_TYPE_FILTER_OPTIONS,
+  SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
+import { SECURITY_FILTER_GROUPS, buildSavingsFilterGroups } from "@/constants/productFilters";
 import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
@@ -59,8 +65,6 @@ const LIST_TAB_OPTIONS = Object.freeze([
   { key: LIST_TABS.DEPOSIT, label: "예금" },
   { key: LIST_TABS.SAVING, label: "적금" },
 ]);
-const VISIBLE_PAGE_COUNT = 4;
-
 const router = useRouter();
 const route = useRoute();
 
@@ -122,8 +126,18 @@ const selectedPreferentialConditions = ref(
     PREFERENTIAL_CONDITION_OPTIONS,
   ),
 );
-const selectedSort = ref(String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort));
-const selectedSecurityType = ref(String(initialQuery.securityType ?? ""));
+const selectedSort = ref(
+  String(initialQuery.sort ?? PRODUCT_LIST_DEFAULTS.sort),
+);
+const selectedSecurityTypes = ref(
+  parseInitialOptionValues(
+    initialQuery.securityTypes,
+    SECURITY_FILTER_TYPE_OPTIONS,
+  ),
+);
+const selectedSecuritySort = ref(
+  String(initialQuery.securitySort ?? SECURITY_LIST_DEFAULTS.sort),
+);
 const currentPage = ref(
   parseInitialInt(initialQuery.page, PRODUCT_LIST_DEFAULTS.page),
 );
@@ -139,6 +153,9 @@ const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
 const isPersonaImageAvailable = ref(true);
 const isFilterOpen = ref(false);
+const isSecurityFilterOpen = ref(false);
+const showMatchInfoModal = ref(false);
+const hasAssessment = computed(() => latestAssessment.value !== null);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -147,27 +164,6 @@ const activeTabLabel = computed(() =>
   isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
 );
 
-const pageGroupStart = computed(
-  () =>
-    Math.floor((currentPage.value - 1) / VISIBLE_PAGE_COUNT) *
-      VISIBLE_PAGE_COUNT +
-    1,
-);
-const hasPreviousPageGroup = computed(() => pageGroupStart.value > 1);
-const hasNextPageGroup = computed(
-  () => pageGroupStart.value + VISIBLE_PAGE_COUNT <= totalPages.value,
-);
-const visiblePageNumbers = computed(() => {
-  const pageCount = Math.min(
-    totalPages.value - pageGroupStart.value + 1,
-    VISIBLE_PAGE_COUNT,
-  );
-
-  return Array.from(
-    { length: pageCount },
-    (_, index) => pageGroupStart.value + index,
-  );
-});
 const activeFilterCount = computed(
   () =>
     selectedSavingTerms.value.length +
@@ -175,6 +171,17 @@ const activeFilterCount = computed(
     selectedPreferentialConditions.value.length,
 );
 const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
+const securityActiveFilterCount = computed(() => selectedSecurityTypes.value.length);
+const hasAppliedSecurityFilters = computed(() => securityActiveFilterCount.value > 0);
+const securityFilterModelValue = computed(() => ({
+  securityTypes: selectedSecurityTypes.value,
+}));
+const filterGroups = computed(() => buildSavingsFilterGroups(isSaving.value));
+const filterModelValue = computed(() => ({
+  savingTerms: selectedSavingTerms.value,
+  reserveTypes: selectedReserveTypes.value,
+  preferentialConditions: selectedPreferentialConditions.value,
+}));
 const activeFilterLabels = computed(() => {
   const labels = selectedSavingTerms.value.map(
     (savingTerm) => `${savingTerm}개월`,
@@ -274,7 +281,8 @@ async function loadLatestAssessment() {
   } catch (error) {
     latestAssessment.value = null;
     assessmentMessage.value =
-      error instanceof ApiError && (error.status === 401 || error.status === 403)
+      error instanceof ApiError &&
+      (error.status === 401 || error.status === 403)
         ? "로그인 후 나의 투자 성향을 확인할 수 있어요."
         : "성향 진단을 완료하면 나에게 맞는 투자 성향이 표시돼요.";
   } finally {
@@ -310,10 +318,11 @@ async function loadSecurityQuotes(items) {
 
 async function loadSecurities() {
   const response = await fetchSecurityList({
-    type: selectedSecurityType.value,
+    types: selectedSecurityTypes.value,
     keyword: appliedSecurityKeyword.value,
     page: currentPage.value,
     size: SECURITY_LIST_DEFAULTS.size,
+    sort: selectedSecuritySort.value,
   });
 
   securities.value = response.content;
@@ -359,7 +368,7 @@ function handleSelectTab(tabKey) {
   searchInput.value = "";
   appliedKeyword.value = "";
   selectedReserveTypes.value = [];
-  selectedSecurityType.value = "";
+  selectedSecurityTypes.value = [];
   securitySearchInput.value = "";
   appliedSecurityKeyword.value = "";
   resetPage();
@@ -382,19 +391,23 @@ function handleSecuritySearch() {
   resetPage();
 }
 
-function handleSelectSecurityType(securityType) {
-  selectedSecurityType.value = securityType;
-  resetPage();
-}
-
 function handleOpenFilter() {
   isFilterOpen.value = true;
 }
 
+function handleOpenSecurityFilter() {
+  isSecurityFilterOpen.value = true;
+}
+
+function handleApplySecurityFilters(filters) {
+  selectedSecurityTypes.value = [...(filters.securityTypes ?? [])];
+  resetPage();
+}
+
 function handleApplyFilters(filters) {
-  selectedSavingTerms.value = [...filters.savingTerms];
-  selectedReserveTypes.value = [...filters.reserveTypes];
-  selectedPreferentialConditions.value = [...filters.preferentialConditions];
+  selectedSavingTerms.value = [...(filters.savingTerms ?? [])];
+  selectedReserveTypes.value = [...(filters.reserveTypes ?? [])];
+  selectedPreferentialConditions.value = [...(filters.preferentialConditions ?? [])];
   resetPage();
 }
 
@@ -426,20 +439,6 @@ function handleSelectSecurity(security) {
   });
 }
 
-function handlePreviousPageGroup() {
-  if (!hasPreviousPageGroup.value) return;
-  currentPage.value = Math.max(pageGroupStart.value - VISIBLE_PAGE_COUNT, 1);
-}
-
-function handleNextPageGroup() {
-  if (!hasNextPageGroup.value) return;
-  currentPage.value = pageGroupStart.value + VISIBLE_PAGE_COUNT;
-}
-
-function handleSelectPage(page) {
-  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
-}
-
 // URL 쿼리 동기화 — standalone 모드에서만
 function buildQueryFromState() {
   const query = {};
@@ -461,7 +460,12 @@ function buildQueryFromState() {
   if (selectedSort.value !== PRODUCT_LIST_DEFAULTS.sort) {
     query.sort = selectedSort.value;
   }
-  if (selectedSecurityType.value) query.securityType = selectedSecurityType.value;
+  if (selectedSecurityTypes.value.length) {
+    query.securityTypes = [...selectedSecurityTypes.value];
+  }
+  if (selectedSecuritySort.value !== SECURITY_LIST_DEFAULTS.sort) {
+    query.securitySort = selectedSecuritySort.value;
+  }
   if (currentPage.value !== PRODUCT_LIST_DEFAULTS.page) {
     query.page = String(currentPage.value);
   }
@@ -501,7 +505,8 @@ watch(
     selectedReserveTypes.value,
     selectedPreferentialConditions.value,
     selectedSort.value,
-    selectedSecurityType.value,
+    selectedSecurityTypes.value,
+    selectedSecuritySort.value,
     currentPage.value,
   ],
   () => {
@@ -557,18 +562,13 @@ onBeforeUnmount(() => {
       </div>
     </BaseCard>
 
-    <div
-      class="flex rounded-3xl bg-surface p-segment-p"
-      aria-label="상품 유형"
-    >
+    <div class="flex rounded-3xl bg-surface p-segment-p" aria-label="상품 유형">
       <button
         v-for="option in LIST_TAB_OPTIONS"
         :key="option.key"
         type="button"
         :class="[
-          activeTab === option.key
-            ? 'bg-pink text-white'
-            : 'text-ink',
+          activeTab === option.key ? 'bg-pink text-white' : 'text-ink',
           'flex-1 rounded-3xl px-4 py-3 text-button',
         ]"
         @click="handleSelectTab(option.key)"
@@ -578,38 +578,19 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-if="!isSecurityTab">
-      <form
-        class="flex items-center gap-2 rounded-3xl bg-surface px-4"
-        role="search"
-        @submit.prevent="handleSearch"
-      >
-        <svg
-          class="h-5 w-5 shrink-0 text-muted"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" stroke-width="2" />
-          <path
-            d="m16 16 4 4"
-            stroke-width="2"
-            stroke-linecap="round"
-          />
-        </svg>
-        <input
+      <template v-if="standalone">
+        <SearchInput
           v-model="searchInput"
-          type="search"
-          class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
           placeholder="은행명 또는 상품명 검색"
-          aria-label="은행명 또는 상품명 검색"
-          @keyup.enter="handleSearch"
+          @search="handleSearch"
         />
-      </form>
 
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex min-w-0 items-center gap-2">
+        <div class="flex flex-col gap-4">
+          <ListToolbar
+            :filter-active="hasAppliedFilters"
+            :filter-count="activeFilterCount"
+            @filter="handleOpenFilter"
+          >
             <svg
               class="h-4 w-4 shrink-0 text-blue"
               viewBox="0 0 24 24"
@@ -628,131 +609,268 @@ onBeforeUnmount(() => {
             <p class="text-caption text-muted">
               금리는 은행 사정에 따라 변동될 수 있어요.
             </p>
-          </div>
-          <div class="flex shrink-0 items-center gap-2">
-            <label
-              class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
-            >
-              <svg
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                aria-hidden="true"
+            <template #sort>
+              <label
+                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
               >
-                <path
-                  d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <span>정렬</span>
-              <select
-                v-model="selectedSort"
-                class="absolute inset-0 cursor-pointer opacity-0"
-                aria-label="상품 정렬"
-                @change="resetPage"
-              >
-                <option
-                  v-for="sortOption in PRODUCT_SORT_OPTIONS"
-                  :key="sortOption.value"
-                  :value="sortOption.value"
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
                 >
-                  {{ sortOption.label }}
-                </option>
-              </select>
-            </label>
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>정렬</span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="상품 정렬"
+                  @change="resetPage"
+                >
+                  <option
+                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                    :key="sortOption.value"
+                    :value="sortOption.value"
+                  >
+                    {{ sortOption.label }}
+                  </option>
+                </select>
+              </label>
+            </template>
+          </ListToolbar>
+
+          <div
+            v-if="hasAppliedFilters"
+            class="flex flex-wrap items-center gap-2"
+          >
+            <BasePill
+              v-for="label in activeFilterLabels"
+              :key="label"
+              :label="label"
+              color="pink"
+              variant="outline"
+            />
             <button
               type="button"
-              :class="[
-                hasAppliedFilters
-                  ? 'text-pink'
-                  : 'text-ink',
-                'flex items-center gap-2 py-pill-y text-caption',
-              ]"
-              :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
-              @click="handleOpenFilter"
+              class="py-pill-y text-caption font-semibold text-muted"
+              @click="handleClearFilters"
             >
-              <svg
-                class="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 7h7m4 0h5M4 17h3m4 0h9"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                />
-                <circle cx="13" cy="7" r="2" stroke-width="1.8" />
-                <circle cx="9" cy="17" r="2" stroke-width="1.8" />
-              </svg>
-              <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
+              전체 초기화
             </button>
           </div>
         </div>
+      </template>
 
-        <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
-          <BasePill
-            v-for="label in activeFilterLabels"
-            :key="label"
-            :label="label"
-            color="pink"
-            variant="outline"
-          />
-          <button
-            type="button"
-            class="py-pill-y text-caption font-semibold text-muted"
-            @click="handleClearFilters"
+      <template v-else>
+        <SearchInput
+          v-model="searchInput"
+          variant="outline"
+          placeholder="은행명 또는 상품명 검색"
+          @search="handleSearch"
+        />
+
+        <div class="flex flex-col gap-4">
+          <ListToolbar
+            :filter-active="hasAppliedFilters"
+            :filter-count="activeFilterCount"
+            @filter="handleOpenFilter"
           >
-            전체 초기화
-          </button>
+            <svg
+              class="h-4 w-4 shrink-0 text-blue"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" fill="currentColor" />
+              <path
+                class="text-white"
+                d="M12 11v6M12 7.5v.5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p class="text-caption text-muted">
+              금리는 은행 사정에 따라 변동될 수 있어요.
+            </p>
+            <template #sort>
+              <label
+                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>정렬</span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="상품 정렬"
+                  @change="resetPage"
+                >
+                  <option
+                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                    :key="sortOption.value"
+                    :value="sortOption.value"
+                  >
+                    {{ sortOption.label }}
+                  </option>
+                </select>
+              </label>
+            </template>
+          </ListToolbar>
+
+          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+            <BasePill
+              v-for="label in activeFilterLabels"
+              :key="label"
+              :label="label"
+              color="pink"
+              variant="outline"
+            />
+            <button
+              type="button"
+              class="py-pill-y text-caption font-semibold text-muted"
+              @click="handleClearFilters"
+            >
+              전체 초기화
+            </button>
+          </div>
         </div>
-      </div>
+      </template>
     </template>
 
     <template v-else>
-      <form class="flex gap-2" role="search" @submit.prevent="handleSecuritySearch">
-        <input
-          v-model="securitySearchInput"
-          type="search"
-          class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
-          placeholder="종목명 또는 티커 검색"
-          aria-label="종목명 또는 티커 검색"
-        />
-        <button
-          type="submit"
-          class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
-        >
-          검색
-        </button>
-      </form>
+      <SearchInput
+        v-model="securitySearchInput"
+        variant="outline"
+        placeholder="종목명 검색"
+        @search="handleSecuritySearch"
+      />
 
-      <div class="flex flex-wrap gap-2" aria-label="증권 유형">
+      <ListToolbar
+        :filter-active="hasAppliedSecurityFilters"
+        :filter-count="securityActiveFilterCount"
+        @filter="handleOpenSecurityFilter"
+      >
         <button
-          v-for="option in SECURITY_TYPE_FILTER_OPTIONS"
-          :key="option.value || 'all'"
           type="button"
-          :class="[
-            selectedSecurityType === option.value
-              ? 'border-pink bg-pink-soft text-pink'
-              : 'border-line bg-white text-muted',
-            'rounded-2xl border px-4 py-3 text-caption font-semibold',
-          ]"
-          @click="handleSelectSecurityType(option.value)"
+          class="flex items-center gap-2"
+          @click="showMatchInfoModal = true"
         >
-          {{ option.label }}
+          <svg
+            class="h-4 w-4 shrink-0 text-blue"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" fill="currentColor" />
+            <path
+              class="text-white"
+              d="M12 11v6M12 7.5v.5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="text-caption text-muted">매칭률이란?</span>
         </button>
-      </div>
-    </template>
+        <template #sort>
+          <label
+            class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+          >
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>정렬</span>
+            <select
+              v-model="selectedSecuritySort"
+              class="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="종목 정렬"
+              @change="resetPage"
+            >
+              <option
+                v-for="sortOption in SECURITY_SORT_OPTIONS"
+                :key="sortOption.value"
+                :value="sortOption.value"
+              >
+                {{ sortOption.label }}
+              </option>
+            </select>
+          </label>
+        </template>
+      </ListToolbar>
 
-    <div v-if="isSecurityTab" class="flex items-center justify-between gap-4">
-      <p class="text-caption text-muted tabular-nums">
-        {{ activeTabLabel }} {{ totalElements.toLocaleString("ko-KR") }}개
-      </p>
-    </div>
+      <!-- 매칭률 안내 모달 -->
+      <BaseModal
+        v-model="showMatchInfoModal"
+        message="매칭률이란?"
+        confirm-text="확인"
+        :show-cancel="false"
+      >
+        <template #content>
+          <div class="flex flex-col gap-4 text-body text-ink tracking-tight">
+            <p>
+              매칭률은 내 투자 성향과 종목의 특성을 비교해, 얼마나 잘 어울리는지
+              나타내는 수치예요.
+            </p>
+            <div class="flex flex-col gap-2">
+              <p>아래 세 가지 기준으로 계산돼요.</p>
+              <ul class="flex flex-col gap-2">
+                <li>
+                  <span class="font-semibold">위험 감수도</span> —
+                  가격이 크게 흔들리거나 손실이 났을 때 견딜 수 있는 정도
+                </li>
+                <li>
+                  <span class="font-semibold">유동성 선호도</span> —
+                  필요할 때 바로 사고팔 수 있는 종목을 선호하는지
+                </li>
+                <li>
+                  <span class="font-semibold">수익 추구도</span> —
+                  더 큰 수익을 위해 그만큼의 등락을 감수할 의향
+                </li>
+              </ul>
+            </div>
+            <p>100%에 가까울수록 내 성향과 잘 맞는 종목이에요.</p>
+            <p class="text-caption text-muted">
+              단, 매칭률이 높다고 수익률이 높은 건 아니에요. 성향이 얼마나
+              비슷한지를 나타낼 뿐, 투자 결과를 보장하지 않아요.
+            </p>
+            <p v-if="!hasAssessment" class="border-t border-line-soft pt-4 text-caption text-muted">
+              성향 진단을 완료하면 각 종목의 매칭률을 바로 확인할 수 있어요.
+            </p>
+          </div>
+        </template>
+      </BaseModal>
+    </template>
 
     <BaseCard v-if="isLoading" color="blue">
       <div class="flex flex-col gap-2" role="status">
@@ -798,7 +916,7 @@ onBeforeUnmount(() => {
         v-for="product in products"
         :key="product.productId"
         :product="product"
-        variant="catalog"
+        :variant="standalone ? 'catalog' : 'default'"
         @select="handleSelectProduct"
       />
     </div>
@@ -816,82 +934,24 @@ onBeforeUnmount(() => {
       </div>
     </BaseCard>
 
-    <nav
-      v-if="!isLoading && !errorMessage && totalPages > 0"
-      class="flex items-center justify-center gap-2"
-      aria-label="상품 목록 페이지"
-    >
-      <button
-        type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
-        aria-label="이전 페이지 묶음"
-        :disabled="!hasPreviousPageGroup"
-        @click="handlePreviousPageGroup"
-      >
-        <svg
-          class="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="m14 6-6 6 6 6"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+    <BasePagination
+      v-if="!isLoading && !errorMessage && totalPages > 1"
+      v-model:current-page="currentPage"
+      :total-pages="totalPages"
+    />
 
-      <button
-        v-for="page in visiblePageNumbers"
-        :key="page"
-        type="button"
-        :class="[
-          currentPage === page
-            ? 'bg-pink text-white'
-            : 'bg-white text-muted',
-          'flex h-10 w-10 items-center justify-center rounded-full text-button tabular-nums',
-        ]"
-        :aria-label="`${page}페이지`"
-        :aria-current="currentPage === page ? 'page' : undefined"
-        @click="handleSelectPage(page)"
-      >
-        {{ page }}
-      </button>
-
-      <button
-        type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
-        aria-label="다음 페이지 묶음"
-        :disabled="!hasNextPageGroup"
-        @click="handleNextPageGroup"
-      >
-        <svg
-          class="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="m10 6 6 6-6 6"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
-    </nav>
-
-    <ProductFilterModal
-      v-model="isFilterOpen"
-      :product-type="activeTab"
-      :saving-terms="selectedSavingTerms"
-      :reserve-types="selectedReserveTypes"
-      :preferential-conditions="selectedPreferentialConditions"
+    <FilterSheet
+      v-model:open="isFilterOpen"
+      :model-value="filterModelValue"
+      :groups="filterGroups"
       @apply="handleApplyFilters"
+    />
+
+    <FilterSheet
+      v-model:open="isSecurityFilterOpen"
+      :model-value="securityFilterModelValue"
+      :groups="SECURITY_FILTER_GROUPS"
+      @apply="handleApplySecurityFilters"
     />
   </div>
 </template>
