@@ -1,5 +1,6 @@
 <script setup>
 import BaseCard from "@/components/common/BaseCard.vue";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import {
   formatCurrency,
   formatInterestRate,
@@ -29,6 +30,7 @@ function handleSelect() {
   <article class="relative">
     <BaseCard color="white" elevation="flat">
       <div v-if="variant === 'catalog'" class="flex items-center gap-4">
+        <ProductBankLogo :name="product.financialCompanyName" />
         <div class="flex min-w-0 flex-1 flex-col gap-2">
           <p class="text-caption text-muted">
             {{ formatNullableText(product.financialCompanyName) }}
@@ -36,11 +38,9 @@ function handleSelect() {
           <h3 class="text-h2 text-navy">
             {{ formatNullableText(product.productName) }}
           </h3>
-          <div class="flex items-center text-caption text-muted tabular-nums">
-            <span class="text-caption text-muted tabular-nums">
-              {{ product.savingTerm ? `${product.savingTerm}개월` : "-" }}
-            </span>
-          </div>
+          <p class="text-caption text-muted tabular-nums">
+            {{ product.savingTerm ? `${product.savingTerm}개월` : "-" }}
+          </p>
         </div>
 
         <dl class="flex shrink-0">
@@ -60,13 +60,16 @@ function handleSelect() {
       </div>
 
       <div v-else class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <p class="text-caption text-muted">
-            {{ formatNullableText(product.financialCompanyName) }}
-          </p>
-          <h3 class="text-h2 text-ink">
-            {{ formatNullableText(product.productName) }}
-          </h3>
+        <div class="flex items-center gap-4">
+          <ProductBankLogo :name="product.financialCompanyName" />
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
+            <p class="text-caption text-muted">
+              {{ formatNullableText(product.financialCompanyName) }}
+            </p>
+            <h3 class="text-h2 text-ink">
+              {{ formatNullableText(product.productName) }}
+            </h3>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

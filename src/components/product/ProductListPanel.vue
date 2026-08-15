@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
 import { ApiError, resolveApiUrl } from "@/api/http";
@@ -20,6 +20,7 @@ import PageHeader from "@/components/common/PageHeader.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
+  PRODUCT_SEARCH_DEBOUNCE_MS,
   PRODUCT_SORT_OPTIONS,
   PRODUCT_TYPES,
   RESERVE_TYPE_OPTIONS,
@@ -31,6 +32,7 @@ import {
   SECURITY_LIST_DEFAULTS,
   SECURITY_TYPE_FILTER_OPTIONS,
 } from "@/constants/security";
+import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
   /**
@@ -363,9 +365,16 @@ function handleSelectTab(tabKey) {
   resetPage();
 }
 
-function handleSearch() {
-  appliedKeyword.value = searchInput.value.trim();
+function applyKeyword(keyword) {
+  appliedKeyword.value = keyword.trim();
   resetPage();
+}
+
+const applyKeywordDebounced = debounce(applyKeyword, PRODUCT_SEARCH_DEBOUNCE_MS);
+
+function handleSearch() {
+  applyKeywordDebounced.cancel();
+  applyKeyword(searchInput.value);
 }
 
 function handleSecuritySearch() {
@@ -376,22 +385,6 @@ function handleSecuritySearch() {
 function handleSelectSecurityType(securityType) {
   selectedSecurityType.value = securityType;
   resetPage();
-}
-
-function handleSelectEmbeddedSavingTerm(savingTerm) {
-  selectedSavingTerms.value = [savingTerm];
-  resetPage();
-}
-
-function handleSelectEmbeddedReserveType(reserveType) {
-  selectedReserveTypes.value = reserveType ? [reserveType] : [];
-  resetPage();
-}
-
-function isEmbeddedReserveTypeSelected(reserveType) {
-  return reserveType
-    ? selectedReserveTypes.value.includes(reserveType)
-    : selectedReserveTypes.value.length === 0;
 }
 
 function handleOpenFilter() {
@@ -495,6 +488,10 @@ function syncQueryFromState() {
   router.replace({ query: nextQuery });
 }
 
+watch(searchInput, (value) => {
+  applyKeywordDebounced(value);
+});
+
 watch(
   () => [
     activeTab.value,
@@ -516,6 +513,10 @@ watch(
 
 onMounted(() => {
   if (props.standalone) loadLatestAssessment();
+});
+
+onBeforeUnmount(() => {
+  applyKeywordDebounced.cancel();
 });
 </script>
 
@@ -577,193 +578,139 @@ onMounted(() => {
     </div>
 
     <template v-if="!isSecurityTab">
-      <template v-if="standalone">
-        <form
-          class="flex items-center gap-2 rounded-3xl bg-surface px-4"
-          role="search"
-          @submit.prevent="handleSearch"
+      <form
+        class="flex items-center gap-2 rounded-3xl bg-surface px-4"
+        role="search"
+        @submit.prevent="handleSearch"
+      >
+        <svg
+          class="h-5 w-5 shrink-0 text-muted"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
         >
-          <svg
-            class="h-5 w-5 shrink-0 text-muted"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" stroke-width="2" />
-            <path
-              d="m16 16 4 4"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-          <input
-            v-model="searchInput"
-            type="search"
-            class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
-            placeholder="은행명 또는 상품명 검색"
-            aria-label="은행명 또는 상품명 검색"
-            @keyup.enter="handleSearch"
+          <circle cx="11" cy="11" r="7" stroke-width="2" />
+          <path
+            d="m16 16 4 4"
+            stroke-width="2"
+            stroke-linecap="round"
           />
-        </form>
+        </svg>
+        <input
+          v-model="searchInput"
+          type="search"
+          class="min-w-0 flex-1 bg-transparent py-3 text-body text-ink outline-none"
+          placeholder="은행명 또는 상품명 검색"
+          aria-label="은행명 또는 상품명 검색"
+          @keyup.enter="handleSearch"
+        />
+      </form>
 
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex min-w-0 items-center gap-2">
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex min-w-0 items-center gap-2">
+            <svg
+              class="h-4 w-4 shrink-0 text-blue"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" fill="currentColor" />
+              <path
+                class="text-white"
+                d="M12 11v6M12 7.5v.5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <p class="text-caption text-muted">
+              금리는 은행 사정에 따라 변동될 수 있어요.
+            </p>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <label
+              class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+            >
               <svg
-                class="h-4 w-4 shrink-0 text-blue"
+                class="h-4 w-4"
                 viewBox="0 0 24 24"
                 fill="none"
+                stroke="currentColor"
                 aria-hidden="true"
               >
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
                 <path
-                  class="text-white"
-                  d="M12 11v6M12 7.5v.5"
-                  stroke="currentColor"
-                  stroke-width="2"
+                  d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                  stroke-width="1.8"
                   stroke-linecap="round"
+                  stroke-linejoin="round"
                 />
               </svg>
-              <p class="text-caption text-muted">
-                금리는 은행 사정에 따라 변동될 수 있어요.
-              </p>
-            </div>
-            <div class="flex shrink-0 items-center gap-2">
-              <label
-                class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
+              <span>정렬</span>
+              <select
+                v-model="selectedSort"
+                class="absolute inset-0 cursor-pointer opacity-0"
+                aria-label="상품 정렬"
+                @change="resetPage"
               >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  aria-hidden="true"
+                <option
+                  v-for="sortOption in PRODUCT_SORT_OPTIONS"
+                  :key="sortOption.value"
+                  :value="sortOption.value"
                 >
-                  <path
-                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                <span>정렬</span>
-                <select
-                  v-model="selectedSort"
-                  class="absolute inset-0 cursor-pointer opacity-0"
-                  aria-label="상품 정렬"
-                  @change="resetPage"
-                >
-                  <option
-                    v-for="sortOption in PRODUCT_SORT_OPTIONS"
-                    :key="sortOption.value"
-                    :value="sortOption.value"
-                  >
-                    {{ sortOption.label }}
-                  </option>
-                </select>
-              </label>
-              <button
-                type="button"
-                :class="[
-                  hasAppliedFilters
-                    ? 'text-pink'
-                    : 'text-ink',
-                  'flex items-center gap-2 py-pill-y text-caption',
-                ]"
-                :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
-                @click="handleOpenFilter"
-              >
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M4 7h7m4 0h5M4 17h3m4 0h9"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                  />
-                  <circle cx="13" cy="7" r="2" stroke-width="1.8" />
-                  <circle cx="9" cy="17" r="2" stroke-width="1.8" />
-                </svg>
-                <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
-              </button>
-            </div>
-          </div>
-
-          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
-            <BasePill
-              v-for="label in activeFilterLabels"
-              :key="label"
-              :label="label"
-              color="pink"
-              variant="outline"
-            />
+                  {{ sortOption.label }}
+                </option>
+              </select>
+            </label>
             <button
               type="button"
-              class="py-pill-y text-caption font-semibold text-muted"
-              @click="handleClearFilters"
+              :class="[
+                hasAppliedFilters
+                  ? 'text-pink'
+                  : 'text-ink',
+                'flex items-center gap-2 py-pill-y text-caption',
+              ]"
+              :aria-label="`상품 필터${activeFilterCount ? ` ${activeFilterCount}개 적용 중` : ''}`"
+              @click="handleOpenFilter"
             >
-              전체 초기화
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 7h7m4 0h5M4 17h3m4 0h9"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+                <circle cx="13" cy="7" r="2" stroke-width="1.8" />
+                <circle cx="9" cy="17" r="2" stroke-width="1.8" />
+              </svg>
+              <span>필터{{ activeFilterCount ? ` ${activeFilterCount}` : "" }}</span>
             </button>
           </div>
         </div>
-      </template>
 
-      <template v-else>
-        <form class="flex gap-2" role="search" @submit.prevent="handleSearch">
-          <input
-            v-model="searchInput"
-            type="search"
-            class="min-w-0 flex-1 rounded-2xl border border-line bg-white px-4 py-3 text-body text-ink outline-none focus:border-pink"
-            placeholder="은행명 또는 상품명 검색"
-            aria-label="은행명 또는 상품명 검색"
+        <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+          <BasePill
+            v-for="label in activeFilterLabels"
+            :key="label"
+            :label="label"
+            color="pink"
+            variant="outline"
           />
           <button
-            type="submit"
-            class="rounded-2xl bg-pink px-4 py-3 text-button text-white"
-          >
-            검색
-          </button>
-        </form>
-
-        <div class="flex flex-wrap gap-2" aria-label="가입 기간">
-          <button
-            v-for="savingTerm in SAVING_TERM_OPTIONS"
-            :key="savingTerm"
             type="button"
-            :class="[
-              selectedSavingTerms.includes(savingTerm)
-                ? 'border-pink bg-pink-soft text-pink'
-                : 'border-line bg-white text-muted',
-              'rounded-2xl border px-4 py-3 text-caption font-semibold',
-            ]"
-            @click="handleSelectEmbeddedSavingTerm(savingTerm)"
+            class="py-pill-y text-caption font-semibold text-muted"
+            @click="handleClearFilters"
           >
-            {{ savingTerm }}개월
+            전체 초기화
           </button>
         </div>
-
-        <div v-if="isSaving" class="flex flex-wrap gap-2" aria-label="적립 유형">
-          <button
-            v-for="reserveType in RESERVE_TYPE_OPTIONS"
-            :key="reserveType.value"
-            type="button"
-            :class="[
-              isEmbeddedReserveTypeSelected(reserveType.value)
-                ? 'border-blue bg-blue-soft text-blue'
-                : 'border-line bg-white text-muted',
-              'rounded-2xl border px-4 py-3 text-caption font-semibold',
-            ]"
-            @click="handleSelectEmbeddedReserveType(reserveType.value)"
-          >
-            {{ reserveType.label }}
-          </button>
-        </div>
-      </template>
+      </div>
     </template>
 
     <template v-else>
@@ -851,7 +798,7 @@ onMounted(() => {
         v-for="product in products"
         :key="product.productId"
         :product="product"
-        :variant="standalone ? 'catalog' : 'default'"
+        variant="catalog"
         @select="handleSelectProduct"
       />
     </div>
@@ -939,7 +886,6 @@ onMounted(() => {
     </nav>
 
     <ProductFilterModal
-      v-if="standalone"
       v-model="isFilterOpen"
       :product-type="activeTab"
       :saving-terms="selectedSavingTerms"

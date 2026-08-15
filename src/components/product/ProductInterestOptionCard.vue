@@ -21,6 +21,20 @@ const hasReserveType = computed(
     props.option.reserveType !== "NONE" &&
     Boolean(props.option.reserveTypeName),
 );
+
+const preferentialRateConditions = computed(() => {
+  const conditions = props.option.preferentialRateConditions;
+  if (!Array.isArray(conditions)) return [];
+  return [...conditions].sort(
+    (a, b) =>
+      (a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
+      a.preferentialRateConditionId - b.preferentialRateConditionId,
+  );
+});
+
+function formatAdditionalRate(additionalRate) {
+  return `+${Number(additionalRate).toFixed(2)}%p`;
+}
 </script>
 
 <template>
@@ -62,6 +76,26 @@ const hasReserveType = computed(
           </dd>
         </div>
       </dl>
+
+      <div
+        v-if="preferentialRateConditions.length"
+        class="flex flex-col gap-2 border-t border-line pt-4"
+      >
+        <span class="text-caption text-muted">우대조건</span>
+        <div
+          v-for="condition in preferentialRateConditions"
+          :key="condition.preferentialRateConditionId"
+          class="flex items-center justify-between gap-4"
+        >
+          <span class="text-body text-ink">{{ condition.conditionName }}</span>
+          <span
+            v-if="condition.additionalRate !== null && condition.additionalRate !== undefined"
+            class="shrink-0 text-body text-profit tabular-nums"
+          >
+            {{ formatAdditionalRate(condition.additionalRate) }}
+          </span>
+        </div>
+      </div>
     </div>
   </BaseCard>
 </template>

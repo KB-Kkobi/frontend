@@ -14,6 +14,10 @@ export const PRODUCT_LIST_DEFAULTS = Object.freeze({
   sort: "maximumInterestRate,desc",
 });
 
+export const PRODUCT_SEARCH_DEBOUNCE_MS = 300;
+
+export const PRODUCT_SUBSCRIPTION_ESTIMATE_DEBOUNCE_MS = 400;
+
 export const SAVING_TERM_OPTIONS = Object.freeze([6, 12, 24]);
 
 export const PRODUCT_SORT_OPTIONS = Object.freeze([
