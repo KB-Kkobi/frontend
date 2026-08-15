@@ -70,15 +70,6 @@ function handleSelectHolding(holding) {
   router.push({ name: 'product-holding-detail', params: { holdingProductId: holding.holdingProductId } })
 }
 
-function handleHoldingTrade(holding) {
-  if (!holding.securityId) return
-  router.push({
-    name: 'virtual-trade',
-    params: { securityId: holding.securityId },
-    query: { ticker: holding.ticker },
-  })
-}
-
 function holdingAvgPrice(holding) {
   return holding.averagePrice ?? null
 }
@@ -223,9 +214,6 @@ onActivated(() => {
                 </span>
               </div>
             </div>
-            <BottomButton v-if="holding.securityId" color="pink" @click="handleHoldingTrade(holding)">
-              매수 / 매도
-            </BottomButton>
           </div>
         </BaseCard>
       </section>

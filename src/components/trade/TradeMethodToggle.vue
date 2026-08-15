@@ -20,18 +20,6 @@ function handleSelect(value) {
       type="button"
       :class="[
         'flex-1 rounded-xl py-3 text-button transition-colors',
-        props.method === 'market'
-          ? 'bg-pink-soft text-pink font-semibold'
-          : 'bg-transparent text-muted font-normal',
-      ]"
-      @click="handleSelect('market')"
-    >
-      시장가로 주문
-    </button>
-    <button
-      type="button"
-      :class="[
-        'flex-1 rounded-xl py-3 text-button transition-colors',
         props.method === 'limit'
           ? 'bg-pink-soft text-pink font-semibold'
           : 'bg-transparent text-muted font-normal',
@@ -39,6 +27,18 @@ function handleSelect(value) {
       @click="handleSelect('limit')"
     >
       지정가로 주문
+    </button>
+    <button
+      type="button"
+      :class="[
+        'flex-1 rounded-xl py-3 text-button transition-colors',
+        props.method === 'market'
+          ? 'bg-pink-soft text-pink font-semibold'
+          : 'bg-transparent text-muted font-normal',
+      ]"
+      @click="handleSelect('market')"
+    >
+      시장가로 주문
     </button>
   </div>
 </template>
