@@ -43,15 +43,20 @@ function handleRecommendProducts() {
   router.push({ name: "products" });
 }
 
+function handleViewAllPersonas() {
+  router.push({ name: "persona-types" });
+}
+
 onMounted(loadAssessmentResult);
 </script>
 
 <template>
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <div class="flex items-center gap-2">
+      <div class="grid grid-cols-[40px_1fr_40px] items-center">
         <BackButton />
-        <h1 class="text-h1 text-ink">성향 진단 리포트</h1>
+        <h1 class="text-h1 text-ink text-center">성향 진단 리포트</h1>
+        <div aria-hidden="true"></div>
       </div>
 
       <BaseCard v-if="isLoading" color="white">
@@ -110,14 +115,19 @@ onMounted(loadAssessmentResult);
 
         <RecommendedPortfolioCard
           :persona-name="result.persona.personaName"
-          :feature="result.persona.feature"
           :stock-ratio="result.persona.stockRatio"
           :bond-ratio="result.persona.bondRatio"
           :deposit-ratio="result.persona.depositRatio"
         />
 
         <div class="flex flex-col items-center gap-4">
-          <span class="text-caption text-muted">다른 유형도 궁금하다면 8가지 유형 전체보기 &gt;</span>
+          <button
+            type="button"
+            class="text-caption text-muted"
+            @click="handleViewAllPersonas"
+          >
+            다른 유형도 궁금하다면 8가지 유형 전체보기 &gt;
+          </button>
           <BottomButton color="pink" shape="pill" @click="handleRecommendProducts">
             내 성향 상품 추천받기
           </BottomButton>

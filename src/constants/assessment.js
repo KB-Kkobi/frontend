@@ -1,9 +1,21 @@
 export const AXIS_SCORE_THRESHOLD = 50;
 
 export const AXIS_DEFINITIONS = Object.freeze([
-  { key: "rtScore", label: "위험감수" },
-  { key: "lhScore", label: "유동성" },
-  { key: "rpScore", label: "기대수익" },
+  {
+    key: "rtScore",
+    label: "위험감수",
+    description: "손실을 감수하고 투자할 수 있는 정도",
+  },
+  {
+    key: "lhScore",
+    label: "유동성",
+    description: "자금을 바로 꺼내 쓸 수 있어야 하는 정도",
+  },
+  {
+    key: "rpScore",
+    label: "기대수익",
+    description: "목표로 하는 수익 수준",
+  },
 ]);
 
 export function getAxisLevel(score) {

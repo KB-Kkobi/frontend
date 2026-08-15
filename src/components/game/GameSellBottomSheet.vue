@@ -140,7 +140,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
       ></button>
 
       <section
-        class="game-sell-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pb-5 pt-3 shadow-popup"
+        class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pb-5 pt-3 shadow-popup"
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-sell-title"
@@ -152,7 +152,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           @click="closeSheet"
         ></button>
 
-        <h2 id="game-sell-title" class="text-amount text-ink">종목 A 매도</h2>
+        <h2 id="game-sell-title" class="text-amount text-navy">종목 A 매도</h2>
 
         <div class="flex items-center justify-between gap-4">
           <span class="text-h2 text-muted">매도 가격</span>
@@ -277,10 +277,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
 </template>
 
 <style scoped>
-.game-sell-sheet {
-  box-shadow: 0 -10px 28px rgb(15 23 42 / 12%);
-}
-
 .game-sell-quantity {
   appearance: textfield;
 }

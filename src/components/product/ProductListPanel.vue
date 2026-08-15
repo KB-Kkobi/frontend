@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
 import { ApiError, resolveApiUrl } from "@/api/http";
@@ -24,6 +24,7 @@ import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
   PRODUCT_LIST_DEFAULTS,
+  PRODUCT_SEARCH_DEBOUNCE_MS,
   PRODUCT_SORT_OPTIONS,
   PRODUCT_TYPES,
   RESERVE_TYPE_OPTIONS,
@@ -37,6 +38,7 @@ import {
   SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
 import { SECURITY_FILTER_GROUPS, buildSavingsFilterGroups } from "@/constants/productFilters";
+import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
   /**
@@ -372,9 +374,16 @@ function handleSelectTab(tabKey) {
   resetPage();
 }
 
-function handleSearch() {
-  appliedKeyword.value = searchInput.value.trim();
+function applyKeyword(keyword) {
+  appliedKeyword.value = keyword.trim();
   resetPage();
+}
+
+const applyKeywordDebounced = debounce(applyKeyword, PRODUCT_SEARCH_DEBOUNCE_MS);
+
+function handleSearch() {
+  applyKeywordDebounced.cancel();
+  applyKeyword(searchInput.value);
 }
 
 function handleSecuritySearch() {
@@ -483,6 +492,10 @@ function syncQueryFromState() {
   router.replace({ query: nextQuery });
 }
 
+watch(searchInput, (value) => {
+  applyKeywordDebounced(value);
+});
+
 watch(
   () => [
     activeTab.value,
@@ -505,6 +518,10 @@ watch(
 
 onMounted(() => {
   if (props.standalone) loadLatestAssessment();
+});
+
+onBeforeUnmount(() => {
+  applyKeywordDebounced.cancel();
 });
 </script>
 

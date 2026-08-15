@@ -1,7 +1,7 @@
 <script setup>
-import BaseAlertIcon from "@/components/common/BaseAlertIcon.vue";
-import BaseBadge from "@/components/common/BaseBadge.vue";
-import BaseCard from "@/components/common/BaseCard.vue";
+import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
+import BaseBadge from '@/components/common/BaseBadge.vue';
+import BaseCard from '@/components/common/BaseCard.vue';
 
 defineProps({
   event: {
@@ -14,18 +14,18 @@ defineProps({
   },
 });
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(['close']);
 </script>
 
 <template>
   <Teleport to="body">
     <div
       v-if="visible"
-      class="fixed inset-0 z-10 bg-ink/50"
+      class="fixed inset-0 z-10 bg-ink/20"
       @click.self="emit('close')"
     >
       <div class="mx-auto max-w-[430px] px-5 pt-24">
-        <BaseCard color="white">
+        <BaseCard color="white" elevation="highlight">
           <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between">
               <BaseBadge color="error-soft">
@@ -58,7 +58,9 @@ const emit = defineEmits(["close"]);
               </button>
             </div>
 
-            <p class="text-h2 text-ink whitespace-pre-line">{{ event?.description }}</p>
+            <p class="text-h2 text-ink whitespace-pre-line">
+              {{ event?.description }}
+            </p>
           </div>
         </BaseCard>
       </div>

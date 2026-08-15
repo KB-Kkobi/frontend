@@ -4,9 +4,11 @@ import { useRouter } from 'vue-router';
 import { startGame } from '@/api/gameApi';
 import { ApiError } from '@/api/http';
 import BackButton from '@/components/common/BackButton.vue';
+import BaseAlertIcon from '@/components/common/BaseAlertIcon.vue';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BottomButton from '@/components/common/BottomButton.vue';
 import PageContainer from '@/components/common/PageContainer.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import GameAssetSlider from '@/components/game/GameAssetSlider.vue';
 import {
   GAME_ALLOCATION_STEP,
@@ -34,8 +36,8 @@ const assetRatios = computed(() => ({
   stock: (allocation.stock / GAME_SEED_MONEY) * 100,
 }));
 
-const allocatedAmount = computed(() =>
-  allocation.cash + allocation.deposit + allocation.stock,
+const allocatedAmount = computed(
+  () => allocation.cash + allocation.deposit + allocation.stock,
 );
 
 const remainingAmount = computed(() =>
@@ -46,8 +48,8 @@ const remainingRatio = computed(() =>
   calculateAssetRatio(remainingAmount.value),
 );
 
-const isAllocationComplete = computed(() =>
-  allocatedAmount.value === GAME_SEED_MONEY,
+const isAllocationComplete = computed(
+  () => allocatedAmount.value === GAME_SEED_MONEY,
 );
 
 function getMaximumAllocation(assetType) {
@@ -112,22 +114,20 @@ async function handleStartGame() {
     <form class="flex flex-col gap-6 py-6" @submit.prevent="handleStartGame">
       <header class="flex flex-col gap-4">
         <BackButton />
-        <div class="flex flex-col gap-2">
-          <h1 class="text-amount text-ink">시작 자산 설정</h1>
-          <p class="text-body text-muted">
-            1,000만원을 어떻게 나눌지 정해 주세요.<br />
-            이 선택도 성향 진단에 함께 반영돼요.
-          </p>
-        </div>
+        <h1 class="text-amount text-ink">시작 자산 설정</h1>
+        <p class="text-body text-muted">
+          1,000만원을 어떻게 나눌지 정해 주세요.<br />
+          이 선택도 성향 진단에 함께 반영돼요.
+        </p>
       </header>
 
-      <BaseCard>
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-6">
           <section
             class="flex flex-col gap-4"
             aria-labelledby="seed-money-title"
           >
-            <h2 id="seed-money-title" class="text-h2 text-ink">시작 자산</h2>
+            <h2 id="seed-money-title" class="text-h2 text-navy">시작 자산</h2>
             <div
               class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-base p-4"
             >
@@ -154,7 +154,7 @@ async function handleStartGame() {
                 :style="{ width: `${assetRatios.cash}%` }"
               ></span>
               <span
-                class="bg-blue"
+                class="bg-green"
                 :style="{ width: `${assetRatios.deposit}%` }"
               ></span>
               <span
@@ -169,7 +169,7 @@ async function handleStartGame() {
                 현금
               </span>
               <span class="flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full bg-blue"></span>
+                <span class="h-2 w-2 rounded-full bg-green"></span>
                 예금
               </span>
               <span class="flex items-center gap-2">
@@ -197,7 +197,7 @@ async function handleStartGame() {
             label="예금"
             :description="`${GAME_DEPOSIT_MONTHS}개월 · 연 ${formatInterestRate(GAME_DEPOSIT_INTEREST_RATE)} 고정`"
             notice="중도해지하면 재가입할 수 없어요."
-            color="blue"
+            color="green"
             :amount="allocation.deposit"
             :total-amount="GAME_SEED_MONEY"
             :max-amount="getMaximumAllocation('deposit')"
@@ -216,22 +216,53 @@ async function handleStartGame() {
             :step="GAME_ALLOCATION_STEP"
             @update:amount="updateAllocation('stock', $event)"
           />
-
         </div>
       </BaseCard>
 
-      <BaseCard :color="isAllocationComplete ? 'green' : 'yellow'">
+      <BaseCard :color="isAllocationComplete ? 'blue' : 'yellow'">
         <div class="flex items-center justify-between gap-4">
           <div class="flex flex-col gap-2">
-            <strong class="text-h2 text-ink">
-              {{ isAllocationComplete ? '배분 완료' : '배분이 아직 부족해요' }}
-            </strong>
+            <div class="flex items-center gap-2">
+              <svg
+                v-if="isAllocationComplete"
+                class="h-6 w-6 shrink-0 text-blue"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M8 12.2L10.7 15L16.4 9.3"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <BaseAlertIcon v-else class="h-6 w-6 shrink-0 text-yellow" />
+              <strong class="text-h2 text-ink">
+                {{
+                  isAllocationComplete
+                    ? '배분을 완료했어요'
+                    : '배분이 아직 부족해요'
+                }}
+              </strong>
+            </div>
             <p class="text-caption text-muted">
               <template v-if="isAllocationComplete">
                 시작 자산 100%를 모두 배분했습니다.
               </template>
               <template v-else>
-                남은 비율 {{ remainingRatio.toFixed(0) }}%를 원하는 자산에 배분해 주세요.
+                <span class="whitespace-nowrap">
+                  남은 비율 {{ remainingRatio.toFixed(0) }}%
+                </span>
+                만큼 더 배분해 주세요.
               </template>
             </p>
           </div>
@@ -247,7 +278,7 @@ async function handleStartGame() {
 
       <BottomButton
         type="submit"
-        color="yellow"
+        color="pink"
         :disabled="isSubmitting || !isAllocationComplete"
       >
         {{ isSubmitting ? '게임을 준비하고 있어요' : '성향 진단 시작하기' }}

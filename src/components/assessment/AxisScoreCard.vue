@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import AxisRadarChart from "@/components/assessment/AxisRadarChart.vue";
+import AxisHelpPopover from "@/components/assessment/AxisHelpPopover.vue";
 import { AXIS_DEFINITIONS, RADAR_AXIS_ORDER } from "@/constants/assessment";
 
 const props = defineProps({
@@ -10,6 +11,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const isHelpOpen = ref(false);
 
 const orderedAxes = computed(() =>
   RADAR_AXIS_ORDER.map((key) => {
@@ -21,13 +24,30 @@ const orderedAxes = computed(() =>
     };
   }),
 );
+
+function openHelp() {
+  isHelpOpen.value = true;
+}
 </script>
 
 <template>
   <BaseCard color="white">
     <div class="flex flex-col gap-4">
       <div class="flex flex-col items-center gap-2 text-center">
-        <h2 class="text-h2 text-navy">투자 성향 3축</h2>
+        <div class="flex items-center gap-1">
+          <h2 class="text-h2 text-navy">투자 성향 3축</h2>
+          <div class="relative">
+            <button
+              type="button"
+              class="flex h-5 w-5 items-center justify-center rounded-full border border-line text-caption text-muted"
+              aria-label="투자 성향 3축 용어 설명 보기"
+              @click="openHelp"
+            >
+              ?
+            </button>
+            <AxisHelpPopover v-model="isHelpOpen" />
+          </div>
+        </div>
         <p class="text-caption text-muted">답변과 자산 배분을 함께 계산했어요</p>
       </div>
 

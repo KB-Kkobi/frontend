@@ -6,12 +6,17 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
 import { useAuthStore } from "@/stores/auth";
+import { clearGameSession } from "@/utils/gameStorage";
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const REPORT_ITEMS = [
   { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
+];
+
+const FRIEND_ITEMS = [
+  { id: "friend-management", label: "친구 관리", icon: "friend" },
 ];
 
 const SETTING_ITEMS = [
@@ -32,6 +37,10 @@ function handleAssessmentSelect() {
   router.push({ name: "assessment-result" });
 }
 
+function handleFriendSelect() {
+  router.push({ name: "friend-management" });
+}
+
 function handleMenuSelect(item) {
   console.log("마이페이지 메뉴:", item.id);
 }
@@ -40,6 +49,7 @@ async function handleLogout() {
   try {
     await logoutUser();
   } finally {
+    clearGameSession();
     authStore.logout();
     await router.replace({ name: "login" });
   }
@@ -86,6 +96,11 @@ async function handleLogout() {
       <section class="flex flex-col gap-4">
         <h2 class="text-h2 text-ink">투자 성향</h2>
         <MyPageMenuCard :items="REPORT_ITEMS" @select="handleAssessmentSelect" />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-h2 text-ink">친구</h2>
+        <MyPageMenuCard :items="FRIEND_ITEMS" @select="handleFriendSelect" />
       </section>
 
       <section class="flex flex-col gap-4">
