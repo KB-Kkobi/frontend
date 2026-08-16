@@ -1,4 +1,4 @@
-import { get, post } from "@/api/http";
+import { get, patch, post } from "@/api/http";
 
 export function signupUser({ email, password, nickname, birthDate }) {
   return post(
@@ -26,4 +26,12 @@ export function logoutUser() {
 
 export function fetchMyInfo() {
   return get("/api/auth/me");
+}
+
+export function fetchMyProfile() {
+  return get("/api/my/profile");
+}
+
+export function updateMyProfile({ nickname, birthDate }) {
+  return patch("/api/my/profile", { nickname, birthDate });
 }
