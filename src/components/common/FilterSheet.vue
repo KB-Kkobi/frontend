@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import BaseBottomSheet from '@/components/common/BaseBottomSheet.vue'
 import BasePill from '@/components/common/BasePill.vue'
 import BottomButton from '@/components/common/BottomButton.vue'
 
@@ -67,61 +68,49 @@ watch(
 </script>
 
 <template>
-  <Teleport to="body">
-    <div
-      v-if="open"
-      class="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
-      @click.self="handleClose"
-    >
-      <section
-        class="flex max-h-screen w-full max-w-[430px] flex-col gap-6 overflow-y-auto rounded-t-3xl bg-white pt-8 px-4 pb-4 shadow-popup"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="filter-sheet-title"
-      >
-        <!-- 헤더 -->
-        <header class="flex items-center justify-between gap-4">
-          <div class="flex flex-col gap-2">
-            <h2 id="filter-sheet-title" class="text-h1 text-ink">{{ title }}</h2>
-            <p v-if="description" class="text-caption text-muted">{{ description }}</p>
-          </div>
-          <button
-            type="button"
-            class="text-h1 text-muted"
-            :aria-label="`${title} 닫기`"
-            @click="handleClose"
-          >
-            ×
-          </button>
-        </header>
-
-        <!-- 필터 그룹 반복 -->
-        <fieldset v-for="group in groups" :key="group.key" class="flex flex-col gap-4">
-          <legend class="text-h2 text-ink">{{ group.label }}</legend>
-          <div class="grid gap-2" :class="`grid-cols-${group.cols ?? 2}`">
-            <BasePill
-              v-for="option in group.options"
-              :key="option.value"
-              as="button"
-              type="button"
-              :label="option.label"
-              :color="group.color ?? 'pink'"
-              full-width
-              :variant="isSelected(group.key, option.value) ? 'filled' : 'ghost'"
-              :aria-pressed="isSelected(group.key, option.value)"
-              @click="toggleOption(group.key, option.value, group.multiple ?? true)"
-            />
-          </div>
-        </fieldset>
-
-        <!-- 하단 버튼 -->
-        <div class="flex gap-2">
-          <BottomButton color="white" @click="handleReset">초기화</BottomButton>
-          <BottomButton @click="handleApply">적용</BottomButton>
+  <BaseBottomSheet :model-value="open" @update:model-value="emit('update:open', $event)">
+    <div class="flex flex-col gap-6 py-2">
+      <!-- 헤더 -->
+      <header class="flex items-center justify-between gap-4">
+        <div class="flex flex-col gap-2">
+          <h2 id="filter-sheet-title" class="text-h1 text-ink">{{ title }}</h2>
+          <p v-if="description" class="text-caption text-muted">{{ description }}</p>
         </div>
-      </section>
+        <button
+          type="button"
+          class="text-h1 text-muted"
+          :aria-label="`${title} 닫기`"
+          @click="handleClose"
+        >
+          ×
+        </button>
+      </header>
+
+      <!-- 필터 그룹 반복 -->
+      <fieldset v-for="group in groups" :key="group.key" class="flex flex-col gap-4">
+        <legend class="text-h2 text-ink">{{ group.label }}</legend>
+        <div class="grid gap-2" :class="`grid-cols-${group.cols ?? 2}`">
+          <BasePill
+            v-for="option in group.options"
+            :key="option.value"
+            as="button"
+            type="button"
+            :label="option.label"
+            :color="group.color ?? 'pink'"
+            full-width
+            :variant="isSelected(group.key, option.value) ? 'filled' : 'ghost'"
+            :aria-pressed="isSelected(group.key, option.value)"
+            @click="toggleOption(group.key, option.value, group.multiple ?? true)"
+          />
+        </div>
+      </fieldset>
+
+      <!-- 하단 버튼 -->
+      <div class="flex gap-2">
+        <BottomButton color="white" @click="handleReset">초기화</BottomButton>
+        <BottomButton @click="handleApply">적용</BottomButton>
+      </div>
     </div>
-  </Teleport>
+  </BaseBottomSheet>
 </template>
 
-<style scoped></style>
