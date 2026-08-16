@@ -142,15 +142,17 @@ export function useTradeOrder({ securityId, ticker }) {
       const result = await createOrder(orderPayload)
       const resultStatus = result?.status ?? result?.orderStatus
 
+      const currentSide = side.value
+
       if (resultStatus === ORDER_STATUS.FILLED) {
-        return { status: ORDER_STATUS.FILLED, message: '주문이 체결되었습니다' }
+        return { status: ORDER_STATUS.FILLED, side: currentSide }
       }
 
       // PENDING(지정가 예약 접수) 및 기타
       limitPrice.value = null
       quantity.value = maxQuantity.value > 0 ? 1 : 0
       await loadOrderable()
-      return { status: resultStatus ?? ORDER_STATUS.PENDING, message: '지정가 예약이 접수되었습니다' }
+      return { status: resultStatus ?? ORDER_STATUS.PENDING, side: currentSide }
     } catch (err) {
       const code = err?.code ?? null
       orderError.value =

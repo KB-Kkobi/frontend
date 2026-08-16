@@ -27,6 +27,7 @@ const tradeSheetOpen = ref(false);
 const tradeSide = ref("buy");
 const toastVisible = ref(false);
 const toastTitle = ref("");
+const toastDescription = ref("");
 
 let pollingTimer = null;
 let activeTicker = null;
@@ -167,8 +168,11 @@ function handleTrade(side) {
   tradeSheetOpen.value = true
 }
 
-async function handleOrdered({ message }) {
-  toastTitle.value = message
+async function handleOrdered({ status, side }) {
+  const sideLabel = side === 'buy' ? '매수' : '매도'
+  const isFilled = status === 'FILLED'
+  toastTitle.value = isFilled ? `${sideLabel} 완료` : `${sideLabel} 예약 접수`
+  toastDescription.value = isFilled ? '주문이 정상적으로 체결되었습니다.' : '지정가 예약이 접수되었습니다.'
   toastVisible.value = true
   const ticker = security.value?.code
   await Promise.allSettled([
@@ -241,5 +245,5 @@ async function handleOrdered({ message }) {
     @ordered="handleOrdered"
   />
 
-  <BaseToast v-model="toastVisible" :title="toastTitle" />
+  <BaseToast v-model="toastVisible" :title="toastTitle" :description="toastDescription" />
 </template>

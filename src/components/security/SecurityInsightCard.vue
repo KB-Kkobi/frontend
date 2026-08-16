@@ -79,7 +79,7 @@ const maxDrawdownLabel = computed(() => formatRate(props.maxDrawdown));
         </div>
 
         <!-- 2. 최대 낙폭 -->
-        <div class="flex items-center gap-4 py-4 border-b border-line-soft">
+        <div :class="['flex items-center gap-4 py-4', description ? 'border-b border-line-soft' : '']">
           <div class="flex items-center justify-center rounded-2xl bg-blue-soft p-2">
             <svg
               class="w-5 h-5 text-blue"
@@ -105,8 +105,8 @@ const maxDrawdownLabel = computed(() => formatRate(props.maxDrawdown));
           </div>
         </div>
 
-        <!-- 3. 증권 설명 (추후 채움) -->
-        <div class="flex items-center gap-4 pt-4">
+        <!-- 3. 증권 설명 -->
+        <div v-if="description" class="flex items-center gap-4 pt-4">
           <div class="flex items-center justify-center rounded-2xl bg-pink-soft p-2">
             <svg
               class="w-5 h-5 text-pink"
