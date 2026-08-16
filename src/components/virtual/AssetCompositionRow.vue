@@ -17,12 +17,13 @@ const props = defineProps({
   barColor: {
     type: String,
     default: "ink",
-    validator: (v) => ["ink", "blue", "green", "lavender"].includes(v),
+    validator: (v) => ["ink", "pink", "blue", "green", "lavender"].includes(v),
   },
 });
 
 const BAR_COLOR_CLASSES = {
   ink: "bg-ink",
+  pink: "bg-pink",
   blue: "bg-blue",
   green: "bg-green",
   lavender: "bg-lavender",
