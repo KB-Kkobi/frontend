@@ -15,6 +15,7 @@ import VirtualHistoryView from '@/views/VirtualHistoryView.vue'
 import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import MyProfileView from '@/views/MyProfileView.vue'
 import FriendManagementView from '@/views/FriendManagementView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
@@ -103,6 +104,12 @@ const router = createRouter({
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { requiresAuth: true } },
     { path: '/my', name: 'my', component: MyPageView, meta: { requiresAuth: true } },
+    {
+      path: '/my/profile',
+      name: 'my-profile',
+      component: MyProfileView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
     {
       path: '/my/friends',
       name: 'friend-management',
