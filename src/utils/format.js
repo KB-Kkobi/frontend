@@ -75,6 +75,14 @@ export function formatInterestRate(value) {
 }
 
 /**
+ * 우대조건 추가 금리 포맷 (%p 단위).
+ * ex) 0.7 → "+0.70%p"
+ */
+export function formatAdditionalRate(value) {
+  return `+${Number(value).toFixed(2)}%p`;
+}
+
+/**
  * 은행명 표시용 포맷. 법인 표기("주식회사", "(주)")를 제거해 한 줄로
  * 표시하기 쉽게 정리한다. 원본 데이터(API 응답)는 그대로 두고 화면
  * 표시에만 사용한다.

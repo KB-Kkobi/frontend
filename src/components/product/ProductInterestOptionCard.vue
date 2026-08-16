@@ -1,7 +1,12 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
-import { formatInterestRate } from "@/utils/format";
+import { formatAdditionalRate, formatInterestRate } from "@/utils/format";
+import {
+  getConditionLabel,
+  groupPreferentialConditions,
+  hasVisibleAdditionalRate,
+} from "@/utils/preferentialConditions";
 
 // 우대조건 목록에 노출할 단위(단독 조건 1개 = 1개, 그룹 1개 = 1개) 개수.
 const PREFERENTIAL_CONDITIONS_VISIBLE_COUNT = 3;
@@ -25,54 +30,9 @@ const hasReserveType = computed(
     Boolean(props.option.reserveTypeName),
 );
 
-const sortedConditions = computed(() => {
-  const conditions = props.option.preferentialRateConditions;
-  if (!Array.isArray(conditions)) return [];
-  return [...conditions].sort(
-    (a, b) =>
-      (a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
-      a.preferentialRateConditionId - b.preferentialRateConditionId,
-  );
-});
-
-// 백엔드가 내려주는 conditionGroupId/conditionRole을 기준으로 우대조건을
-// 화면 표시 단위로 묶는다. 같은 conditionGroupId가 연속되는 구간을 그룹
-// 하나로 보고, GROUP_NOTICE(공통 안내)/GROUP_DETAIL(세부 설명)/
-// GROUP_CONDITION(실제 선택·금리 조건)을 역할별로 나눠 담는다.
-// conditionGroupId가 없는 조건(STANDALONE)은 기존처럼 단독 항목으로 유지한다.
-const conditionUnits = computed(() => {
-  const units = [];
-  let currentGroupUnit = null;
-
-  sortedConditions.value.forEach((condition) => {
-    if (condition.conditionGroupId == null) {
-      currentGroupUnit = null;
-      units.push({ type: "standalone", condition });
-      return;
-    }
-
-    if (!currentGroupUnit || currentGroupUnit.groupId !== condition.conditionGroupId) {
-      currentGroupUnit = {
-        type: "group",
-        groupId: condition.conditionGroupId,
-        notice: null,
-        details: [],
-        conditions: [],
-      };
-      units.push(currentGroupUnit);
-    }
-
-    if (condition.conditionRole === "GROUP_NOTICE") {
-      currentGroupUnit.notice = condition;
-    } else if (condition.conditionRole === "GROUP_DETAIL") {
-      currentGroupUnit.details.push(condition);
-    } else {
-      currentGroupUnit.conditions.push(condition);
-    }
-  });
-
-  return units;
-});
+const conditionUnits = computed(() =>
+  groupPreferentialConditions(props.option.preferentialRateConditions),
+);
 
 // 그룹의 공통 안내(GROUP_NOTICE) 문구. "우대조건" 제목 옆 정보 아이콘을 눌렀을
 // 때 팝오버로 보여준다. 그룹이 여러 개면 안내 문구도 함께 모아서 보여준다.
@@ -111,27 +71,6 @@ const hiddenUnitsCount = computed(() =>
     0,
   ),
 );
-
-function formatAdditionalRate(additionalRate) {
-  return `+${Number(additionalRate).toFixed(2)}%p`;
-}
-
-// 실제로 우대금리를 받을 수 있는(selectable) 조건에 0보다 큰 금리가 있을
-// 때만 오른쪽 배지를 보여준다. null/0%처럼 의미 없는 값은 표시하지 않는다.
-function hasVisibleRate(condition) {
-  if (condition.selectable === false) return false;
-  const rate = Number(condition.additionalRate);
-  return Number.isFinite(rate) && rate > 0;
-}
-
-// 원본 conditionName에 "…:연 0.7%p"처럼 우대금리가 문장 끝에 함께 들어있는
-// 경우가 있다. 같은 값을 오른쪽에 additionalRate로 이미 표시하므로 중복
-// 노출되지 않도록 문장 끝의 금리 표기만 제거한다(설명 문장 자체는 원본 그대로).
-function getConditionLabel(condition) {
-  const name = String(condition.conditionName ?? "").trim();
-  const stripped = name.replace(/\s*[:：]\s*(연\s*)?[\d.]+\s*%p?\s*$/, "").trim();
-  return stripped || name;
-}
 
 function handleToggleConditions() {
   isConditionsExpanded.value = !isConditionsExpanded.value;
@@ -233,7 +172,7 @@ function handleToggleConditions() {
                 {{ getConditionLabel(unit.condition) }}
               </span>
               <span
-                v-if="hasVisibleRate(unit.condition)"
+                v-if="hasVisibleAdditionalRate(unit.condition)"
                 class="shrink-0 whitespace-nowrap text-body font-semibold text-profit tabular-nums"
               >
                 {{ formatAdditionalRate(unit.condition.additionalRate) }}
@@ -250,7 +189,7 @@ function handleToggleConditions() {
                   {{ getConditionLabel(condition) }}
                 </span>
                 <span
-                  v-if="hasVisibleRate(condition)"
+                  v-if="hasVisibleAdditionalRate(condition)"
                   class="shrink-0 whitespace-nowrap text-body font-semibold text-profit tabular-nums"
                 >
                   {{ formatAdditionalRate(condition.additionalRate) }}
