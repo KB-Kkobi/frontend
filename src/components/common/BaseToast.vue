@@ -25,11 +25,22 @@ const props = defineProps({
     default: "page",
     validator: (v) => ["page", "header"].includes(v),
   },
+  // 실패 알림에는 "error"를 사용해 제목 색을 text-error로 바꾼다.
+  variant: {
+    type: String,
+    default: "success",
+    validator: (v) => ["success", "error"].includes(v),
+  },
 });
 
 const OFFSET_CLASSES = {
   page: "top-6",
   header: "top-32",
+};
+
+const TITLE_COLOR_CLASSES = {
+  success: "text-success",
+  error: "text-error",
 };
 
 const emit = defineEmits(["update:modelValue"]);
@@ -75,7 +86,7 @@ onBeforeUnmount(clearHideTimer);
         <div class="w-full max-w-[430px] px-5">
           <BaseCard color="white">
             <div class="flex flex-col gap-2">
-              <p class="text-h2 text-success tracking-tight">{{ title }}</p>
+              <p :class="['text-h2 tracking-tight', TITLE_COLOR_CLASSES[variant]]">{{ title }}</p>
               <p v-if="description" class="text-caption text-muted tracking-tight">
                 {{ description }}
               </p>
