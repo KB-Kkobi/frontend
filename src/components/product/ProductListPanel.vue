@@ -109,8 +109,8 @@ function parseInitialOptionValues(value, options) {
 }
 
 const initialQuery = route.query;
-// 가상투자 상품 추천은 주식 탭을 먼저 보여준다.
-const defaultTab = props.standalone ? LIST_TABS.SAVING : LIST_TABS.SECURITY;
+// 상품 탭은 독립/가상투자 모드 모두 주식 탭을 먼저 보여준다.
+const defaultTab = LIST_TABS.SECURITY;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 
 const activeTab = ref(parseInitialTab(initialQuery.tab, defaultTab));
@@ -935,7 +935,6 @@ onBeforeUnmount(() => {
         v-for="product in products"
         :key="product.productId"
         :product="product"
-        :variant="standalone ? 'catalog' : 'default'"
         @select="handleSelectProduct"
       />
     </div>
