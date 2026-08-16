@@ -45,3 +45,38 @@ export const GAME_ALLOCATION_ADJUSTMENT_PRIORITY = {
   deposit: ["stock", "cash"],
   stock: ["cash", "deposit"],
 };
+
+// 실제 게임(SC001) tick 재생 간격과 동일하게 맞춤
+export const GAME_TUTORIAL_TICK_INTERVAL_MS = 2_500;
+
+// 하락 → 저점(매수) → 상승(매도) → 한 틱 더(예금해지) — 정지 지점 도달에 필요한 최소 tick
+export const GAME_TUTORIAL_CHART_PRICES = [
+  11000, 10600, 10200, 10600, 11000, 11000,
+];
+export const GAME_TUTORIAL_LOW_TICK_INDEX = 2;
+export const GAME_TUTORIAL_HIGH_TICK_INDEX = 4;
+export const GAME_TUTORIAL_DEPOSIT_TICK_INDEX = 5;
+
+// 합계가 GAME_SEED_MONEY와 같아야 GamePortfolioPanel의 손익 계산이 맞음
+export const GAME_TUTORIAL_STARTING_ASSET = {
+  cashAmount: 3_000_000,
+  depositAmount: 1_500_000,
+  stockPrincipal: 5_500_000,
+  stockQuantity: 500,
+  averageStockPrice: 11_000,
+};
+
+export const GAME_TUTORIAL_STEPS = [
+  {
+    action: "buy",
+    message: "가격이 내렸어요. 매수해볼까요?",
+  },
+  {
+    action: "sell",
+    message: "가격이 올랐어요. 매도해볼까요?",
+  },
+  {
+    action: "cancel-deposit",
+    message: "예금도 현금으로 바꿀 수 있어요. 예금 해지 해볼까요?",
+  },
+];

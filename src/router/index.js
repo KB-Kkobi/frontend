@@ -19,6 +19,8 @@ import FriendManagementView from '@/views/FriendManagementView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
+import GameTutorialView from '@/views/GameTutorialView.vue'
+import GameStartView from '@/views/GameStartView.vue'
 import GameView from '@/views/GameView.vue'
 import AssessmentResultView from '@/views/AssessmentResultView.vue'
 import PersonaTypesView from '@/views/PersonaTypesView.vue'
@@ -135,6 +137,18 @@ const router = createRouter({
       path: '/game/introduction',
       name: 'game-introduction',
       component: GameIntroductionView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
+    {
+      path: '/game/tutorial',
+      name: 'game-tutorial',
+      component: GameTutorialView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
+    {
+      path: '/game/start',
+      name: 'game-start',
+      component: GameStartView,
       meta: { requiresAuth: true, hideBottomTabBar: true },
     },
     {

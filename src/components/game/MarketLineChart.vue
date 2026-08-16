@@ -26,6 +26,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const gradientId = `market-line-chart-fill-${Math.random().toString(36).slice(2)}`;
@@ -68,7 +72,7 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
 
 <template>
   <svg
-    class="h-40 w-full"
+    :class="compact ? 'h-24 w-full' : 'h-40 w-full'"
     :viewBox="`0 0 ${CHART_VIEWBOX_WIDTH} ${CHART_VIEWBOX_HEIGHT}`"
     preserveAspectRatio="none"
     xmlns="http://www.w3.org/2000/svg"
