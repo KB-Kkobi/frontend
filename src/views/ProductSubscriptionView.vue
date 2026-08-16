@@ -17,6 +17,7 @@ import BaseTextField from "@/components/common/BaseTextField.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
+import ProductPreferentialConditionSelector from "@/components/product/ProductPreferentialConditionSelector.vue";
 import ProductSubscriptionOptionCard from "@/components/product/ProductSubscriptionOptionCard.vue";
 import {
   PRODUCT_AMOUNT_OPTIONS,
@@ -94,24 +95,6 @@ const maximumInterestRate = computed(() => {
   return rates.length ? Math.max(...rates) : null;
 });
 
-const preferentialRateConditions = computed(() => {
-  const conditions = selectedOption.value?.preferentialRateConditions;
-  if (!Array.isArray(conditions)) return [];
-  return [...conditions].sort(
-    (a, b) =>
-      (a.displayOrder ?? 0) - (b.displayOrder ?? 0) ||
-      a.preferentialRateConditionId - b.preferentialRateConditionId,
-  );
-});
-
-const selectableConditions = computed(() =>
-  preferentialRateConditions.value.filter((condition) => condition.selectable),
-);
-
-const nonSelectableConditions = computed(() =>
-  preferentialRateConditions.value.filter((condition) => !condition.selectable),
-);
-
 const appliedRate = computed(() => subscriptionEstimate.value?.appliedRate ?? null);
 
 // 실제 선택으로 인해 기본 금리 대비 얼마나 올랐는지(서버 계산 결과 기준).
@@ -129,7 +112,10 @@ const localPreviewRate = computed(() => {
   const baseRate = Number(selectedOption.value?.interestRate);
   if (!Number.isFinite(baseRate)) return null;
 
-  const additionalRateSum = preferentialRateConditions.value
+  const conditions = Array.isArray(selectedOption.value?.preferentialRateConditions)
+    ? selectedOption.value.preferentialRateConditions
+    : [];
+  const additionalRateSum = conditions
     .filter(
       (condition) =>
         condition.selectable &&
@@ -202,10 +188,6 @@ function getLoadErrorMessage(error) {
   return "상품 정보를 불러오지 못했습니다.";
 }
 
-function formatAdditionalRate(additionalRate) {
-  return `+${Number(additionalRate).toFixed(2)}%p`;
-}
-
 function handleSelectOption(option) {
   selectedOptionId.value = option.productOptionId;
   // 옵션마다 선택 가능한 우대조건 ID가 다르므로 이전 선택은 초기화한다.
@@ -227,13 +209,8 @@ function handleSelectAmount(amount) {
   handleAmountInput(String(amount));
 }
 
-function handleTogglePreferentialCondition(conditionId) {
-  selectedPreferentialRateConditionIds.value =
-    selectedPreferentialRateConditionIds.value.includes(conditionId)
-      ? selectedPreferentialRateConditionIds.value.filter(
-          (id) => id !== conditionId,
-        )
-      : [...selectedPreferentialRateConditionIds.value, conditionId];
+function handlePreferentialConditionsUpdate(conditionIds) {
+  selectedPreferentialRateConditionIds.value = conditionIds;
   subscriptionEstimate.value = null;
   refreshLiveEstimateDebounced();
 }
@@ -580,76 +557,12 @@ onBeforeUnmount(() => {
               </strong>
             </div>
 
-            <div class="flex flex-col gap-4 border-t border-line pt-4">
-              <h2 class="text-h2 text-ink">우대조건</h2>
-
-              <p
-                v-if="!preferentialRateConditions.length"
-                class="text-caption text-muted"
-              >
-                선택 가능한 우대조건이 없어요.
-              </p>
-
-              <div v-else class="flex flex-col gap-4">
-                <div
-                  v-if="selectableConditions.length"
-                  class="flex flex-col gap-2"
-                  role="group"
-                  aria-label="선택 가능한 우대조건"
-                >
-                  <label
-                    v-for="condition in selectableConditions"
-                    :key="condition.preferentialRateConditionId"
-                    class="flex items-center justify-between gap-4 py-2"
-                  >
-                    <span class="flex items-center gap-2 text-body text-ink">
-                      <input
-                        type="checkbox"
-                        class="h-4 w-4 shrink-0 accent-pink"
-                        :checked="
-                          selectedPreferentialRateConditionIds.includes(
-                            condition.preferentialRateConditionId,
-                          )
-                        "
-                        @change="
-                          handleTogglePreferentialCondition(
-                            condition.preferentialRateConditionId,
-                          )
-                        "
-                      />
-                      {{ condition.conditionName }}
-                    </span>
-                    <span
-                      v-if="condition.additionalRate !== null && condition.additionalRate !== undefined"
-                      class="shrink-0 text-body text-profit tabular-nums"
-                    >
-                      {{ formatAdditionalRate(condition.additionalRate) }}
-                    </span>
-                  </label>
-                </div>
-
-                <div
-                  v-if="nonSelectableConditions.length"
-                  class="flex flex-col gap-2 rounded-2xl bg-blue-soft p-4"
-                >
-                  <p class="text-caption text-muted">
-                    해당 조건의 우대금리는 상품 조건에 따라 적용돼요.
-                  </p>
-                  <div
-                    v-for="condition in nonSelectableConditions"
-                    :key="condition.preferentialRateConditionId"
-                    class="flex items-center justify-between gap-4"
-                  >
-                    <span class="text-body text-ink">{{ condition.conditionName }}</span>
-                    <span
-                      v-if="condition.additionalRate !== null && condition.additionalRate !== undefined"
-                      class="shrink-0 text-caption text-muted tabular-nums"
-                    >
-                      {{ formatAdditionalRate(condition.additionalRate) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div class="border-t border-line pt-4">
+              <ProductPreferentialConditionSelector
+                :conditions="selectedOption?.preferentialRateConditions ?? []"
+                :model-value="selectedPreferentialRateConditionIds"
+                @update:model-value="handlePreferentialConditionsUpdate"
+              />
             </div>
 
             <div class="flex flex-col gap-2 border-t border-line pt-4">
