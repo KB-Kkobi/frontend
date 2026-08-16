@@ -30,6 +30,11 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  variant: {
+    type: String,
+    default: 'default',
+    validator: (v) => ['default', 'tutorial'].includes(v),
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'confirm']);
@@ -74,7 +79,12 @@ function confirmCancel() {
       >
         <div class="flex justify-center">
           <span
-            class="rounded-full bg-pink-soft px-3 py-1 text-caption font-semibold text-error"
+            :class="[
+              'rounded-full px-3 py-1 text-caption font-semibold',
+              variant === 'tutorial'
+                ? 'bg-segment text-muted'
+                : 'bg-pink-soft text-error',
+            ]"
           >
             중도 해지
           </span>
@@ -128,6 +138,7 @@ function confirmCancel() {
           </div>
 
           <div
+            v-if="variant !== 'tutorial'"
             class="flex items-center justify-between gap-4 rounded-xl bg-error/10 p-3"
           >
             <span class="text-body font-semibold text-error"
@@ -139,7 +150,16 @@ function confirmCancel() {
           </div>
         </div>
 
-        <p class="text-body text-muted">
+        <p v-if="variant === 'tutorial'" class="text-body text-muted">
+          해지하면 예금 비중이
+          <strong class="text-h2 text-ink">
+            {{ depositRatio.toFixed(0) }}% → 0% </strong
+          >가 돼요.
+          <strong class="text-ink"
+            >한 번 해지하면 다시 가입하거나 되돌릴 수 없어요.</strong
+          >
+        </p>
+        <p v-else class="text-body text-muted">
           해지하면 예금 비중이
           <strong class="text-h2 text-error">
             {{ depositRatio.toFixed(0) }}% → 0% </strong

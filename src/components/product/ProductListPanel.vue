@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
 import { ApiError, resolveApiUrl } from "@/api/http";
 import { fetchPersonas } from "@/api/personaApi";
+import { PERSONA_RECOMMEND_REASONS } from "@/constants/persona";
 import {
   PRODUCT_API_ERROR_CODES,
   ProductApiError,
@@ -160,6 +161,9 @@ const isFilterOpen = ref(false);
 const isSecurityFilterOpen = ref(false);
 const showMatchInfoModal = ref(false);
 const hasAssessment = computed(() => latestAssessment.value !== null);
+const recommendReason = computed(
+  () => PERSONA_RECOMMEND_REASONS[latestAssessment.value?.personaCode] ?? "",
+);
 
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
@@ -557,6 +561,9 @@ onBeforeUnmount(() => {
           <h2 class="text-h1 text-ink">{{ latestAssessment.typeName }}</h2>
           <p class="text-body text-muted tracking-tight">
             {{ latestAssessment.investmentFeature }}
+          </p>
+          <p v-if="recommendReason" class="text-caption text-pink">
+            {{ recommendReason }}
           </p>
         </div>
         <img

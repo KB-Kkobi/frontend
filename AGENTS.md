@@ -92,7 +92,7 @@
 | `TradeStockHeader`    | `trade/TradeStockHeader.vue`        | 종목 헤더 카드(BaseCard). `name`/`code`/`currentPrice`/`changeRate` props. name=종목명(text-h2), code=종목코드(text-caption text-muted, 선택). 등락률 양수=text-profit, 음수=text-loss |
 | `TradeMethodToggle`   | `trade/TradeMethodToggle.vue`       | 시장가/지정가 세그먼트 토글. `method`('market'\|'limit') prop, `@update:method` emit. 선택=bg-yellow |
 | `TradePriceInput`     | `trade/TradePriceInput.vue`         | 1주당 가격 입력. `method`/`marketPrice`/`modelValue` props, `@update:modelValue` emit. 시장가=읽기전용 bg-surface |
-| `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼 + 빠른 선택 pill(1주/5주/10주/최대). `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
+| `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼(직접 입력 가능, inputmode="numeric") + "최대" pill. `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
 | `TradeOrderSummary`   | `trade/TradeOrderSummary.vue`       | 주문 요약(주문가능금액/매도가능수량·단가×수량·주문금액). `orderableCash`/`pricePerShare`/`quantity`/`orderAmount`/`side`/`sellableQuantity` props |
 | `TradePortfolioImpact`| `trade/TradePortfolioImpact.vue`    | 포트폴리오 영향 섹션. 비중 프로그레스바(bg-yellow) + 권장 세로선(bg-ink) + 초과 경고(bg-yellow-soft). `currentRatio`/`afterRatio`/`recommendedRatio`/`show` props. null 또는 show=false면 전체 숨김 |
 | `ProductHoldingPreviewRow` | `product/ProductHoldingPreviewRow.vue` | 보유 예·적금 미리보기 행 콘텐츠(이름·만기 D-day + 평가금액·적용금리). `holding` prop. 자산현황 대시보드 `HoldingPreviewSection` 전용 |

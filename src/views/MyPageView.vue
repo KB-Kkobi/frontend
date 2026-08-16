@@ -1,6 +1,7 @@
 <script setup>
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { logoutUser } from "@/api/authApi";
+import { fetchMyProfile, logoutUser } from "@/api/authApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
@@ -10,6 +11,8 @@ import { clearGameSession } from "@/utils/gameStorage";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const nickname = ref("");
+const isProfileLoading = ref(true);
 
 const REPORT_ITEMS = [
   { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
@@ -30,7 +33,20 @@ const SUPPORT_ITEMS = [
 ];
 
 function handleProfile() {
-  console.log("프로필 정보");
+  router.push({ name: "my-profile" });
+}
+
+async function loadProfile() {
+  isProfileLoading.value = true;
+
+  try {
+    const profile = await fetchMyProfile();
+    nickname.value = profile?.nickname ?? "";
+  } catch {
+    nickname.value = "";
+  } finally {
+    isProfileLoading.value = false;
+  }
 }
 
 function handleAssessmentSelect() {
@@ -55,6 +71,7 @@ async function handleLogout() {
   }
 }
 
+onMounted(loadProfile);
 </script>
 
 <template>
@@ -77,8 +94,10 @@ async function handleLogout() {
             </span>
 
             <span class="flex min-w-0 flex-1 flex-col gap-2">
-              <strong class="text-h2 text-ink">꼬비</strong>
-              <span class="text-caption text-muted">불꽃 추격자</span>
+              <strong class="block truncate text-h2 text-ink">
+                {{ isProfileLoading ? "불러오는 중..." : nickname || "사용자" }}
+              </strong>
+              <span class="text-caption text-muted">프로필 관리</span>
             </span>
 
             <svg
