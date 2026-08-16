@@ -38,23 +38,20 @@ defineProps({
         <p class="text-caption text-muted">서버에 저장된 현금과 보유 자산을 기준으로 계산했어요.</p>
       </div>
       <dl class="flex flex-col gap-4">
+        <AssetCompositionRow label="현금" :amount="cashBalance" :ratio="cashRatio" bar-color="blue" />
         <AssetCompositionRow
-          label="사용 가능한 현금"
-          :amount="cashBalance"
-          :ratio="cashRatio"
-        />
-        <AssetCompositionRow
-          class="border-t border-line pt-4"
-          label="주식 자산"
+          class="border-t border-line-soft pt-4"
+          label="주식"
           :amount="stockAsset"
           :ratio="stockRatio"
+          bar-color="lavender"
         />
         <AssetCompositionRow
-          class="border-t border-line pt-4"
-          label="예금·적금 자산"
+          class="border-t border-line-soft pt-4"
+          label="예·적금"
           :amount="savingsAsset"
           :ratio="savingsRatio"
-          amount-class="text-profit"
+          bar-color="green"
         />
       </dl>
     </div>

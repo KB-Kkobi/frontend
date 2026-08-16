@@ -95,8 +95,11 @@
 | `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼(직접 입력 가능, inputmode="numeric") + "최대" pill. `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
 | `TradeOrderSummary`   | `trade/TradeOrderSummary.vue`       | 주문 요약(주문가능금액/매도가능수량·단가×수량·주문금액). `orderableCash`/`pricePerShare`/`quantity`/`orderAmount`/`side`/`sellableQuantity` props |
 | `TradePortfolioImpact`| `trade/TradePortfolioImpact.vue`    | 포트폴리오 영향 섹션. 비중 프로그레스바(bg-yellow) + 권장 세로선(bg-ink) + 초과 경고(bg-yellow-soft). `currentRatio`/`afterRatio`/`recommendedRatio`/`show` props. null 또는 show=false면 전체 숨김 |
+| `ProductHoldingPreviewRow` | `product/ProductHoldingPreviewRow.vue` | 보유 예·적금 미리보기 행 콘텐츠(이름·만기 D-day + 평가금액·적용금리). `holding` prop. 자산현황 대시보드 `HoldingPreviewSection` 전용 |
 | `AssetCompositionCard` | `virtual/AssetCompositionCard.vue` | 자산 구성 카드(현금·주식·예금적금 비율 표시). `cashBalance`/`cashRatio`/`stockAsset`/`stockRatio`/`savingsAsset`/`savingsRatio` props |
-| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성 행(라벨+금액+비율). `label`/`amount`/`ratio`/`amountClass`(기본 `text-ink`) props |
+| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성 행(라벨+금액+비율 progress bar). `label`/`amount`/`ratio`/`barColor`(`ink`/`blue`/`green`/`lavender`, 기본 `ink`) props |
+| `HoldingPreviewSection` | `virtual/HoldingPreviewSection.vue` | 자산현황 대시보드의 보유자산 미리보기 섹션(제목+더보기 링크+카드 목록/빈 상태 공통 틀). `title`/`moreTo`/`items`/`itemKey`/`emptyTitle`/`emptyDescription` props, `#item` scoped slot, `@select-item`/`@empty-action` emit |
+| `StockHoldingRow`      | `virtual/StockHoldingRow.vue`      | 보유 주식 행 콘텐츠(이름 + 평가금액·수익률). `holding` prop. 대시보드 미리보기와 보유 주식 전체 목록에서 공용 |
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행(BaseCard). 순위 원형 배지(1~3위=bg-cream-soft, 그 외=bg-surface) + 닉네임 + 총자산·수익률. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. `isMe`면 pink 카드 + "나" pill |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |

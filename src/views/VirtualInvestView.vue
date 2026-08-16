@@ -19,7 +19,7 @@ const HIDDEN_TABBAR_ROUTES = ['virtual-trade', 'security-detail']
 const isTabBarVisible = computed(() => !HIDDEN_TABBAR_ROUTES.includes(route.name))
 
 const activeTab = computed(() =>
-  ['product-holdings', 'product-holding-detail', 'product-termination'].includes(route.name)
+  ['product-holdings', 'product-holding-detail', 'product-termination', 'stock-holdings'].includes(route.name)
     ? 'virtual-assets'
     : route.name,
 )
