@@ -9,7 +9,12 @@ defineProps({
   elevation: {
     type: String,
     default: "default",
-    validator: (v) => ["flat", "default", "highlight"].includes(v),
+    validator: (v) => ["flat", "default", "highlight", "float"].includes(v),
+  },
+  density: {
+    type: String,
+    default: "default",
+    validator: (v) => ["default", "tutorial"].includes(v),
   },
 });
 
@@ -27,6 +32,12 @@ const ELEVATION_CLASSES = {
   flat: "shadow-none",
   default: "shadow-card",
   highlight: "shadow-highlight",
+  float: "shadow-float",
+};
+
+const DENSITY_CLASSES = {
+  default: "p-4",
+  tutorial: "px-4 pt-tutorial-card-y pb-4",
 };
 
 </script>
@@ -37,7 +48,8 @@ const ELEVATION_CLASSES = {
       COLOR_CLASSES[color],
       color === 'white' ? ELEVATION_CLASSES[elevation] : 'shadow-none',
       color === 'white' && elevation === 'flat' ? 'border border-line-soft' : '',
-      'rounded-3xl p-4',
+      DENSITY_CLASSES[density],
+      'rounded-3xl',
     ]"
   >
     <slot />

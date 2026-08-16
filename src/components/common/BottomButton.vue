@@ -39,7 +39,7 @@ const SHAPE_CLASSES = {
     :class="[
       COLOR_CLASSES[color],
       SHAPE_CLASSES[shape],
-      'w-full px-4 py-3 text-button active:opacity-90 disabled:opacity-50',
+      'w-full px-4 py-3 text-button transition-transform duration-150 active:scale-95 active:opacity-90 disabled:opacity-50',
     ]"
   >
     <slot />

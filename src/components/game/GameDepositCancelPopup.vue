@@ -35,6 +35,14 @@ const props = defineProps({
     default: 'default',
     validator: (v) => ['default', 'tutorial'].includes(v),
   },
+  dismissible: {
+    type: Boolean,
+    default: true,
+  },
+  showBackdrop: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'confirm']);
@@ -52,6 +60,7 @@ const maturityAmount = computed(
 );
 
 function closePopup() {
+  if (!props.dismissible) return;
   emit('update:modelValue', false);
 }
 
@@ -65,14 +74,20 @@ function confirmCancel() {
   <Teleport to="body">
     <template v-if="modelValue">
       <button
+        v-if="showBackdrop"
         type="button"
         class="fixed inset-0 z-40 bg-ink/20"
         aria-label="예금 중도 해지 창 닫기"
+        :disabled="!dismissible"
         @click="closePopup"
       ></button>
 
       <section
-        class="fixed inset-x-5 top-1/2 z-50 mx-auto flex max-h-[90dvh] max-w-[390px] -translate-y-1/2 flex-col gap-6 overflow-y-auto rounded-3xl bg-white px-5 py-7 shadow-popup"
+        data-tutorial-target="deposit-cancel-card"
+        :class="[
+          'fixed inset-x-5 top-1/2 z-50 mx-auto flex max-h-[90dvh] max-w-[390px] -translate-y-1/2 flex-col gap-6 overflow-y-auto rounded-3xl bg-white px-5 py-7',
+          variant === 'tutorial' ? 'shadow-float' : 'shadow-popup',
+        ]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="deposit-cancel-title"
@@ -90,7 +105,10 @@ function confirmCancel() {
           </span>
         </div>
 
-        <div class="flex flex-col items-center gap-2 text-center">
+        <div
+          data-tutorial-target="deposit-not-matured"
+          class="flex flex-col items-center gap-2 text-center"
+        >
           <h2 id="deposit-cancel-title" class="text-amount text-navy">
             아직 만기가 아니에요
           </h2>
@@ -102,7 +120,10 @@ function confirmCancel() {
         </div>
 
         <div class="flex flex-col gap-3">
-          <div class="flex flex-col gap-3 rounded-2xl bg-pink-soft p-4">
+          <div
+            data-tutorial-target="deposit-maturity-amount"
+            class="flex flex-col gap-3 rounded-2xl bg-pink-soft p-4"
+          >
             <div class="flex items-center justify-between gap-3">
               <strong class="text-h2 text-ink">
                 {{ GAME_DEPOSIT_MONTHS }}개월 채우고 만기까지 가면
@@ -114,13 +135,16 @@ function confirmCancel() {
             <strong class="text-amount text-pink tabular-nums">
               {{ formatCurrency(maturityAmount) }}
             </strong>
-            <span class="text-caption text-muted tabular-nums">
+            <span
+              data-tutorial-target="deposit-principal"
+              class="text-caption text-muted tabular-nums"
+            >
               납입 {{ formatCurrency(depositAmount) }} + 이자
               {{ formatCurrency(maturityInterest) }}
             </span>
           </div>
 
-          <div class="flex flex-col gap-3 rounded-2xl bg-base p-4">
+          <div data-tutorial-target="deposit-cancel-amount" class="flex flex-col gap-3 rounded-2xl bg-base p-4">
             <div class="flex items-center justify-between gap-3">
               <strong class="text-h2 text-ink">지금 해지하면</strong>
               <span
@@ -150,8 +174,12 @@ function confirmCancel() {
           </div>
         </div>
 
-        <p v-if="variant === 'tutorial'" class="text-body text-muted">
-          해지하면 예금 비중이
+        <p
+          v-if="variant === 'tutorial'"
+          data-tutorial-target="deposit-warning-note"
+          class="text-body text-muted"
+        >
+          해지하면 예·적금 비중이
           <strong class="text-h2 text-ink">
             {{ depositRatio.toFixed(0) }}% → 0% </strong
           >가 돼요.
@@ -175,6 +203,7 @@ function confirmCancel() {
 
         <div class="grid grid-cols-2 gap-3">
           <BottomButton
+            data-tutorial-target="deposit-confirm"
             color="danger"
             :disabled="isSubmitting"
             @click="confirmCancel"
@@ -183,7 +212,7 @@ function confirmCancel() {
           </BottomButton>
           <BottomButton
             color="pink"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || variant === 'tutorial'"
             @click="closePopup"
           >
             계속 납입하기

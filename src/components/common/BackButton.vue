@@ -1,9 +1,17 @@
 <script setup>
 import { useRouter } from 'vue-router'
 
+const props = defineProps({
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+})
+
 const router = useRouter()
 
 function handleClick() {
+  if (props.disabled) return
   if (window.history.state?.back) {
     router.back()
   } else {
@@ -15,8 +23,9 @@ function handleClick() {
 <template>
   <button
     type="button"
-    class="p-2 text-ink"
+    class="p-2 text-ink disabled:opacity-50"
     aria-label="뒤로가기"
+    :disabled="disabled"
     @click="handleClick"
   >
     <svg

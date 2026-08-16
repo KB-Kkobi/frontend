@@ -64,8 +64,8 @@
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
 | `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop                              |
-| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color`로 배경, `elevation`(`flat`/`default`/`highlight`)으로 흰 카드 깊이 선택 |
-| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText` prop, `@confirm`/`@cancel` emit |
+| `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
+| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |
@@ -100,6 +100,7 @@
 | `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성 행(라벨+금액+비율 progress bar). `label`/`amount`/`ratio`/`barColor`(`ink`/`blue`/`green`/`lavender`, 기본 `ink`) props |
 | `HoldingPreviewSection` | `virtual/HoldingPreviewSection.vue` | 자산현황 대시보드의 보유자산 미리보기 섹션(제목+더보기 링크+카드 목록/빈 상태 공통 틀). `title`/`moreTo`/`items`/`itemKey`/`emptyTitle`/`emptyDescription` props, `#item` scoped slot, `@select-item`/`@empty-action` emit |
 | `StockHoldingRow`      | `virtual/StockHoldingRow.vue`      | 보유 주식 행 콘텐츠(이름 + 평가금액·수익률). `holding` prop. 대시보드 미리보기와 보유 주식 전체 목록에서 공용 |
+| `GameTutorialCard`     | `game/GameTutorialCard.vue`        | 게임 튜토리얼 공통 안내 카드. Header·Character Slot·Content·Footer를 분리해 꼬비 이미지와 가변 길이 문구·버튼의 겹침을 방지 |
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행(BaseCard). 순위 원형 배지(1~3위=bg-cream-soft, 그 외=bg-surface) + 닉네임 + 총자산·수익률. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. `isMe`면 pink 카드 + "나" pill |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |
@@ -260,6 +261,8 @@ src/
 - `shadow-card`는 `develop` 기준의 크림 톤 그림자다.
 - `shadow-highlight`는 화면의 핵심 카드 한정이며 `develop`과 같은 그림자 값을 사용한다.
 - `shadow-popup`은 모달과 팝업 레이어 전용이며 `develop`과 같은 그림자 값을 사용한다.
+- `shadow-float`는 어둡게 딤 처리된 배경(게임 튜토리얼 오버레이 등) 위에 뜨는 카드 전용이다. `card`/`highlight`/`popup`은 밝은 배경 기준 크림 톤이라 딤 배경 위에서는 거의 보이지 않아 검정 톤으로 별도 정의했다.
+- `ring-pink`와 `animate-tutorial-*`은 게임 튜토리얼의 현재 설명 대상과 관찰 상태를 표시할 때만 사용한다.
 - 그림자가 적용된 카드에는 윤곽선을 사용하지 않는다.
 
 ### 텍스트와 행동
