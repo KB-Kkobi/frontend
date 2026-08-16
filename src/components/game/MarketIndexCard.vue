@@ -31,6 +31,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const changeColorClass = computed(() => {
@@ -64,6 +68,7 @@ const changeColorClass = computed(() => {
           :total-ticks="totalTicks"
           :price-min="priceMin"
           :price-max="priceMax"
+          :compact="compact"
         />
       </div>
 

@@ -5,6 +5,10 @@ const props = defineProps({
     default: "page",
     validator: (value) => ["page", "page-warm", "base", "white"].includes(value),
   },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const colorClasses = {
@@ -19,7 +23,9 @@ const colorClasses = {
   <main
     :class="[
       colorClasses[props.color],
-      'mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-5 pb-20',
+      compact ? '' : 'min-h-screen',
+      compact ? 'pb-5' : 'pb-20',
+      'mx-auto flex w-full max-w-[430px] flex-col px-5',
     ]"
   >
     <slot />
