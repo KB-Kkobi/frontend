@@ -4,9 +4,9 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import TransactionCard from '@/components/transaction/TransactionCard.vue'
 import TransactionSegment from '@/components/transaction/TransactionSegment.vue'
-import PeriodFilter from '@/components/transaction/PeriodFilter.vue'
+import ListToolbar from '@/components/common/ListToolbar.vue'
+import FilterSheet from '@/components/common/FilterSheet.vue'
 import SortToggle from '@/components/transaction/SortToggle.vue'
-import TypeFilter from '@/components/transaction/TypeFilter.vue'
 import { cancelOrder, fetchOrders } from '@/api/trade'
 import { ORDER_STATUS, ORDER_ERROR_MESSAGE } from '@/constants/trade'
 import { PERIOD_OPTIONS, STOCK_TYPE_OPTIONS, HISTORY_TYPE_OPTIONS } from '@/constants/transaction'
@@ -36,6 +36,8 @@ const cancelError = ref(null)
 const pendingOrders = ref([])
 const isLoadingPending = ref(false)
 const isCancelling = ref(false)
+const isHistoryFilterOpen = ref(false)
+const isPendingFilterOpen = ref(false)
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const periodFromDate = computed(() => {
@@ -51,6 +53,52 @@ const periodFromDate = computed(() => {
 
   return from.toISOString().slice(0, 10)
 })
+
+// ── 필터 그룹 정의 ────────────────────────────────────────────────────────────
+const historyFilterGroups = [
+  {
+    key: 'period',
+    label: '기간',
+    multiple: false,
+    cols: 2,
+    color: 'pink',
+    options: PERIOD_OPTIONS.map((o) => ({ value: o.key, label: o.label })),
+  },
+  {
+    key: 'types',
+    label: '종류',
+    multiple: true,
+    cols: 3,
+    color: 'pink',
+    options: HISTORY_TYPE_OPTIONS.map((o) => ({ value: o.key, label: o.label })),
+  },
+]
+
+const pendingFilterGroups = [
+  {
+    key: 'types',
+    label: '종류',
+    multiple: true,
+    cols: 2,
+    color: 'pink',
+    options: STOCK_TYPE_OPTIONS.map((o) => ({ value: o.key, label: o.label })),
+  },
+]
+
+const historyFilterValue = computed(() => ({
+  period: activePeriod.value ? [activePeriod.value] : [],
+  types: [...selectedTypes.value],
+}))
+
+const pendingFilterValue = computed(() => ({
+  types: [...selectedPendingTypes.value],
+}))
+
+const historyFilterCount = computed(
+  () => (activePeriod.value !== '1m' ? 1 : 0) + selectedTypes.value.length,
+)
+
+const pendingFilterCount = computed(() => selectedPendingTypes.value.length)
 
 // ── 유틸 함수 ─────────────────────────────────────────────────────────────────
 function formatDatetime(isoString) {
@@ -136,6 +184,16 @@ async function handleConfirmCancel() {
   }
 }
 
+// ── 필터 적용 ─────────────────────────────────────────────────────────────────
+function handleHistoryFilterApply(result) {
+  activePeriod.value = result.period?.[0] ?? '1m'
+  selectedTypes.value = result.types ?? []
+}
+
+function handlePendingFilterApply(result) {
+  selectedPendingTypes.value = result.types ?? []
+}
+
 // ── watch ─────────────────────────────────────────────────────────────────────
 watch(activePeriod, () => {
   if (activeSegment.value === 'history') {
@@ -172,16 +230,25 @@ onActivated(() => {
     <TransactionSegment v-model="activeSegment" />
 
     <!-- 필터 영역 -->
-    <div class="flex min-h-12 items-center gap-2">
-      <template v-if="activeSegment === 'history'">
-        <div class="min-w-0 flex-1"><PeriodFilter v-model="activePeriod" /></div>
-        <div class="min-w-0 flex-1"><TypeFilter v-model="selectedTypes" :options="HISTORY_TYPE_OPTIONS" /></div>
-        <SortToggle v-model="activeSort" />
-      </template>
-      <template v-else-if="activeSegment === 'pending'">
-        <div class="ml-auto w-1/2 min-w-0"><TypeFilter v-model="selectedPendingTypes" :options="STOCK_TYPE_OPTIONS" /></div>
-      </template>
-    </div>
+    <template v-if="activeSegment === 'history'">
+      <ListToolbar
+        :filter-active="historyFilterCount > 0"
+        :filter-count="historyFilterCount"
+        @filter="isHistoryFilterOpen = true"
+      >
+        <template #sort>
+          <SortToggle v-model="activeSort" />
+        </template>
+      </ListToolbar>
+    </template>
+    <template v-else-if="activeSegment === 'pending'">
+      <ListToolbar
+        :show-sort="false"
+        :filter-active="pendingFilterCount > 0"
+        :filter-count="pendingFilterCount"
+        @filter="isPendingFilterOpen = true"
+      />
+    </template>
 
     <!-- 취소 에러 표시 -->
     <p v-if="cancelError" class="text-caption text-error text-center tracking-tight">
@@ -249,6 +316,24 @@ onActivated(() => {
       />
     </div>
   </div>
+
+  <FilterSheet
+    :open="isHistoryFilterOpen"
+    title="필터"
+    description="기간과 종류를 함께 선택할 수 있어요."
+    :groups="historyFilterGroups"
+    :model-value="historyFilterValue"
+    @update:open="isHistoryFilterOpen = $event"
+    @apply="handleHistoryFilterApply"
+  />
+  <FilterSheet
+    :open="isPendingFilterOpen"
+    title="필터"
+    :groups="pendingFilterGroups"
+    :model-value="pendingFilterValue"
+    @update:open="isPendingFilterOpen = $event"
+    @apply="handlePendingFilterApply"
+  />
 
   <!-- 주문 취소 확인 모달 -->
   <BaseModal
