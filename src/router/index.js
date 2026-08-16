@@ -13,6 +13,7 @@ import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
 import VirtualProductsView from '@/views/VirtualProductsView.vue'
 import VirtualHistoryView from '@/views/VirtualHistoryView.vue'
 import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
+import StockHoldingsView from '@/views/StockHoldingsView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import FriendManagementView from '@/views/FriendManagementView.vue'
@@ -68,6 +69,11 @@ const router = createRouter({
           path: 'holdings',
           name: 'product-holdings',
           component: ProductHoldingsView,
+        },
+        {
+          path: 'stocks',
+          name: 'stock-holdings',
+          component: StockHoldingsView,
         },
         {
           path: 'holdings/:holdingProductId',
