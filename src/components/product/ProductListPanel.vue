@@ -935,7 +935,6 @@ onBeforeUnmount(() => {
         v-for="product in products"
         :key="product.productId"
         :product="product"
-        :variant="standalone ? 'catalog' : 'default'"
         @select="handleSelectProduct"
       />
     </div>
