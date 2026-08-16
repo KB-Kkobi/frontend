@@ -454,96 +454,97 @@ onBeforeUnmount(() => {
           </div>
         </BaseCard>
 
-        <section class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-ink">가입 기간 고르기</h2>
-            <p class="text-caption text-muted">기간에 따라 금리가 달라져요.</p>
-          </div>
-
-          <div
-            v-if="isSaving"
-            class="flex flex-col gap-4"
-            role="radiogroup"
-            aria-label="가입 금리 옵션"
-          >
-            <ProductSubscriptionOptionCard
-              v-for="option in productOptions"
-              :key="option.productOptionId"
-              :option="option"
-              :is-selected="selectedOptionId === option.productOptionId"
-              @select="handleSelectOption"
-            />
-          </div>
-
-          <BaseCard v-else color="white">
-            <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="가입 기간">
-              <BasePill
-                v-for="option in productOptions"
-                :key="option.productOptionId"
-                as="button"
-                type="button"
-                :label="`${option.savingTerm}개월`"
-                color="yellow"
-                :variant="selectedOptionId === option.productOptionId ? 'filled' : 'ghost'"
-                :aria-pressed="selectedOptionId === option.productOptionId"
-                @click="handleSelectOption(option)"
-              />
-            </div>
-          </BaseCard>
-        </section>
-
         <BaseCard color="white">
           <div class="flex flex-col gap-4">
-            <BaseTextField
-              id="join-amount"
-              :model-value="joinAmountInput"
-              :label="amountLabel"
-              inputmode="numeric"
-              placeholder="금액을 입력해 주세요"
-              trailing-text="원"
-              :hint="amountHint"
-              :error-message="amountErrorMessage"
-              @update:model-value="handleAmountInput"
-            />
-
-            <div class="flex flex-wrap gap-2" aria-label="추천 가입 금액">
-              <BasePill
-                v-for="amount in amountOptions"
-                :key="amount"
-                as="button"
-                type="button"
-                :label="formatKoreanShortAmount(amount)"
-                color="yellow"
-                :variant="joinAmount === amount ? 'filled' : 'ghost'"
-                @click="handleSelectAmount(amount)"
-              />
-            </div>
-
-            <div v-if="isSaving" class="flex flex-col gap-2">
-              <label for="payment-day" class="text-body font-semibold text-ink">
-                납입일
-              </label>
-              <div class="rounded-2xl border border-line bg-white px-4">
-                <select
-                  id="payment-day"
-                  v-model="paymentDay"
-                  class="w-full bg-white py-3 text-body text-ink outline-none"
-                  :aria-invalid="Boolean(paymentDayErrorMessage)"
-                  @change="paymentDayErrorMessage = ''"
-                >
-                  <option value="">월 납입일을 선택해 주세요</option>
-                  <option v-for="day in PRODUCT_PAYMENT_DAYS" :key="day" :value="day">
-                    매월 {{ day }}일
-                  </option>
-                </select>
+            <section class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <h2 class="text-h2 text-ink">가입 기간 고르기</h2>
+                <p class="text-caption text-muted">기간에 따라 금리가 달라져요.</p>
               </div>
-              <p
-                v-if="paymentDayErrorMessage"
-                class="text-caption text-error"
-                role="alert"
+
+              <div
+                v-if="isSaving"
+                class="flex flex-col gap-4"
+                role="radiogroup"
+                aria-label="가입 금리 옵션"
               >
-                {{ paymentDayErrorMessage }}
-              </p>
+                <ProductSubscriptionOptionCard
+                  v-for="option in productOptions"
+                  :key="option.productOptionId"
+                  :option="option"
+                  :is-selected="selectedOptionId === option.productOptionId"
+                  elevation="flat"
+                  @select="handleSelectOption"
+                />
+              </div>
+
+              <div v-else class="flex flex-wrap gap-2" role="radiogroup" aria-label="가입 기간">
+                <BasePill
+                  v-for="option in productOptions"
+                  :key="option.productOptionId"
+                  as="button"
+                  type="button"
+                  :label="`${option.savingTerm}개월`"
+                  color="pink"
+                  :variant="selectedOptionId === option.productOptionId ? 'filled' : 'ghost'"
+                  :aria-pressed="selectedOptionId === option.productOptionId"
+                  @click="handleSelectOption(option)"
+                />
+              </div>
+            </section>
+
+            <div class="flex flex-col gap-4 border-t border-line pt-4">
+              <BaseTextField
+                id="join-amount"
+                :model-value="joinAmountInput"
+                :label="amountLabel"
+                inputmode="numeric"
+                placeholder="금액을 입력해 주세요"
+                trailing-text="원"
+                :hint="amountHint"
+                :error-message="amountErrorMessage"
+                @update:model-value="handleAmountInput"
+              />
+
+              <div class="flex flex-wrap gap-2" aria-label="추천 가입 금액">
+                <BasePill
+                  v-for="amount in amountOptions"
+                  :key="amount"
+                  as="button"
+                  type="button"
+                  :label="formatKoreanShortAmount(amount)"
+                  color="pink"
+                  :variant="joinAmount === amount ? 'filled' : 'ghost'"
+                  @click="handleSelectAmount(amount)"
+                />
+              </div>
+
+              <div v-if="isSaving" class="flex flex-col gap-2">
+                <label for="payment-day" class="text-body font-semibold text-ink">
+                  납입일
+                </label>
+                <div class="rounded-2xl border border-line bg-white px-4">
+                  <select
+                    id="payment-day"
+                    v-model="paymentDay"
+                    class="w-full bg-white py-3 text-body text-ink outline-none"
+                    :aria-invalid="Boolean(paymentDayErrorMessage)"
+                    @change="paymentDayErrorMessage = ''"
+                  >
+                    <option value="">월 납입일을 선택해 주세요</option>
+                    <option v-for="day in PRODUCT_PAYMENT_DAYS" :key="day" :value="day">
+                      매월 {{ day }}일
+                    </option>
+                  </select>
+                </div>
+                <p
+                  v-if="paymentDayErrorMessage"
+                  class="text-caption text-error"
+                  role="alert"
+                >
+                  {{ paymentDayErrorMessage }}
+                </p>
+              </div>
             </div>
           </div>
         </BaseCard>
