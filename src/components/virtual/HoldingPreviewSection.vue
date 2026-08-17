@@ -1,7 +1,7 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import BaseCard from "@/components/common/BaseCard.vue";
-import BasePill from "@/components/common/BasePill.vue";
+import BottomButton from "@/components/common/BottomButton.vue";
 
 defineProps({
   title: {
@@ -10,6 +10,10 @@ defineProps({
   },
   moreTo: {
     type: [String, Object],
+    required: true,
+  },
+  moreLabel: {
+    type: String,
     required: true,
   },
   items: {
@@ -28,6 +32,14 @@ defineProps({
     type: String,
     required: true,
   },
+  emptyActionLabel: {
+    type: String,
+    default: "상품 보기",
+  },
+  showMore: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 defineEmits(["select-item", "empty-action"]);
@@ -36,31 +48,26 @@ defineEmits(["select-item", "empty-action"]);
 <template>
   <section class="flex flex-col gap-4">
     <div class="flex items-center justify-between gap-4">
-      <h2 class="text-h2 text-ink">{{ title }}</h2>
+      <h2 class="min-w-0 text-h2 text-ink">{{ title }}</h2>
       <RouterLink
+        v-if="showMore && items.length"
         :to="moreTo"
-        class="flex items-center gap-1 text-caption font-semibold text-pink"
+        class="flex shrink-0 items-center gap-2 whitespace-nowrap py-3 text-caption font-semibold text-pink"
       >
-        더보기
-        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        {{ moreLabel }}
+        <span aria-hidden="true">›</span>
       </RouterLink>
     </div>
 
     <BaseCard v-if="!items.length" color="white" elevation="flat">
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex flex-col gap-1">
-          <p class="text-body text-ink tracking-tight">{{ emptyTitle }}</p>
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <p class="text-h2 text-ink tracking-tight">{{ emptyTitle }}</p>
           <p class="text-caption text-muted tracking-tight">{{ emptyDescription }}</p>
         </div>
-        <BasePill
-          as="button"
-          label="상품 보기"
-          color="pink"
-          variant="outline"
-          @click="$emit('empty-action')"
-        />
+        <BottomButton color="pink" @click="$emit('empty-action')">
+          {{ emptyActionLabel }}
+        </BottomButton>
       </div>
     </BaseCard>
 
