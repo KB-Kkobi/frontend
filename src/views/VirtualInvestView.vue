@@ -10,7 +10,7 @@ const router = useRouter()
 
 const tabs = [
   { key: 'virtual-assets', label: '자산현황' },
-  { key: 'virtual-products', label: '상품' },
+  { key: 'virtual-products', label: '투자하기' },
   { key: 'virtual-history', label: '내역' },
 ]
 

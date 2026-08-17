@@ -10,7 +10,7 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import { INITIAL_SEED_MONEY } from "@/constants/account";
 import { formatCurrency } from "@/utils/format";
 
-const CONFIRM_MESSAGE = `초기 자산 ${formatCurrency(INITIAL_SEED_MONEY)}으로 가상투자를 시작하시겠습니까?`;
+const CONFIRM_MESSAGE = "가상투자를 시작할까요?";
 
 const router = useRouter();
 
@@ -103,6 +103,13 @@ async function handleSubmit() {
       confirm-text="시작하기"
       cancel-text="취소"
       @confirm="handleSubmit"
-    />
+    >
+      <template #content>
+        <div class="flex flex-col gap-2 text-center text-caption text-muted tracking-tight">
+          <p>500만 원의 가상 자산이 연습 계좌에 지급돼요.</p>
+          <p>실제 돈은 사용되지 않아요.</p>
+        </div>
+      </template>
+    </BaseModal>
   </PageContainer>
 </template>
