@@ -22,6 +22,6 @@ export const CHART_COLORS = Object.freeze({
   down: "#5B8BF7", // loss (하락 = 블루, 한국식)
   text: "#8B8A85", // muted
   grid: "#E4E3E0", // line
-  background: "#F5F4F2", // surface
+  background: "#FFFFFF", // white
   border: "#E4E3E0", // line
 });

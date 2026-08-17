@@ -22,6 +22,22 @@ let resizeObserver = null;
 let lastCandle = null;
 let unsubscribeTick = null;
 
+function formatKoreanPrice(price) {
+  if (price >= 100_000_000) {
+    const v = price / 100_000_000;
+    return (Number.isInteger(v) ? v : +v.toFixed(1)) + "억";
+  }
+  if (price >= 10_000) {
+    const v = price / 10_000;
+    return (Number.isInteger(v) ? v : +v.toFixed(1)) + "만";
+  }
+  if (price >= 1_000) {
+    const v = price / 1_000;
+    return (Number.isInteger(v) ? v : +v.toFixed(1)) + "천";
+  }
+  return price.toLocaleString("ko-KR");
+}
+
 function createChartInstance(container) {
   const instance = createChart(container, {
     layout: {
@@ -35,7 +51,9 @@ function createChartInstance(container) {
       horzLines: { color: CHART_COLORS.grid },
     },
     rightPriceScale: {
-      borderColor: CHART_COLORS.border,
+      visible: true,
+      borderVisible: false,
+      minimumWidth: 0,
     },
     timeScale: {
       borderColor: CHART_COLORS.border,
@@ -50,11 +68,15 @@ function createChartInstance(container) {
     },
     localization: {
       locale: "ko-KR",
-      priceFormatter: (price) => price.toLocaleString("ko-KR"),
+      priceFormatter: formatKoreanPrice,
     },
     autoSize: false,
     width: container.clientWidth,
     height: container.clientHeight,
+  });
+
+  instance.priceScale("right").applyOptions({
+    scaleMargins: { top: 0.06, bottom: 0.1 },
   });
 
   const series = instance.addSeries(CandlestickSeries, {
@@ -64,6 +86,8 @@ function createChartInstance(container) {
     borderDownColor: CHART_COLORS.down,
     wickUpColor: CHART_COLORS.up,
     wickDownColor: CHART_COLORS.down,
+    lastValueVisible: true,
+    priceLineVisible: true,
   });
 
   return { instance, series };
@@ -101,7 +125,9 @@ async function loadChart() {
     candleSeries.value.setData(data);
 
     lastCandle = data.length > 0 ? { ...data[data.length - 1] } : null;
-    if (data.length > 0) chart.value?.timeScale().fitContent();
+    if (data.length > 0) {
+      chart.value?.timeScale().fitContent();
+    }
     setupRealtimeTick();
   } catch (err) {
     errorMessage.value = err?.message ?? "차트를 불러오지 못했습니다.";
@@ -176,7 +202,7 @@ watch(
 </script>
 
 <template>
-  <div class="relative h-56 w-full overflow-hidden rounded-2xl bg-surface">
+  <div class="relative h-56 w-full overflow-hidden rounded-2xl bg-white">
     <div ref="containerRef" class="h-full w-full" />
 
     <div
