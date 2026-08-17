@@ -43,16 +43,12 @@ function handleCancel() {
 <template>
   <BaseCard color="white" elevation="flat">
     <div class="flex flex-col gap-4">
-      <div class="flex justify-between items-start">
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2">
-            <span class="text-h2 text-ink tracking-tight">{{ name }}</span>
-            <BasePill v-if="pill" :label="pill.label" :color="pill.color" />
-          </div>
-          <span v-if="subLabel" class="text-caption text-muted tracking-tight">{{ subLabel }}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span v-if="datetime" class="text-caption text-muted tracking-tight">{{ datetime }}</span>
+      <div class="flex items-center justify-between gap-4">
+        <BasePill v-if="pill" :label="pill.label" :color="pill.color" />
+        <div class="flex shrink-0 items-center gap-2">
+          <span v-if="datetime" class="whitespace-nowrap text-caption text-muted tabular-nums tracking-tight">
+            {{ datetime }}
+          </span>
           <BasePill
             v-if="isCancelable"
             as="button"
@@ -63,15 +59,19 @@ function handleCancel() {
           />
         </div>
       </div>
+      <div class="flex flex-col gap-2">
+        <span class="break-keep text-h2 text-ink tracking-tight">{{ name }}</span>
+        <span v-if="subLabel" class="text-caption text-muted tracking-tight">{{ subLabel }}</span>
+      </div>
       <div class="border-t border-line-soft" />
       <div class="flex gap-4">
         <div
-          v-for="stat in stats"
+          v-for="(stat, index) in stats"
           :key="stat.label"
-          class="flex flex-col gap-2 flex-1"
+          :class="['flex flex-1 flex-col gap-2', index === stats.length - 1 ? 'items-end text-right' : '']"
         >
           <span class="text-caption text-muted tracking-tight">{{ stat.label }}</span>
-          <span class="text-body font-semibold tabular-nums tracking-tight">{{ stat.value }}</span>
+          <span class="text-body font-semibold text-ink tabular-nums tracking-tight">{{ stat.value }}</span>
         </div>
       </div>
     </div>
