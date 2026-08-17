@@ -138,6 +138,8 @@ const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
 const isDepositCancelPopupOpen = ref(false);
 const isDepositConfirmationOpen = ref(false);
+const isSkipConfirmationOpen = ref(false);
+const shouldResumeAfterSkipCancel = ref(false);
 const isTutorialExiting = ref(false);
 const overlayRef = ref(null);
 const sheetLiftPx = computed(() => overlayRef.value?.sheetLiftPx ?? 0);
@@ -366,6 +368,28 @@ function completeTutorial() {
   finishTutorialNavigation();
 }
 
+function handleRequestSkipTutorial() {
+  shouldResumeAfterSkipCancel.value = phase.value === TUTORIAL_PHASE.PLAYING;
+  if (shouldResumeAfterSkipCancel.value) pause();
+  overlayRef.value?.clearSpotlight();
+  isSkipConfirmationOpen.value = true;
+}
+
+function handleCancelSkipTutorial() {
+  if (
+    shouldResumeAfterSkipCancel.value &&
+    phase.value === TUTORIAL_PHASE.PLAYING
+  ) {
+    resume();
+  }
+  shouldResumeAfterSkipCancel.value = false;
+}
+
+function handleSkipTutorial() {
+  shouldResumeAfterSkipCancel.value = false;
+  completeTutorial();
+}
+
 function handleOpenBuySheet() {
   overlayRef.value?.clearSpotlight();
   isBuySheetOpen.value = true;
@@ -572,15 +596,8 @@ onBeforeUnmount(() => {
 <template>
   <PageContainer compact>
     <div class="flex flex-col gap-4 py-6">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center">
         <BackButton disabled />
-        <button
-          type="button"
-          class="text-caption text-muted underline disabled:opacity-50"
-          disabled
-        >
-          건너뛰기
-        </button>
       </div>
 
       <MarketIndexCard
@@ -645,7 +662,7 @@ onBeforeUnmount(() => {
        BaseModal(z-50)이 Overlay(z-[60]) 아래 깔려 클릭이 막히는 것을 막고,
        모달이 닫히면 Overlay가 새로 마운트되며 깨끗한 상태로 다시 측정된다. -->
   <GameTutorialOverlay
-    v-if="overlayContent && !isDepositConfirmationOpen"
+    v-if="overlayContent && !isDepositConfirmationOpen && !isSkipConfirmationOpen"
     ref="overlayRef"
     :visible="isOverlayVisible"
     :image="overlayImage"
@@ -655,6 +672,7 @@ onBeforeUnmount(() => {
     :message="overlayContent.message"
     :target="overlayContent.target"
     :interaction-target="overlayContent.interactionTarget"
+    skip-label="건너뛰기"
     :placement="overlayContent.placement"
     :show-prev="overlayContent.showPrev"
     :prev-disabled="overlayContent.prevDisabled"
@@ -669,6 +687,16 @@ onBeforeUnmount(() => {
     @prev="handleOverlayPrev"
     @next="handleOverlayNext"
     @confirm="handleOverlayConfirm"
+    @skip="handleRequestSkipTutorial"
+  />
+
+  <BaseModal
+    v-model="isSkipConfirmationOpen"
+    message="튜토리얼을 건너뛰시겠습니까?"
+    confirm-text="건너뛰기"
+    cancel-text="계속 진행하기"
+    @confirm="handleSkipTutorial"
+    @cancel="handleCancelSkipTutorial"
   />
 
   <BaseModal
