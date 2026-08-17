@@ -91,6 +91,14 @@ const KKOBI_EXPRESSION_SCALE = Object.freeze({
 // 순간이라 표정도 담백하게 유지한다(시무룩 금지).
 const PLAYING_WATCH_EXPRESSIONS = ['curious', 'curious'];
 
+// 가격 관찰·매수 전·매도 전 시장 안내는 같은 범위와 배치를 공유한다.
+// 개별 화면 설명용 market-index/current-price target은 그대로 두고, 두 영역을
+// 감싼 target 하나를 사용해 여러 Spotlight 박스처럼 보이지 않게 한다.
+const MARKET_PRICE_SPOTLIGHT = Object.freeze({
+  target: 'market-price-info',
+  placement: 'bottom',
+});
+
 const router = useRouter();
 const {
   currentTick,
@@ -130,6 +138,8 @@ const isBuySheetOpen = ref(false);
 const isSellSheetOpen = ref(false);
 const isDepositCancelPopupOpen = ref(false);
 const isDepositConfirmationOpen = ref(false);
+const isSkipConfirmationOpen = ref(false);
+const shouldResumeAfterSkipCancel = ref(false);
 const isTutorialExiting = ref(false);
 const overlayRef = ref(null);
 const sheetLiftPx = computed(() => overlayRef.value?.sheetLiftPx ?? 0);
@@ -205,9 +215,8 @@ const overlayContent = computed(() => {
       return {
         expression: PLAYING_WATCH_EXPRESSIONS[actionStepIndex.value] ?? 'curious',
         message: GAME_TUTORIAL_WATCH_MESSAGES[actionStepIndex.value] ?? '',
-        target: 'market-index',
+        ...MARKET_PRICE_SPOTLIGHT,
         lightweight: true,
-        centerDock: true,
         spotlightVariant: 'observe',
       };
     // 가격 하락이라는 "시장 상황"을 먼저 보여주고, 실제 매수 행동 유도는
@@ -218,8 +227,7 @@ const overlayContent = computed(() => {
         expression: 'default',
         title: GAME_TUTORIAL_MESSAGES.buyMarketNoticeTitle,
         message: GAME_TUTORIAL_MESSAGES.buyMarketNotice,
-        target: 'market-index',
-        placement: 'bottom',
+        ...MARKET_PRICE_SPOTLIGHT,
         nextLabel: '다음',
       };
     case TUTORIAL_PHASE.BUY_PROMPT:
@@ -253,8 +261,7 @@ const overlayContent = computed(() => {
         expression: 'default',
         title: GAME_TUTORIAL_MESSAGES.sellMarketNoticeTitle,
         message: GAME_TUTORIAL_MESSAGES.sellMarketNotice,
-        target: 'market-index',
-        placement: 'bottom',
+        ...MARKET_PRICE_SPOTLIGHT,
         nextLabel: '다음',
       };
     case TUTORIAL_PHASE.SELL_PROMPT:
@@ -359,6 +366,28 @@ function completeTutorial() {
   }
 
   finishTutorialNavigation();
+}
+
+function handleRequestSkipTutorial() {
+  shouldResumeAfterSkipCancel.value = phase.value === TUTORIAL_PHASE.PLAYING;
+  if (shouldResumeAfterSkipCancel.value) pause();
+  overlayRef.value?.clearSpotlight();
+  isSkipConfirmationOpen.value = true;
+}
+
+function handleCancelSkipTutorial() {
+  if (
+    shouldResumeAfterSkipCancel.value &&
+    phase.value === TUTORIAL_PHASE.PLAYING
+  ) {
+    resume();
+  }
+  shouldResumeAfterSkipCancel.value = false;
+}
+
+function handleSkipTutorial() {
+  shouldResumeAfterSkipCancel.value = false;
+  completeTutorial();
 }
 
 function handleOpenBuySheet() {
@@ -472,10 +501,12 @@ function handleOverlayNext() {
     return;
   }
   if (phase.value === TUTORIAL_PHASE.BUY_MARKET_NOTICE) {
+    overlayRef.value?.clearSpotlight();
     phase.value = TUTORIAL_PHASE.BUY_PROMPT;
     return;
   }
   if (phase.value === TUTORIAL_PHASE.SELL_MARKET_NOTICE) {
+    overlayRef.value?.clearSpotlight();
     phase.value = TUTORIAL_PHASE.SELL_PROMPT;
     return;
   }
@@ -565,15 +596,8 @@ onBeforeUnmount(() => {
 <template>
   <PageContainer compact>
     <div class="flex flex-col gap-4 py-6">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center">
         <BackButton disabled />
-        <button
-          type="button"
-          class="text-caption text-muted underline disabled:opacity-50"
-          disabled
-        >
-          건너뛰기
-        </button>
       </div>
 
       <MarketIndexCard
@@ -638,7 +662,7 @@ onBeforeUnmount(() => {
        BaseModal(z-50)이 Overlay(z-[60]) 아래 깔려 클릭이 막히는 것을 막고,
        모달이 닫히면 Overlay가 새로 마운트되며 깨끗한 상태로 다시 측정된다. -->
   <GameTutorialOverlay
-    v-if="overlayContent && !isDepositConfirmationOpen"
+    v-if="overlayContent && !isDepositConfirmationOpen && !isSkipConfirmationOpen"
     ref="overlayRef"
     :visible="isOverlayVisible"
     :image="overlayImage"
@@ -648,6 +672,7 @@ onBeforeUnmount(() => {
     :message="overlayContent.message"
     :target="overlayContent.target"
     :interaction-target="overlayContent.interactionTarget"
+    skip-label="건너뛰기"
     :placement="overlayContent.placement"
     :show-prev="overlayContent.showPrev"
     :prev-disabled="overlayContent.prevDisabled"
@@ -662,6 +687,16 @@ onBeforeUnmount(() => {
     @prev="handleOverlayPrev"
     @next="handleOverlayNext"
     @confirm="handleOverlayConfirm"
+    @skip="handleRequestSkipTutorial"
+  />
+
+  <BaseModal
+    v-model="isSkipConfirmationOpen"
+    message="튜토리얼을 건너뛰시겠습니까?"
+    confirm-text="건너뛰기"
+    cancel-text="계속 진행하기"
+    @confirm="handleSkipTutorial"
+    @cancel="handleCancelSkipTutorial"
   />
 
   <BaseModal

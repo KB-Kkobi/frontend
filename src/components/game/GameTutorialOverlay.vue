@@ -66,6 +66,11 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  // 튜토리얼 진행 중 항상 노출하는 우측 상단 건너뛰기 동작.
+  skipLabel: {
+    type: String,
+    default: "",
+  },
   showPrev: {
     type: Boolean,
     default: false,
@@ -127,7 +132,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["prev", "next", "confirm"]);
+const emit = defineEmits(["prev", "next", "confirm", "skip"]);
 
 const targetKeys = computed(() => {
   if (!props.target) return [];
@@ -657,6 +662,15 @@ onBeforeUnmount(() => {
           ]"
           aria-hidden="true"
         ></div>
+
+        <button
+          v-if="skipLabel"
+          type="button"
+          class="pointer-events-auto absolute right-5 top-6 z-30 text-caption font-semibold text-white underline"
+          @click="emit('skip')"
+        >
+          {{ skipLabel }}
+        </button>
 
         <!-- Spotlight에는 leave 전환을 두지 않는다. target 교체 시 이전 링은 즉시
              제거하고, 같은 target의 좌표 변화만 transition-all로 부드럽게 이동한다. -->
