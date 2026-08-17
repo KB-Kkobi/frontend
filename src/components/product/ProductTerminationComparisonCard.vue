@@ -21,10 +21,10 @@ defineProps({
         </p>
       </div>
 
-      <BaseCard v-if="isSaving" color="yellow">
+      <BaseCard v-if="isSaving" color="white" elevation="flat">
         <div class="flex items-center justify-between gap-4">
           <span class="text-caption text-muted">앞으로 남은 납입</span>
-          <strong class="text-body text-ink tabular-nums">
+          <strong class="text-body font-semibold text-pink tabular-nums">
             {{ estimate.remainingInstallments ?? 0 }}회 ·
             {{ formatCurrency(estimate.remainingContributionAmount) }}
           </strong>
@@ -65,12 +65,14 @@ defineProps({
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-4 rounded-2xl bg-pink-soft p-4">
-        <span class="text-body text-error">포기하게 되는 이자</span>
-        <strong class="text-h2 text-error tabular-nums">
-          {{ formatCurrency(estimate.foregoneInterest) }}
-        </strong>
-      </div>
+      <BaseCard color="white" elevation="flat">
+        <div class="flex items-center justify-between gap-4">
+          <span class="text-body text-pink">포기하게 되는 이자</span>
+          <strong class="text-h2 text-pink tabular-nums">
+            {{ formatCurrency(estimate.foregoneInterest) }}
+          </strong>
+        </div>
+      </BaseCard>
     </div>
   </BaseCard>
 </template>

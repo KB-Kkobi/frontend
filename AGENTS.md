@@ -95,10 +95,10 @@
 | `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼(직접 입력 가능, inputmode="numeric") + "최대" pill. `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
 | `TradeOrderSummary`   | `trade/TradeOrderSummary.vue`       | 주문 요약(주문가능금액/매도가능수량·단가×수량·주문금액). `orderableCash`/`pricePerShare`/`quantity`/`orderAmount`/`side`/`sellableQuantity` props |
 | `TradePortfolioImpact`| `trade/TradePortfolioImpact.vue`    | 포트폴리오 영향 섹션. 비중 프로그레스바(bg-yellow) + 권장 세로선(bg-ink) + 초과 경고(bg-yellow-soft). `currentRatio`/`afterRatio`/`recommendedRatio`/`show` props. null 또는 show=false면 전체 숨김 |
-| `ProductHoldingPreviewRow` | `product/ProductHoldingPreviewRow.vue` | 보유 예·적금 미리보기 행 콘텐츠(이름·만기 D-day + 평가금액·적용금리). `holding` prop. 자산현황 대시보드 `HoldingPreviewSection` 전용 |
-| `AssetCompositionCard` | `virtual/AssetCompositionCard.vue` | 자산 구성 카드(현금·주식·예금적금 비율 표시). `cashBalance`/`cashRatio`/`stockAsset`/`stockRatio`/`savingsAsset`/`savingsRatio` props |
-| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성 행(라벨+금액+비율 progress bar). `label`/`amount`/`ratio`/`barColor`(`ink`/`blue`/`green`/`lavender`, 기본 `ink`) props |
-| `HoldingPreviewSection` | `virtual/HoldingPreviewSection.vue` | 자산현황 대시보드의 보유자산 미리보기 섹션(제목+더보기 링크+카드 목록/빈 상태 공통 틀). `title`/`moreTo`/`items`/`itemKey`/`emptyTitle`/`emptyDescription` props, `#item` scoped slot, `@select-item`/`@empty-action` emit |
+| `ProductHoldingPreviewRow` | `product/ProductHoldingPreviewRow.vue` | 보유 예·적금 미리보기 행 콘텐츠(상품명·평가금액 + 적용금리·만기 D-day). `holding` prop. 자산현황 대시보드 `HoldingPreviewSection` 전용 |
+| `AssetCompositionCard` | `virtual/AssetCompositionCard.vue` | 단일 stacked bar와 금액 목록으로 현금·주식·예금적금 비율을 표시. `cashBalance`/`cashRatio`/`stockAsset`/`stockRatio`/`savingsAsset`/`savingsRatio` props |
+| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성의 압축형 범례 행(색상 점·라벨·비율·금액). `label`/`amount`/`ratio`/`barColor`(`ink`/`pink`/`blue`/`green`/`lavender`, 기본 `ink`) props |
+| `HoldingPreviewSection` | `virtual/HoldingPreviewSection.vue` | 자산현황 대시보드의 보유자산 미리보기 섹션. `showMore`일 때 `moreLabel` 목적 링크를 표시하고 `emptyActionLabel`로 빈 상태 CTA를 구분. `title`/`moreTo`/`moreLabel`/`items`/`itemKey`/`emptyTitle`/`emptyDescription` props, `#item` scoped slot, `@select-item`/`@empty-action` emit |
 | `StockHoldingRow`      | `virtual/StockHoldingRow.vue`      | 보유 주식 행 콘텐츠(이름 + 평가금액·수익률). `holding` prop. 대시보드 미리보기와 보유 주식 전체 목록에서 공용 |
 | `GameTutorialCard`     | `game/GameTutorialCard.vue`        | 게임 튜토리얼 공통 안내 카드. Header·Character Slot·Content·Footer를 분리해 꼬비 이미지와 가변 길이 문구·버튼의 겹침을 방지 |
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
