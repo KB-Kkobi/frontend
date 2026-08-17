@@ -666,7 +666,7 @@ onBeforeUnmount(() => {
         <button
           v-if="skipLabel"
           type="button"
-          class="pointer-events-auto absolute right-5 top-6 z-30 text-caption text-muted underline"
+          class="pointer-events-auto absolute right-5 top-6 z-30 text-caption font-semibold text-white underline"
           @click="emit('skip')"
         >
           {{ skipLabel }}
