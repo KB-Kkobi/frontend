@@ -392,9 +392,19 @@ function handleSearch() {
   applyKeyword(searchInput.value);
 }
 
-function handleSecuritySearch() {
-  appliedSecurityKeyword.value = securitySearchInput.value.trim();
+function applySecurityKeyword(keyword) {
+  appliedSecurityKeyword.value = keyword.trim();
   resetPage();
+}
+
+const applySecurityKeywordDebounced = debounce(
+  applySecurityKeyword,
+  PRODUCT_SEARCH_DEBOUNCE_MS,
+);
+
+function handleSecuritySearch() {
+  applySecurityKeywordDebounced.cancel();
+  applySecurityKeyword(securitySearchInput.value);
 }
 
 function handleOpenFilter() {
@@ -512,6 +522,10 @@ watch(searchInput, (value) => {
   applyKeywordDebounced(value);
 });
 
+watch(securitySearchInput, (value) => {
+  applySecurityKeywordDebounced(value);
+});
+
 watch(
   () => [
     activeTab.value,
@@ -538,6 +552,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   applyKeywordDebounced.cancel();
+  applySecurityKeywordDebounced.cancel();
 });
 </script>
 
