@@ -49,6 +49,8 @@ const selectedPreferentialRateConditionIds = ref([]);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isEstimating = ref(false);
+const isEstimateRefreshing = ref(false);
+const estimateErrorMessage = ref("");
 const loadErrorMessage = ref("");
 const amountErrorMessage = ref("");
 const paymentDayErrorMessage = ref("");
@@ -134,15 +136,15 @@ const localPreviewRate = computed(() => {
     : rawRate;
 });
 
-// 서버 예상조회가 현재 선택 기준으로 확정됐는지 여부.
-const isEstimateConfirmed = computed(() => Boolean(subscriptionEstimate.value));
+// 백그라운드 재계산 중에는 기존 카드 값을 유지하되, 금리 선택 영역은 현재
+// 선택을 기준으로 즉시 안내한다. 새 응답이 도착하면 서버 결과로 전환한다.
+const isEstimateConfirmed = computed(
+  () => Boolean(subscriptionEstimate.value) && !isEstimateRefreshing.value,
+);
 
 // 확정 전엔 화면용 로컬 계산값을, 확정 후엔 서버 appliedRate를 보여준다.
 const displayRate = computed(() =>
   isEstimateConfirmed.value ? appliedRate.value : localPreviewRate.value,
-);
-const displayRateLabel = computed(() =>
-  isEstimateConfirmed.value ? "예상 적용금리" : "선택 기준 예상금리",
 );
 const expectedMaturityDate = computed(
   () => subscriptionEstimate.value?.maturityDate ?? null,
@@ -192,17 +194,15 @@ function handleSelectOption(option) {
   selectedOptionId.value = option.productOptionId;
   // 옵션마다 선택 가능한 우대조건 ID가 다르므로 이전 선택은 초기화한다.
   selectedPreferentialRateConditionIds.value = [];
-  subscriptionEstimate.value = null;
   formErrorMessage.value = "";
-  refreshLiveEstimateDebounced();
+  queueLiveEstimate({ clearExisting: true });
 }
 
 function handleAmountInput(value) {
   joinAmountInput.value = formatCurrencyInput(value);
-  subscriptionEstimate.value = null;
   amountErrorMessage.value = "";
   formErrorMessage.value = "";
-  refreshLiveEstimateDebounced();
+  queueLiveEstimate();
 }
 
 function handleSelectAmount(amount) {
@@ -211,8 +211,7 @@ function handleSelectAmount(amount) {
 
 function handlePreferentialConditionsUpdate(conditionIds) {
   selectedPreferentialRateConditionIds.value = conditionIds;
-  subscriptionEstimate.value = null;
-  refreshLiveEstimateDebounced();
+  queueLiveEstimate();
 }
 
 function validateForm() {
@@ -263,6 +262,12 @@ function createSubscriptionRequest() {
 const canEstimate = computed(() => {
   if (!selectedOption.value) return false;
   if (!joinAmount.value || joinAmount.value <= 0) return false;
+
+  const maximumLimit = Number(product.value?.maxLimit);
+  if (Number.isFinite(maximumLimit) && joinAmount.value > maximumLimit) {
+    return false;
+  }
+
   if (isSaving.value && !paymentDay.value) return false;
   return true;
 });
@@ -273,32 +278,45 @@ const canEstimate = computed(() => {
 const estimateHint = computed(() => {
   if (canEstimate.value || !selectedOption.value) return "";
   return isSaving.value
-    ? "월 납입금액과 납입일을 입력하면 만기 예상금액을 확인할 수 있어요."
-    : "가입금액을 입력하면 만기 예상금액을 확인할 수 있어요.";
+    ? "월 납입금액과 납입일을 입력하면 예상 만기 수령액을 확인할 수 있어요."
+    : "가입금액을 입력하면 예상 만기 수령액을 확인할 수 있어요.";
 });
 
 // estimate/subscribe 양쪽에서 재사용. 요청 도중 입력이 바뀌면(token 불일치)
 // 오래된 응답으로 최신 상태를 덮어쓰지 않는다.
 async function fetchEstimate() {
   const token = ++estimateRequestToken.value;
-  const estimate = await estimateProductSubscription(createSubscriptionRequest());
-  return token === estimateRequestToken.value ? estimate : null;
+  try {
+    const estimate = await estimateProductSubscription(createSubscriptionRequest());
+    return token === estimateRequestToken.value ? estimate : null;
+  } catch (error) {
+    // 입력이 바뀐 뒤 도착한 이전 요청의 실패도 최신 화면을 덮어쓰지 않는다.
+    if (token !== estimateRequestToken.value) return null;
+    throw error;
+  }
 }
 
 async function refreshLiveEstimate() {
   if (!canEstimate.value) {
     subscriptionEstimate.value = null;
+    isEstimateRefreshing.value = false;
+    estimateErrorMessage.value = "";
     return;
   }
 
+  const requestToken = estimateRequestToken.value + 1;
   try {
     const estimate = await fetchEstimate();
     if (!estimate) return;
     subscriptionEstimate.value = estimate;
+    estimateErrorMessage.value = "";
     formErrorMessage.value = "";
   } catch (error) {
-    subscriptionEstimate.value = null;
-    formErrorMessage.value = getRequestErrorMessage(error);
+    estimateErrorMessage.value = getRequestErrorMessage(error);
+  } finally {
+    if (requestToken === estimateRequestToken.value) {
+      isEstimateRefreshing.value = false;
+    }
   }
 }
 
@@ -307,17 +325,40 @@ const refreshLiveEstimateDebounced = debounce(
   PRODUCT_SUBSCRIPTION_ESTIMATE_DEBOUNCE_MS,
 );
 
+function queueLiveEstimate({ clearExisting = false } = {}) {
+  refreshLiveEstimateDebounced.cancel();
+  // debounce 대기 중에도 이전 요청이 현재 입력의 결과처럼 반영되지 않도록 즉시 무효화한다.
+  estimateRequestToken.value += 1;
+
+  if (clearExisting || !canEstimate.value) {
+    subscriptionEstimate.value = null;
+  }
+
+  if (!canEstimate.value) {
+    isEstimateRefreshing.value = false;
+    estimateErrorMessage.value = "";
+    return;
+  }
+
+  isEstimateRefreshing.value = true;
+  estimateErrorMessage.value = "";
+  formErrorMessage.value = "";
+  refreshLiveEstimateDebounced();
+}
+
 async function handleOpenConfirmation() {
   if (!validateForm() || isEstimating.value) return;
 
   refreshLiveEstimateDebounced.cancel();
   isEstimating.value = true;
+  isEstimateRefreshing.value = false;
   formErrorMessage.value = "";
 
   try {
     const estimate = await fetchEstimate();
     if (!estimate) return;
     subscriptionEstimate.value = estimate;
+    estimateErrorMessage.value = "";
     isConfirmationOpen.value = true;
   } catch (error) {
     formErrorMessage.value = getRequestErrorMessage(error);
@@ -346,12 +387,15 @@ async function handleSubscribe() {
 }
 
 async function loadProduct() {
+  refreshLiveEstimateDebounced.cancel();
   isLoading.value = true;
   loadErrorMessage.value = "";
   product.value = null;
   selectedOptionId.value = null;
   selectedPreferentialRateConditionIds.value = [];
   subscriptionEstimate.value = null;
+  isEstimateRefreshing.value = false;
+  estimateErrorMessage.value = "";
   estimateRequestToken.value += 1;
 
   try {
@@ -371,9 +415,8 @@ async function loadProduct() {
 }
 
 watch(paymentDay, () => {
-  subscriptionEstimate.value = null;
   paymentDayErrorMessage.value = "";
-  refreshLiveEstimateDebounced();
+  queueLiveEstimate();
 });
 
 watch(
@@ -384,6 +427,7 @@ watch(
 
 onBeforeUnmount(() => {
   refreshLiveEstimateDebounced.cancel();
+  estimateRequestToken.value += 1;
 });
 </script>
 
@@ -568,14 +612,11 @@ onBeforeUnmount(() => {
 
             <div class="flex flex-col gap-2 border-t border-line pt-4">
               <div class="flex items-center justify-between gap-4">
-                <span class="text-caption text-muted">{{ displayRateLabel }}</span>
+                <span class="text-caption text-muted">예상 적용금리</span>
                 <strong class="text-h2 text-profit tabular-nums">
                   {{ formatInterestRate(displayRate) }}
                 </strong>
               </div>
-              <p v-if="estimateHint" class="text-caption text-muted">
-                {{ estimateHint }}
-              </p>
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -587,57 +628,104 @@ onBeforeUnmount(() => {
           </div>
         </BaseCard>
 
-        <BaseCard v-if="subscriptionEstimate" color="blue">
+        <BaseCard v-if="selectedOption" color="blue">
           <div class="flex flex-col gap-4">
-            <h2 class="text-h2 text-ink">내 예상 수령액</h2>
-            <dl class="flex flex-col gap-2">
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">기본 금리</dt>
-                <dd class="text-body text-ink tabular-nums">
-                  {{ formatInterestRate(selectedOption.interestRate) }}
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">우대 금리</dt>
-                <dd class="text-body text-profit tabular-nums">
-                  +{{ formatInterestRate(appliedRateUplift) }}
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">적용 금리</dt>
-                <dd class="text-h2 text-profit tabular-nums">
-                  {{ formatInterestRate(appliedRate) }}
-                </dd>
-              </div>
-            </dl>
-
-            <dl class="flex flex-col gap-2 border-t border-line pt-4">
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">예상 원금</dt>
-                <dd class="text-body text-ink tabular-nums">
-                  {{ formatCurrency(expectedAmounts.expectedPrincipal) }}
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-caption text-muted">세후 예상 이자</dt>
-                <dd class="text-body text-ink tabular-nums">
-                  {{ formatCurrency(expectedAmounts.expectedInterest) }}
-                </dd>
-              </div>
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-body font-semibold text-ink">만기 수령액</dt>
-                <dd class="text-amount text-profit tabular-nums">
-                  {{ formatCurrency(expectedAmounts.expectedAmount) }}
-                </dd>
-              </div>
-            </dl>
-
-            <BaseCard color="green">
-              <p class="text-caption text-muted">
-                만기일은 {{ formatLocalDate(expectedMaturityDate) }}이며, 실제 이자는 납입일과
-                상품 조건에 따라 달라질 수 있어요.
+            <div class="flex items-center justify-between gap-4">
+              <h2 class="text-h2 text-ink">내 예상 수령액</h2>
+              <p
+                v-if="isEstimateRefreshing"
+                class="text-caption text-muted"
+                role="status"
+              >
+                예상 금액 계산 중...
               </p>
-            </BaseCard>
+            </div>
+
+            <p
+              v-if="!canEstimate && !subscriptionEstimate"
+              class="text-caption text-muted"
+            >
+              {{ estimateHint }}
+            </p>
+
+            <template v-else>
+              <div
+                v-if="estimateErrorMessage"
+                class="flex flex-col gap-2"
+                role="alert"
+              >
+                <p class="text-caption text-error">
+                  {{
+                    subscriptionEstimate
+                      ? "예상 금액을 업데이트하지 못했어요. 이전 계산 결과를 표시하고 있어요."
+                      : "예상 금액을 다시 계산하지 못했어요."
+                  }}
+                </p>
+                <p class="text-caption text-muted">{{ estimateErrorMessage }}</p>
+              </div>
+
+              <dl class="flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-caption text-muted">기본 금리</dt>
+                  <dd class="text-body text-ink tabular-nums">
+                    {{ formatInterestRate(selectedOption?.interestRate) }}
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-caption text-muted">우대 금리</dt>
+                  <dd class="text-body text-profit tabular-nums">
+                    {{
+                      subscriptionEstimate
+                        ? `+${formatInterestRate(appliedRateUplift)}`
+                        : "—"
+                    }}
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-caption text-muted">적용 금리</dt>
+                  <dd class="text-h2 text-profit tabular-nums">
+                    {{ formatInterestRate(appliedRate) }}
+                  </dd>
+                </div>
+              </dl>
+
+              <dl class="flex flex-col gap-2 border-t border-line pt-4">
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-caption text-muted">예상 원금</dt>
+                  <dd class="text-body text-ink tabular-nums">
+                    {{ formatCurrency(expectedAmounts.expectedPrincipal) }}
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-caption text-muted">세후 예상 이자</dt>
+                  <dd class="text-body text-ink tabular-nums">
+                    {{ formatCurrency(expectedAmounts.expectedInterest) }}
+                  </dd>
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="text-body font-semibold text-ink">만기 수령액</dt>
+                  <dd class="text-amount text-profit tabular-nums">
+                    {{ formatCurrency(expectedAmounts.expectedAmount) }}
+                  </dd>
+                </div>
+              </dl>
+
+              <BaseCard
+                :color="subscriptionEstimate ? 'green' : 'white'"
+                :elevation="subscriptionEstimate ? 'default' : 'flat'"
+              >
+                <p v-if="subscriptionEstimate" class="text-caption text-muted">
+                  만기일은 {{ formatLocalDate(expectedMaturityDate) }}이며, 실제 이자는 납입일과
+                  상품 조건에 따라 달라질 수 있어요.
+                </p>
+                <p v-else-if="estimateErrorMessage" class="text-caption text-muted">
+                  입력값을 확인하거나 잠시 후 다시 시도해 주세요.
+                </p>
+                <p v-else class="text-caption text-muted">
+                  입력한 조건으로 만기일과 예상금액을 계산하고 있어요.
+                </p>
+              </BaseCard>
+            </template>
           </div>
         </BaseCard>
 
