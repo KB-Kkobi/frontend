@@ -10,6 +10,10 @@ export function fetchReceivedFriendRequests() {
   return get(`${FRIENDS_PATH}/requests/received`);
 }
 
+export function fetchSentFriendRequests() {
+  return get(`${FRIENDS_PATH}/requests/sent`);
+}
+
 export function acceptFriendRequest(friendshipId) {
   return patch(`${FRIENDS_PATH}/requests/${friendshipId}/accept`);
 }
