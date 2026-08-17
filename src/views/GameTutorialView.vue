@@ -91,6 +91,14 @@ const KKOBI_EXPRESSION_SCALE = Object.freeze({
 // 순간이라 표정도 담백하게 유지한다(시무룩 금지).
 const PLAYING_WATCH_EXPRESSIONS = ['curious', 'curious'];
 
+// 가격 관찰·매수 전·매도 전 시장 안내는 같은 범위와 배치를 공유한다.
+// 개별 화면 설명용 market-index/current-price target은 그대로 두고, 두 영역을
+// 감싼 target 하나를 사용해 여러 Spotlight 박스처럼 보이지 않게 한다.
+const MARKET_PRICE_SPOTLIGHT = Object.freeze({
+  target: 'market-price-info',
+  placement: 'bottom',
+});
+
 const router = useRouter();
 const {
   currentTick,
@@ -205,9 +213,8 @@ const overlayContent = computed(() => {
       return {
         expression: PLAYING_WATCH_EXPRESSIONS[actionStepIndex.value] ?? 'curious',
         message: GAME_TUTORIAL_WATCH_MESSAGES[actionStepIndex.value] ?? '',
-        target: 'market-index',
+        ...MARKET_PRICE_SPOTLIGHT,
         lightweight: true,
-        centerDock: true,
         spotlightVariant: 'observe',
       };
     // 가격 하락이라는 "시장 상황"을 먼저 보여주고, 실제 매수 행동 유도는
@@ -218,8 +225,7 @@ const overlayContent = computed(() => {
         expression: 'default',
         title: GAME_TUTORIAL_MESSAGES.buyMarketNoticeTitle,
         message: GAME_TUTORIAL_MESSAGES.buyMarketNotice,
-        target: 'market-index',
-        placement: 'bottom',
+        ...MARKET_PRICE_SPOTLIGHT,
         nextLabel: '다음',
       };
     case TUTORIAL_PHASE.BUY_PROMPT:
@@ -253,8 +259,7 @@ const overlayContent = computed(() => {
         expression: 'default',
         title: GAME_TUTORIAL_MESSAGES.sellMarketNoticeTitle,
         message: GAME_TUTORIAL_MESSAGES.sellMarketNotice,
-        target: 'market-index',
-        placement: 'bottom',
+        ...MARKET_PRICE_SPOTLIGHT,
         nextLabel: '다음',
       };
     case TUTORIAL_PHASE.SELL_PROMPT:
@@ -472,10 +477,12 @@ function handleOverlayNext() {
     return;
   }
   if (phase.value === TUTORIAL_PHASE.BUY_MARKET_NOTICE) {
+    overlayRef.value?.clearSpotlight();
     phase.value = TUTORIAL_PHASE.BUY_PROMPT;
     return;
   }
   if (phase.value === TUTORIAL_PHASE.SELL_MARKET_NOTICE) {
+    overlayRef.value?.clearSpotlight();
     phase.value = TUTORIAL_PHASE.SELL_PROMPT;
     return;
   }
