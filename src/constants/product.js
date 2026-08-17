@@ -22,9 +22,7 @@ export const SAVING_TERM_OPTIONS = Object.freeze([6, 12, 24]);
 
 export const PRODUCT_SORT_OPTIONS = Object.freeze([
   { value: "maximumInterestRate,desc", label: "최고 금리순" },
-  { value: "maximumInterestRate,asc", label: "최고 금리 낮은순" },
   { value: "interestRate,desc", label: "기본 금리순" },
-  { value: "interestRate,asc", label: "기본 금리 낮은순" },
   { value: "productName,asc", label: "상품명순" },
   { value: "financialCompanyName,asc", label: "금융회사순" },
 ]);
