@@ -72,6 +72,7 @@
 | `BottomTabBar`  | 하단 탭 네비게이션                                                                                        |
 | `BaseToast`     | 일정 시간 뒤 자동으로 사라지는 완료 알림. `v-model` + `title`/`description`/`duration`(기본 3000ms) + `offset`(`page` 기본값 / `header`=상단 고정 헤더 아래) + `variant`(`success` 기본값 / `error`=제목 `text-error`) prop. 화면 상단에 고정되며 클릭을 막지 않음 |
 | `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `disabled` prop. `ghost`=`bg-surface text-muted font-normal` |
+| `HelpButton`    | 원형 (?) 도움말 버튼. `ariaLabel`(필수) + `size`(선택, 기본 20px) prop, `@click` emit. 시각 크기는 `size`×`size`px, 터치 영역은 `::before`로 44px 확보. 라벨 텍스트는 포함하지 않으므로 호출부에서 옆에 배치할 것. |
 | `ListToolbar`   | 목록 상단 툴바(정렬·필터 버튼 + 왼쪽 자유 슬롯). `sortLabel`/`filterLabel`/`showSort`/`showFilter`/`filterActive`/`filterCount` props, `@sort`/`@filter` emit. `default` slot=왼쪽 영역, `#sort` named slot=정렬 버튼 교체 |
 
 - 새 컴포넌트를 만들기 전에 이 목록부터 확인.

@@ -16,6 +16,7 @@ import FilterSheet from "@/components/common/FilterSheet.vue";
 import SecurityListCard from "@/components/security/SecurityListCard.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import HelpButton from "@/components/common/HelpButton.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
@@ -38,7 +39,10 @@ import {
   SECURITY_LIST_DEFAULTS,
   SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
-import { SECURITY_FILTER_GROUPS, buildSavingsFilterGroups } from "@/constants/productFilters";
+import {
+  SECURITY_FILTER_GROUPS,
+  buildSavingsFilterGroups,
+} from "@/constants/productFilters";
 import { debounce } from "@/utils/debounce";
 
 const props = defineProps({
@@ -179,8 +183,12 @@ const activeFilterCount = computed(
     selectedPreferentialConditions.value.length,
 );
 const hasAppliedFilters = computed(() => activeFilterCount.value > 0);
-const securityActiveFilterCount = computed(() => selectedSecurityTypes.value.length);
-const hasAppliedSecurityFilters = computed(() => securityActiveFilterCount.value > 0);
+const securityActiveFilterCount = computed(
+  () => selectedSecurityTypes.value.length,
+);
+const hasAppliedSecurityFilters = computed(
+  () => securityActiveFilterCount.value > 0,
+);
 const securityFilterModelValue = computed(() => ({
   securityTypes: selectedSecurityTypes.value,
 }));
@@ -385,7 +393,10 @@ function applyKeyword(keyword) {
   resetPage();
 }
 
-const applyKeywordDebounced = debounce(applyKeyword, PRODUCT_SEARCH_DEBOUNCE_MS);
+const applyKeywordDebounced = debounce(
+  applyKeyword,
+  PRODUCT_SEARCH_DEBOUNCE_MS,
+);
 
 function handleSearch() {
   applyKeywordDebounced.cancel();
@@ -423,7 +434,9 @@ function handleApplySecurityFilters(filters) {
 function handleApplyFilters(filters) {
   selectedSavingTerms.value = sortSavingTerms(filters.savingTerms ?? []);
   selectedReserveTypes.value = [...(filters.reserveTypes ?? [])];
-  selectedPreferentialConditions.value = [...(filters.preferentialConditions ?? [])];
+  selectedPreferentialConditions.value = [
+    ...(filters.preferentialConditions ?? []),
+  ];
   resetPage();
 }
 
@@ -771,7 +784,10 @@ onBeforeUnmount(() => {
             </template>
           </ListToolbar>
 
-          <div v-if="hasAppliedFilters" class="flex flex-wrap items-center gap-2">
+          <div
+            v-if="hasAppliedFilters"
+            class="flex flex-wrap items-center gap-2"
+          >
             <BasePill
               v-for="label in activeFilterLabels"
               :key="label"
@@ -804,28 +820,13 @@ onBeforeUnmount(() => {
         :filter-count="securityActiveFilterCount"
         @filter="handleOpenSecurityFilter"
       >
-        <button
-          type="button"
-          class="flex items-center gap-2"
-          @click="showMatchInfoModal = true"
-        >
-          <svg
-            class="h-4 w-4 shrink-0 text-blue"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" fill="currentColor" />
-            <path
-              class="text-white"
-              d="M12 11v6M12 7.5v.5"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-          <span class="text-caption text-muted">매칭률이란?</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <span class="text-caption text-muted">매칭률</span>
+          <HelpButton
+            aria-label="매칭률 설명 보기"
+            @click="showMatchInfoModal = true"
+          />
+        </div>
         <template #sort>
           <label
             class="relative flex cursor-pointer items-center gap-2 py-pill-y text-caption text-ink"
@@ -876,29 +877,15 @@ onBeforeUnmount(() => {
               매칭률은 내 투자 성향과 종목의 특성을 비교해, 얼마나 잘 어울리는지
               나타내는 수치예요.
             </p>
-            <div class="flex flex-col gap-2">
-              <p>아래 세 가지 기준으로 계산돼요.</p>
-              <ul class="flex flex-col gap-2">
-                <li>
-                  <span class="font-semibold">위험 감수도</span> —
-                  가격이 크게 흔들리거나 손실이 났을 때 견딜 수 있는 정도
-                </li>
-                <li>
-                  <span class="font-semibold">유동성 선호도</span> —
-                  필요할 때 바로 사고팔 수 있는 종목을 선호하는지
-                </li>
-                <li>
-                  <span class="font-semibold">수익 추구도</span> —
-                  더 큰 수익을 위해 그만큼의 등락을 감수할 의향
-                </li>
-              </ul>
-            </div>
             <p>100%에 가까울수록 내 성향과 잘 맞는 종목이에요.</p>
             <p class="text-caption text-muted">
               단, 매칭률이 높다고 수익률이 높은 건 아니에요. 성향이 얼마나
               비슷한지를 나타낼 뿐, 투자 결과를 보장하지 않아요.
             </p>
-            <p v-if="!hasAssessment" class="border-t border-line-soft pt-4 text-caption text-muted">
+            <p
+              v-if="!hasAssessment"
+              class="border-t border-line-soft pt-4 text-caption text-muted"
+            >
               성향 진단을 완료하면 각 종목의 매칭률을 바로 확인할 수 있어요.
             </p>
           </div>

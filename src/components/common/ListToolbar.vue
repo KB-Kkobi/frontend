@@ -19,20 +19,6 @@ const emit = defineEmits(['sort', 'filter'])
     </div>
     <!-- 오른쪽 -->
     <div class="flex shrink-0 items-center gap-2">
-      <!-- sort slot: 없으면 기본 버튼 -->
-      <slot name="sort">
-        <button
-          v-if="showSort"
-          type="button"
-          class="flex items-center gap-2 py-pill-y text-caption text-ink"
-          @click="$emit('sort')"
-        >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-            <path d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span>{{ sortLabel }}</span>
-        </button>
-      </slot>
       <!-- 필터 버튼 -->
       <button
         v-if="showFilter"
@@ -48,6 +34,20 @@ const emit = defineEmits(['sort', 'filter'])
         </svg>
         <span>{{ filterLabel }}{{ filterCount ? ` ${filterCount}` : '' }}</span>
       </button>
+      <!-- sort slot: 없으면 기본 버튼 -->
+      <slot name="sort">
+        <button
+          v-if="showSort"
+          type="button"
+          class="flex items-center gap-2 py-pill-y text-caption text-ink"
+          @click="$emit('sort')"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>{{ sortLabel }}</span>
+        </button>
+      </slot>
     </div>
   </div>
 </template>
