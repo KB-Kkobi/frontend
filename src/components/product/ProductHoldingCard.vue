@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import {
   PRODUCT_TYPES,
   getProductHoldingStatus,
@@ -9,6 +10,7 @@ import {
   normalizeProductType,
 } from "@/constants/product";
 import {
+  formatBankName,
   formatCurrency,
   formatInterestRate,
   formatNullableText,
@@ -50,22 +52,29 @@ function handleSelect() {
   >
     <BaseCard color="white" elevation="flat">
       <article class="flex flex-col gap-4">
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-4">
+          <ProductBankLogo :name="holding.financialCompanyName" />
+
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex min-w-0 flex-1 flex-col gap-2">
+                <p class="truncate text-caption text-muted">
+                  {{ formatBankName(holding.financialCompanyName) }}
+                </p>
+                <h2 class="line-clamp-2 break-words text-h2 text-ink">
+                  {{ formatNullableText(holding.productName) }}
+                </h2>
+              </div>
+              <p class="shrink-0 whitespace-nowrap text-body font-semibold text-profit tabular-nums">
+                적용 {{ formatInterestRate(holding.appliedRate) }}
+              </p>
+            </div>
+
             <div class="flex items-center gap-2">
               <BasePill :label="typeLabel" color="pink" />
               <BasePill :label="status.label" :color="status.color" />
             </div>
-            <p class="text-caption text-muted">
-              {{ formatNullableText(holding.financialCompanyName) }}
-            </p>
-            <h2 class="text-h2 text-ink">
-              {{ formatNullableText(holding.productName) }}
-            </h2>
           </div>
-          <p class="text-h2 text-profit tabular-nums">
-            {{ formatInterestRate(holding.appliedRate) }}
-          </p>
         </div>
 
         <div class="flex flex-col gap-2 border-t border-line pt-4">
@@ -96,15 +105,14 @@ function handleSelect() {
               {{ formatCurrency(holding.expectedMaturityAmount) }}
             </dd>
           </div>
-          <div v-if="isSaving" class="flex flex-col gap-2">
-            <dt class="text-caption text-muted">납입 횟수</dt>
-            <dd class="text-body text-ink tabular-nums">
+        </dl>
+
+        <dl v-if="isSaving" class="border-t border-line pt-4">
+          <div class="flex items-center justify-between gap-4">
+            <dt class="text-caption text-muted">납입 현황</dt>
+            <dd class="text-body font-semibold text-ink tabular-nums">
               {{ holding.paidInstallments ?? 0 }} / {{ holding.totalInstallments ?? "—" }}회
             </dd>
-          </div>
-          <div class="flex flex-col gap-2">
-            <dt class="text-caption text-muted">상세 보기</dt>
-            <dd class="text-body font-semibold text-pink">확인하기</dd>
           </div>
         </dl>
       </article>
