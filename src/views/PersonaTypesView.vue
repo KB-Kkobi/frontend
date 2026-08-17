@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import HelpButton from "@/components/common/HelpButton.vue";
 import PersonaTypeCard from "@/components/assessment/PersonaTypeCard.vue";
 import AxisHelpPopover from "@/components/assessment/AxisHelpPopover.vue";
 import { fetchPersonas } from "@/api/personaApi";
@@ -49,14 +50,7 @@ onMounted(loadPersonas);
       <div class="flex items-start gap-1">
         <p class="whitespace-pre-line text-caption text-muted">{{ SUBTITLE }}</p>
         <div class="relative shrink-0">
-          <button
-            type="button"
-            class="flex h-5 w-5 items-center justify-center rounded-full border border-line text-caption text-muted"
-            aria-label="투자 성향 3축 용어 설명 보기"
-            @click="openHelp"
-          >
-            ?
-          </button>
+          <HelpButton aria-label="투자 성향 3축 설명 보기" @click="openHelp" />
           <AxisHelpPopover v-model="isHelpOpen" />
         </div>
       </div>

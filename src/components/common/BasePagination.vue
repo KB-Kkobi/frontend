@@ -30,6 +30,16 @@ const visiblePageNumbers = computed(() => {
   );
 });
 
+function handleFirstPage() {
+  if (props.currentPage === 1) return;
+  emit("update:currentPage", 1);
+}
+
+function handleLastPage() {
+  if (props.currentPage === props.totalPages) return;
+  emit("update:currentPage", props.totalPages);
+}
+
 function handlePreviousPageGroup() {
   if (!hasPreviousPageGroup.value) return;
   emit("update:currentPage", Math.max(pageGroupStart.value - props.visiblePageCount, 1));
@@ -53,6 +63,29 @@ function handleSelectPage(page) {
     class="flex items-center justify-center gap-2"
     aria-label="상품 목록 페이지"
   >
+    <button
+      type="button"
+      class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+      aria-label="첫 페이지로"
+      :disabled="currentPage === 1"
+      @click="handleFirstPage"
+    >
+      <svg
+        class="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          d="M11 6 5 12l6 6M18 6l-6 6 6 6"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
     <button
       type="button"
       class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
@@ -107,6 +140,29 @@ function handleSelectPage(page) {
       >
         <path
           d="m10 6 6 6-6 6"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white text-muted disabled:opacity-50"
+      aria-label="마지막 페이지로"
+      :disabled="currentPage === totalPages"
+      @click="handleLastPage"
+    >
+      <svg
+        class="h-5 w-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          d="M6 6l6 6-6 6M13 6l6 6-6 6"
           stroke-width="1.8"
           stroke-linecap="round"
           stroke-linejoin="round"
