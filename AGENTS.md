@@ -106,8 +106,9 @@
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행(BaseCard). 순위 원형 배지(1~3위=bg-cream-soft, 그 외=bg-surface) + 닉네임 + 총자산·수익률. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. `isMe`면 pink 카드 + "나" pill |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |
-| `HomeRecommendationCard` | `home/HomeRecommendationCard.vue` | 홈 화면 "추천 금융상품" 섹션(BaseCard color=pink). 자체적으로 `/api/securities/recommendations` 조회(주식1+주식형ETF1+채권형ETF1, 성향 매칭 순) 후 `HomeRecommendationItemCard` 가로 스크롤 목록 + "더보기"(상품 탭 이동)로 표시. props 없음, 내부에서 로딩·에러·빈 상태 처리 |
-| `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 가로 스크롤 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
+| `HomeRecommendationCard` | `home/HomeRecommendationCard.vue` | 홈 화면 "추천 금융상품" 섹션(BaseCard color=pink). `/api/securities/recommendations`(서버가 주식·주식형ETF 통합 1개 + 채권형ETF 1개를 성향 매칭 순으로 반환)와 `/api/products/recommendations`(예·적금 최고금리 1개, `fetchRecommendedSavingsProduct`)를 함께 조회해 `HomeRecommendationItemCard` + `HomeRecommendationProductItemCard` 가로 스크롤 목록(총 3장) + "더보기"(상품 탭 이동)로 표시. props 없음, 내부에서 로딩·에러·빈 상태 처리 |
+| `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 증권 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
+| `HomeRecommendationProductItemCard` | `home/HomeRecommendationProductItemCard.vue` | 홈 추천 섹션의 예·적금 카드 1개(BaseCard color=white elevation=flat, `w-40`). 예금/적금 배지·상품명·금융회사명·최고 우대 금리. `product` prop, `@select` emit |
 
 ## 개발 컨벤션
 
