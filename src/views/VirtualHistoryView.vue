@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, watch, onMounted, onActivated } from 'vue'
+import { ref, computed, watch, onMounted, onActivated, onBeforeUnmount, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import TransactionCard from '@/components/transaction/TransactionCard.vue'
@@ -14,6 +15,8 @@ import { useHistoryOrders } from '@/composables/useHistoryOrders'
 
 // ── props / emits ─────────────────────────────────────────────────────────────
 // (없음)
+
+const route = useRoute()
 
 // ── composables · store ───────────────────────────────────────────────────────
 const {
@@ -38,6 +41,10 @@ const isLoadingPending = ref(false)
 const isCancelling = ref(false)
 const isHistoryFilterOpen = ref(false)
 const isPendingFilterOpen = ref(false)
+
+// 알림(거래 체결)에서 들어왔을 때 해당 주문으로 스크롤 + 잠깐 하이라이트하기 위한 상태.
+const highlightedItemId = ref(null)
+let highlightTimer = null
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const periodFromDate = computed(() => {
@@ -194,6 +201,22 @@ function handlePendingFilterApply(result) {
   selectedPendingTypes.value = result.types ?? []
 }
 
+// ── 알림 딥링크 처리 ─────────────────────────────────────────────────────────────
+// 알림 클릭(/virtual/history?segment=history&type=stock&orderId=123)으로 들어왔을 때
+// 반드시 history 탭 + 주식 필터가 선택되도록 하고, 해당 주문이 있으면 스크롤 + 하이라이트한다.
+// 라우트 진입 시 한 번만 반영하면 되므로 onMounted에서 처리하고 query를 지켜보진 않는다.
+function applyNotificationQuery() {
+  activeSegment.value = route.query.segment === 'pending' ? 'pending' : 'history'
+
+  if (route.query.type) {
+    selectedTypes.value = String(route.query.type).split(',').filter(Boolean)
+  }
+
+  if (route.query.orderId) {
+    highlightedItemId.value = `STOCK-${route.query.orderId}`
+  }
+}
+
 // ── watch ─────────────────────────────────────────────────────────────────────
 watch(activePeriod, () => {
   if (activeSegment.value === 'history') {
@@ -209,8 +232,27 @@ watch(activeSegment, (newSegment) => {
   }
 })
 
+watch(filteredItems, (items) => {
+  if (!highlightedItemId.value) return
+  if (!items.some((item) => item.id === highlightedItemId.value)) return
+
+  const targetId = highlightedItemId.value
+  nextTick(() => {
+    document
+      .getElementById(`history-item-${targetId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+
+  if (highlightTimer !== null) clearTimeout(highlightTimer)
+  highlightTimer = setTimeout(() => {
+    highlightedItemId.value = null
+    highlightTimer = null
+  }, 1000)
+})
+
 // ── lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(() => {
+  applyNotificationQuery()
   loadHistory(periodFromDate.value)
   loadPendingOrders()
 })
@@ -221,6 +263,13 @@ onActivated(() => {
     loadHistory(periodFromDate.value)
   } else {
     loadPendingOrders()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (highlightTimer !== null) {
+    clearTimeout(highlightTimer)
+    highlightTimer = null
   }
 })
 </script>
@@ -280,12 +329,14 @@ onActivated(() => {
 
       <TransactionCard
         v-for="item in filteredItems"
+        :id="`history-item-${item.id}`"
         :key="item.id"
         :name="item.name"
         :sub-label="item.subLabel"
         :pill="item.pill"
         :datetime="item.datetime"
         :stats="item.stats"
+        :highlighted="item.id === highlightedItemId"
       />
     </div>
 

@@ -31,6 +31,11 @@ const props = defineProps({
     type: String,
     default: '주문 취소',
   },
+  // 알림에서 특정 거래로 진입했을 때 잠깐 시선을 끌기 위한 표시. 시간이 지나면 부모가 꺼준다.
+  highlighted: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['cancel'])
@@ -41,7 +46,7 @@ function handleCancel() {
 </script>
 
 <template>
-  <BaseCard color="white" elevation="flat">
+  <BaseCard :color="highlighted ? 'pink' : 'white'" :elevation="highlighted ? 'highlight' : 'flat'">
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-4">
         <BasePill v-if="pill" :label="pill.label" :color="pill.color" />
