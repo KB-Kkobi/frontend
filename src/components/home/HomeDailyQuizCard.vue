@@ -69,11 +69,11 @@ onMounted(loadTodayQuiz);
     </div>
   </BaseCard>
 
-  <BaseCard v-else-if="quiz && quiz.hasQuizToday" color="white">
+  <BaseCard v-else-if="quiz && quiz.hasQuizToday && !hasNoAccount" color="white">
     <div class="flex flex-col gap-4">
       <div class="flex items-center gap-2">
-        <BasePill :label="quiz.category" variant="ghost" />
         <h2 class="text-h2 text-ink">오늘의 금융 퀴즈</h2>
+        <BasePill :label="quiz.category" variant="ghost" />
       </div>
 
       <p class="text-body text-ink">{{ quiz.question }}</p>
@@ -87,12 +87,9 @@ onMounted(loadTodayQuiz);
           <p class="text-body text-ink">{{ result.explanation }}</p>
         </div>
 
-        <div v-if="result.correct" class="rounded-2xl bg-yellow-soft p-4">
-          <p class="text-caption text-ink">
-            <span aria-hidden="true">🎁</span>
-            {{ formatCurrency(result.rewardAmount) }}이 지급됐어요!
-          </p>
-        </div>
+        <p v-if="result.correct" class="text-caption text-muted">
+          가상 투자금 {{ formatCurrency(result.rewardAmount) }}이 적립됐어요
+        </p>
       </template>
 
       <template v-else-if="quiz.hasParticipatedToday">
@@ -104,7 +101,7 @@ onMounted(loadTodayQuiz);
           <button
             type="button"
             class="rounded-2xl border border-blue-soft bg-white py-3 text-button font-semibold text-blue disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!quiz.canParticipate || isSubmitting"
+            :disabled="isSubmitting"
             @click="handleAnswer('O')"
           >
             O
@@ -112,16 +109,13 @@ onMounted(loadTodayQuiz);
           <button
             type="button"
             class="rounded-2xl border border-pink-soft bg-white py-3 text-button font-semibold text-pink disabled:cursor-not-allowed disabled:opacity-50"
-            :disabled="!quiz.canParticipate || isSubmitting"
+            :disabled="isSubmitting"
             @click="handleAnswer('X')"
           >
             X
           </button>
         </div>
 
-        <p v-if="hasNoAccount" class="text-caption text-muted">
-          가상 투자 계좌를 만들면 퀴즈에 참여할 수 있어요.
-        </p>
         <p v-if="submitError" class="text-caption text-error" role="alert">
           {{ submitError }}
         </p>
