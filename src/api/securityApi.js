@@ -9,6 +9,7 @@ import {
 
 const SECURITY_API_PATH = "/api/securities";
 const SECURITY_QUOTES_PATH = `${SECURITY_API_PATH}/quotes`;
+const SECURITY_RECOMMENDATIONS_PATH = `${SECURITY_API_PATH}/recommendations`;
 
 function assertTicker(ticker) {
   if (typeof ticker !== "string" || ticker.trim() === "") {
@@ -74,6 +75,25 @@ function normalizeSecurityListResponse(response) {
     size: response?.size ?? SECURITY_LIST_DEFAULTS.size,
     totalElements: response?.totalElements ?? 0,
     totalPages: response?.totalPages ?? 0,
+  };
+}
+
+function normalizeRecommendedSecurityItem(item) {
+  return {
+    ...normalizeSecurityListItem(item),
+    matchScore: item?.matchScore ?? null,
+    volume: item?.volume ?? null,
+    changeRate: item?.changeRate ?? null,
+  };
+}
+
+function normalizeSecurityRecommendationResponse(response) {
+  return {
+    content: Array.isArray(response?.content)
+      ? response.content.map(normalizeRecommendedSecurityItem)
+      : [],
+    sortFallback: Boolean(response?.sortFallback),
+    appliedSort: response?.appliedSort ?? "volume",
   };
 }
 
@@ -148,6 +168,14 @@ export async function fetchSecurityList(params) {
   const queryString = buildSecurityListQuery(params);
   const response = await get(`${SECURITY_API_PATH}?${queryString}`);
   return normalizeSecurityListResponse(response);
+}
+
+/**
+ * 홈 화면 추천 종목 조회 (주식·주식형 ETF 통합 1 + 채권형 ETF 1, 성향 매칭 순).
+ */
+export async function fetchRecommendedSecurities() {
+  const response = await get(SECURITY_RECOMMENDATIONS_PATH);
+  return normalizeSecurityRecommendationResponse(response);
 }
 
 /**

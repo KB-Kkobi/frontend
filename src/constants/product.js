@@ -97,6 +97,15 @@ export function getProductTypeLabel(productType) {
   return PRODUCT_TYPE_LABELS[normalizeProductType(productType)] ?? "상품";
 }
 
+const PRODUCT_CATEGORY_PILLS = Object.freeze({
+  [PRODUCT_TYPES.DEPOSIT]: { label: "예금", color: "blue" },
+  [PRODUCT_TYPES.SAVING]: { label: "적금", color: "blue" },
+});
+
+export function getProductCategoryPill(productType) {
+  return PRODUCT_CATEGORY_PILLS[normalizeProductType(productType)] ?? null;
+}
+
 export function getProductHoldingStatus(status) {
   return (
     PRODUCT_HOLDING_STATUS_OPTIONS[String(status ?? "").toUpperCase()] ?? {
