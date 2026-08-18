@@ -30,6 +30,11 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  // 건너뛰기 확인 중에는 기존 딤을 유지한 채 이 대화 카드로 가이드 UI를 교체한다.
+  skipConfirmation: {
+    type: Object,
+    default: null,
+  },
   image: {
     type: String,
     required: true,
@@ -132,7 +137,16 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["prev", "next", "confirm", "skip"]);
+const emit = defineEmits([
+  "prev",
+  "next",
+  "confirm",
+  "skip",
+  "skip-cancel",
+  "skip-confirm",
+]);
+
+const isSkipConfirmationVisible = computed(() => !!props.skipConfirmation);
 
 const targetKeys = computed(() => {
   if (!props.target) return [];
@@ -249,7 +263,7 @@ function isElementFullyVisible(el) {
 }
 
 async function prepareTargets(visible, generation) {
-  if (!visible) return;
+  if (!visible || isSkipConfirmationVisible.value) return;
 
   await nextTick();
   if (generation !== measurementGeneration) return;
@@ -297,6 +311,7 @@ function startWatchStatus() {
 watch(
   () => [
     props.visible,
+    isSkipConfirmationVisible.value,
     targetKeys.value.join("|"),
     props.interactionTarget,
     props.centerDock,
@@ -310,16 +325,17 @@ watch(
     props.lightweight,
   ],
   (nextValues, previousValues) => {
-    const [visible, targetSignature, interactionTarget] = nextValues;
+    const [visible, skipConfirmationVisible, targetSignature, interactionTarget] =
+      nextValues;
     const targetChanged =
       !previousValues ||
-      targetSignature !== previousValues[1] ||
-      interactionTarget !== previousValues[2];
+      targetSignature !== previousValues[2] ||
+      interactionTarget !== previousValues[3];
     const generation = ++measurementGeneration;
     stopTracking();
-    if (targetChanged) targetRectMap.value = {};
+    if (skipConfirmationVisible || targetChanged) targetRectMap.value = {};
     stablePlacementSide.value = null;
-    void prepareTargets(visible, generation);
+    void prepareTargets(visible && !skipConfirmationVisible, generation);
   },
   { immediate: true, flush: "sync" },
 );
@@ -340,7 +356,7 @@ const interactionEntries = computed(() =>
 );
 
 watch(
-  () => props.visible && props.lightweight,
+  () => props.visible && !isSkipConfirmationVisible.value && props.lightweight,
   (isWatching) => {
     if (isWatching) {
       startWatchStatus();
@@ -389,7 +405,7 @@ function interactionGeometry(rect) {
 // 현재 DOM에서 실제로 측정된 대상만 그린다. 이전 위치 fallback을 두지 않아
 // activeEntries가 비는 순간 Spotlight도 즉시 사라진다.
 const maskEntries = computed(() =>
-  activeEntries.value.map((entry) => ({
+  (isSkipConfirmationVisible.value ? [] : activeEntries.value).map((entry) => ({
     key: entry.key,
     isCard: CARD_TARGET_KEYS.has(entry.key),
     geo: activeGeometry(entry.rect, entry.key),
@@ -658,13 +674,15 @@ onBeforeUnmount(() => {
         <div
           :class="[
             'absolute inset-0 z-10',
-            dialogRect ? 'pointer-events-none' : 'pointer-events-auto',
+            isSkipConfirmationVisible || !dialogRect
+              ? 'pointer-events-auto'
+              : 'pointer-events-none',
           ]"
           aria-hidden="true"
         ></div>
 
         <button
-          v-if="skipLabel"
+          v-if="!isSkipConfirmationVisible && skipLabel"
           type="button"
           class="pointer-events-auto absolute right-5 top-6 z-30 text-caption font-semibold text-white underline"
           @click="emit('skip')"
@@ -674,7 +692,7 @@ onBeforeUnmount(() => {
 
         <!-- Spotlight에는 leave 전환을 두지 않는다. target 교체 시 이전 링은 즉시
              제거하고, 같은 target의 좌표 변화만 transition-all로 부드럽게 이동한다. -->
-        <div class="absolute inset-0 z-20">
+        <div v-if="!isSkipConfirmationVisible" class="absolute inset-0 z-20">
           <div
             v-for="entry in maskEntries"
             :key="spotlightKey(entry)"
@@ -691,7 +709,7 @@ onBeforeUnmount(() => {
         </div>
 
         <button
-          v-for="entry in allowInteraction ? interactionEntries : []"
+          v-for="entry in !isSkipConfirmationVisible && allowInteraction ? interactionEntries : []"
           :key="`interaction-${entry.key}`"
           type="button"
           class="pointer-events-auto absolute z-30 bg-transparent"
@@ -704,6 +722,7 @@ onBeforeUnmount(() => {
              새 target 측정 중에는 이전 stable 좌표를 유지하고, 준비된 새 좌표로만
              한 번 이동한다. -->
         <div
+          v-if="!isSkipConfirmationVisible"
           ref="dockEl"
           class="pointer-events-none absolute inset-x-0 top-0 z-40 transition-transform duration-300 ease-out"
           :style="dockStyle"
@@ -727,6 +746,35 @@ onBeforeUnmount(() => {
             />
           </div>
         </div>
+
+        <!-- 기존 단계와 동일한 GameTutorialCard를 중앙에 옮겨 건너뛰기 여부를
+             묻는다. 카드 디자인은 유지하고 배경 딤도 같은 Overlay에서 이어진다. -->
+        <Transition
+          enter-active-class="transition duration-150 ease-out"
+          enter-from-class="scale-95 opacity-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-to-class="scale-95 opacity-0"
+        >
+          <div
+            v-if="isSkipConfirmationVisible"
+            class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
+          >
+            <div class="mx-auto w-full max-w-[430px] px-4">
+              <GameTutorialCard
+                :image="skipConfirmation.image"
+                :image-scale="skipConfirmation.imageScale"
+                variant="compact"
+                :title="skipConfirmation.title"
+                :message="skipConfirmation.message"
+                show-prev
+                :prev-label="skipConfirmation.secondaryLabel"
+                :next-label="skipConfirmation.primaryLabel"
+                @prev="emit('skip-confirm')"
+                @next="emit('skip-cancel')"
+              />
+            </div>
+          </div>
+        </Transition>
     </div>
   </Teleport>
 </template>

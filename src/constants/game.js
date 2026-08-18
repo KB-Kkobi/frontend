@@ -135,6 +135,9 @@ export const GAME_TUTORIAL_MESSAGES = {
   // 시작 화면은 인사 문장을 제목처럼 크게 강조해서 보여준다(title/message 분리).
   greetingTitle: (nickname) => `안녕${nickname ? `, ${nickname}` : ""}!`,
   greetingBody: "난 꼬비라고 해!\n게임하는 방법을 하나씩 알려줄게!",
+  skipTitle: "벌써 가려고?",
+  skipBody:
+    "아직 알려줄 내용이 남아 있어!\n그래도 원한다면 튜토리얼을 건너뛸 수 있어.",
   transition: "좋아!\n이제 화면은 다 알아봤어!\n\n이번엔 내가 알려주는 상황에서\n직접 선택해보자!",
   buyMarketNoticeTitle: "주식이 많이 내려갔네!",
   buyMarketNotice: "가격이 많이 내려갔어.\n지금 시장종합지수를 확인해보자!",
