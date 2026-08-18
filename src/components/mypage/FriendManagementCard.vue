@@ -492,23 +492,25 @@ onBeforeUnmount(() => {
               :key="request.friendshipId"
               class="flex items-center gap-3 py-3"
             >
-              <span
-                class="min-w-0 flex-1 truncate text-body text-ink"
-                :title="request.nickname"
-              >
-                {{ request.nickname }}
-              </span>
-              <div class="flex shrink-0 items-center gap-3">
-                <BasePill variant="ghost" label="대기중" />
-                <button
-                  type="button"
-                  class="rounded px-1 py-1 text-caption font-semibold text-pink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 active:opacity-60"
-                  :disabled="cancellingFriendshipId !== null"
-                  @click="handleOpenCancelRequestModal(request)"
+              <div class="flex min-w-0 flex-1 flex-col gap-1">
+                <span
+                  class="truncate text-body font-semibold text-ink"
+                  :title="request.nickname"
                 >
-                  {{ cancellingFriendshipId === request.friendshipId ? "취소 중" : "취소" }}
-                </button>
+                  {{ request.nickname }}
+                </span>
+                <span class="text-caption text-muted">요청 대기 중</span>
               </div>
+              <BasePill
+                as="button"
+                type="button"
+                color="pink"
+                variant="outline"
+                class="shrink-0 active:bg-pink-soft"
+                :label="cancellingFriendshipId === request.friendshipId ? '취소 중' : '요청 취소'"
+                :disabled="cancellingFriendshipId !== null"
+                @click="handleOpenCancelRequestModal(request)"
+              />
             </li>
           </ul>
         </div>
