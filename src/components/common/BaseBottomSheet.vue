@@ -3,9 +3,13 @@ import { watch, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
+  ariaLabelledby: { type: String, default: undefined },
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+let previousBodyOverflow = ''
+let isBodyLocked = false
 
 function close() {
   emit('update:modelValue', false)
@@ -15,11 +19,29 @@ function handleKeydown(e) {
   if (e.key === 'Escape' && props.modelValue) close()
 }
 
+function lockBodyScroll() {
+  if (isBodyLocked) return
+  previousBodyOverflow = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  isBodyLocked = true
+}
+
+function unlockBodyScroll() {
+  if (!isBodyLocked) return
+  document.body.style.overflow = previousBodyOverflow
+  isBodyLocked = false
+}
+
+function handleAfterLeave() {
+  if (!props.modelValue) unlockBodyScroll()
+}
+
 watch(
   () => props.modelValue,
   (open) => {
-    document.body.style.overflow = open ? 'hidden' : ''
+    if (open) lockBodyScroll()
   },
+  { immediate: true },
 )
 
 onMounted(() => {
@@ -28,7 +50,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
+  unlockBodyScroll()
 })
 
 // 드래그 닫기 — 핸들바 영역에서만
@@ -55,13 +77,13 @@ function endDrag(e) {
       />
     </Transition>
 
-    <Transition name="sheet-panel">
+    <Transition name="sheet-panel" @after-leave="handleAfterLeave">
       <section
         v-if="modelValue"
-        class="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[430px] -translate-x-1/2 flex-col overflow-hidden rounded-t-3xl border-t border-line bg-white"
-        style="max-height: 90dvh"
+        class="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-sheet w-full max-w-[430px] flex-col overflow-hidden rounded-t-3xl border-t border-line bg-white"
         role="dialog"
         aria-modal="true"
+        :aria-labelledby="ariaLabelledby"
       >
         <!-- 드래그 핸들 -->
         <div
@@ -86,19 +108,21 @@ function endDrag(e) {
 <style scoped>
 .sheet-dim-enter-active,
 .sheet-dim-leave-active {
-  transition: opacity 250ms ease;
+  transition: opacity 200ms ease;
 }
 .sheet-dim-enter-from,
 .sheet-dim-leave-to {
   opacity: 0;
 }
 
-.sheet-panel-enter-active,
+.sheet-panel-enter-active {
+  transition: transform 200ms ease-out;
+}
 .sheet-panel-leave-active {
-  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition: transform 200ms ease-in;
 }
 .sheet-panel-enter-from,
 .sheet-panel-leave-to {
-  transform: translateY(100%);
+  transform: translate3d(0, 100%, 0);
 }
 </style>

@@ -68,7 +68,11 @@ watch(
 </script>
 
 <template>
-  <BaseBottomSheet :model-value="open" @update:model-value="emit('update:open', $event)">
+  <BaseBottomSheet
+    :model-value="open"
+    aria-labelledby="filter-sheet-title"
+    @update:model-value="emit('update:open', $event)"
+  >
     <div class="flex flex-col gap-6 py-2">
       <!-- 헤더 -->
       <header class="flex items-center justify-between gap-4">

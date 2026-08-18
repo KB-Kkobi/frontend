@@ -55,6 +55,7 @@
 - 허용 값만: `gap-2`(8px) / `gap-4`(16px) / `gap-6`(24px), 카드 `p-4`, 버튼 `py-3 px-4`, 페이지 좌우 `px-5`, 모달 `pt-8 px-4 pb-4`(상단만 32px로 여유), pill `py-pill-y px-pill-x`(6px × 12px), 세그먼트 트랙 `p-segment-p`(4px). 어중간한 값(`p-3.5`, `mt-7`) 금지.
 - 컴포넌트 사이 간격은 부모가 `flex flex-col gap-*`으로 관리 (컴포넌트에 `margin` 넣지 않기).
 - 페이지는 `PageContainer`로 폭 고정 → `mx-auto w-full max-w-[430px] px-5`. breakpoint(`sm:` 등) 거의 불필요.
+- Bottom Sheet 최대 높이는 `max-h-sheet`(90dvh)를 사용하고, 넘치는 내용은 내부에서 스크롤한다.
 
 ## 공통 컴포넌트
 
@@ -66,6 +67,8 @@
 | `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop. `#actions` named slot으로 우측 상단 아이콘(알림 벨 등) 배치 가능 |
 | `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
+| `BaseBottomSheet` | 화면 하단에 고정되어 아래에서 위로 열리는 모바일 시트. `v-model`로 열림 상태를 관리하며 overlay 클릭·Escape·핸들 드래그로 닫기 지원. 최대 높이 `max-h-sheet`, 내부 스크롤 적용 |
+| `FilterSheet`   | 필터 그룹을 공통 Bottom Sheet로 표시. `open`/`groups`/`modelValue` props, `@update:open`/`@apply`/`@reset` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |

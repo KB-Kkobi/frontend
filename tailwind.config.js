@@ -93,6 +93,7 @@ export default {
       },
 
       maxHeight: {
+        sheet: "90dvh",
         "tutorial-card": "38dvh",
         "notification-panel": "380px",
       },
