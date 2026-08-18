@@ -2,7 +2,6 @@ import { ref, computed, watch } from 'vue'
 import { usePriceFeed } from '@/composables/usePriceFeed'
 import { fetchOrderable, createOrder } from '@/api/trade'
 import { ORDER_TYPE, ORDER_METHOD, ORDER_STATUS, ORDER_ERROR_MESSAGE } from '@/constants/trade'
-import { formatCurrency } from '@/utils/format'
 
 /**
  * 매매 주문 관련 상태·로직 composable.
@@ -20,7 +19,6 @@ export function useTradeOrder({ securityId, ticker }) {
   const limitPrice = ref(null)
   const isLoading = ref(false)
   const isSubmitting = ref(false)
-  const showConfirmModal = ref(false)
   const orderError = ref(null)
   const orderableInfo = ref({
     orderableCash: null,
@@ -43,14 +41,6 @@ export function useTradeOrder({ securityId, ticker }) {
     if (method.value === 'market') return orderableInfo.value.maxBuyQuantityAtMarket ?? 0
     if (!limitPrice.value || !orderableInfo.value.orderableCash) return 0
     return Math.floor(orderableInfo.value.orderableCash / limitPrice.value)
-  })
-
-  const confirmMessage = computed(() => {
-    if (!orderAmount.value) return ''
-    if (method.value === 'market') {
-      return `예상 체결금액 ${formatCurrency(orderAmount.value)}\n(실제 체결가는 다를 수 있습니다)`
-    }
-    return `${formatCurrency(orderAmount.value)}에 주문을 접수합니다`
   })
 
   const buttonLabel = computed(() => (side.value === 'buy' ? '매수하기' : '매도하기'))
@@ -107,26 +97,23 @@ export function useTradeOrder({ securityId, ticker }) {
     }
   }
 
-  function handleOpenConfirm() {
-    orderError.value = null
-    if (quantity.value <= 0) {
-      orderError.value = ORDER_ERROR_MESSAGE.INVALID_QUANTITY
-      return
-    }
-    if (method.value === 'limit' && !limitPrice.value) {
-      orderError.value = ORDER_ERROR_MESSAGE.PRICE_REQUIRED_FOR_LIMIT
-      return
-    }
-    showConfirmModal.value = true
-  }
-
   /**
    * 주문 실행.
    * @returns {{ status: string, message: string } | null} 성공 시 객체, 실패 시 null
    */
   async function submitOrder() {
-    isSubmitting.value = true
     orderError.value = null
+
+    if (quantity.value <= 0) {
+      orderError.value = ORDER_ERROR_MESSAGE.INVALID_QUANTITY
+      return null
+    }
+    if (method.value === 'limit' && !limitPrice.value) {
+      orderError.value = ORDER_ERROR_MESSAGE.PRICE_REQUIRED_FOR_LIMIT
+      return null
+    }
+
+    isSubmitting.value = true
 
     try {
       await loadOrderable()
@@ -175,7 +162,6 @@ export function useTradeOrder({ securityId, ticker }) {
     quantity.value = 1
     limitPrice.value = currentPrice.value ?? null
     orderError.value = null
-    showConfirmModal.value = false
     orderableInfo.value = {
       orderableCash: null,
       sellableQuantity: null,
@@ -196,19 +182,16 @@ export function useTradeOrder({ securityId, ticker }) {
     isLoading,
     isSubmitting,
     orderError,
-    showConfirmModal,
     orderableInfo,
     // computed
     pricePerShare,
     orderAmount,
     maxQuantity,
-    confirmMessage,
     buttonLabel,
     buttonColor,
     isButtonDisabled,
     // 함수
     loadOrderable,
-    handleOpenConfirm,
     submitOrder,
     resetState,
   }

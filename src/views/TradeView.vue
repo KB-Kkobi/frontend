@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseCard from '@/components/common/BaseCard.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
 import BottomButton from '@/components/common/BottomButton.vue'
 import BackButton from '@/components/common/BackButton.vue'
 import TradeSideToggle from '@/components/trade/TradeSideToggle.vue'
@@ -16,7 +15,6 @@ import { usePriceFeed } from '@/composables/usePriceFeed'
 import { fetchOrderable, createOrder } from '@/api/trade'
 import { fetchSecurityDetail } from '@/api/securityApi'
 import { ORDER_TYPE, ORDER_METHOD, ORDER_STATUS, ORDER_ERROR_MESSAGE } from '@/constants/trade'
-import { formatCurrency } from '@/utils/format'
 
 // ── 라우트 ───────────────────────────────────────────────────────────────────
 const route = useRoute()
@@ -36,7 +34,6 @@ const quantity = ref(1)
 const limitPrice = ref(null)
 const isLoading = ref(false)
 const isSubmitting = ref(false)
-const showConfirmModal = ref(false)
 const orderError = ref(null)
 const orderableInfo = ref({
   orderableCash: null,
@@ -65,14 +62,6 @@ const maxQuantity = computed(() => {
   // 매수 + 지정가
   if (!limitPrice.value || !orderableInfo.value.orderableCash) return 0
   return Math.floor(orderableInfo.value.orderableCash / limitPrice.value)
-})
-
-const confirmMessage = computed(() => {
-  if (!orderAmount.value) return ''
-  if (method.value === 'market') {
-    return `예상 체결금액 ${formatCurrency(orderAmount.value)}\n(실제 체결가는 다를 수 있습니다)`
-  }
-  return `${formatCurrency(orderAmount.value)}에 주문을 접수합니다`
 })
 
 const buttonLabel = computed(() => (side.value === 'buy' ? '매수하기' : '매도하기'))
@@ -127,8 +116,9 @@ async function loadOrderable() {
   }
 }
 
-function handleOpenConfirm() {
+async function submitOrder() {
   orderError.value = null
+
   if (quantity.value <= 0) {
     orderError.value = ORDER_ERROR_MESSAGE.INVALID_QUANTITY
     return
@@ -137,12 +127,8 @@ function handleOpenConfirm() {
     orderError.value = ORDER_ERROR_MESSAGE.PRICE_REQUIRED_FOR_LIMIT
     return
   }
-  showConfirmModal.value = true
-}
 
-async function submitOrder() {
   isSubmitting.value = true
-  orderError.value = null
 
   try {
     // 주문 직전 최신 주문가능 정보 재조회
@@ -254,19 +240,9 @@ loadOrderable().finally(() => {
     <BottomButton
       :color="buttonColor"
       :disabled="isButtonDisabled"
-      @click="handleOpenConfirm"
+      @click="submitOrder"
     >
       {{ buttonLabel }}
     </BottomButton>
   </div>
-
-  <!-- 주문 확인 모달 -->
-  <BaseModal
-    v-model="showConfirmModal"
-    :message="confirmMessage"
-    :confirm-text="buttonLabel"
-    :confirm-color="buttonColor"
-    cancel-text="취소"
-    @confirm="submitOrder"
-  />
 </template>
