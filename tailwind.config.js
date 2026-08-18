@@ -80,6 +80,7 @@ export default {
       },
 
       maxHeight: {
+        sheet: "90dvh",
         "tutorial-card": "38dvh",
       },
 
