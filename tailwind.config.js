@@ -1,5 +1,5 @@
 /**
- * 결투 디자인 토큰 — Tailwind Config
+ * 누리 디자인 토큰 — Tailwind Config
  * -------------------------------------------------------------
  * 팀 공통 팔레트 / 타이포. 원시 hex(#FF6B9D 등)를 직접 쓰지 말고
  * 아래 시맨틱 클래스를 사용하세요.
@@ -76,6 +76,15 @@ export default {
         "pill-y": "6px",
         "pill-x": "12px",
         "segment-p": "4px",
+        "tutorial-card-y": "6px",
+      },
+
+      maxHeight: {
+        "tutorial-card": "38dvh",
+      },
+
+      gridTemplateColumns: {
+        "tutorial-card": "minmax(0, 96px) minmax(0, 1fr)",
       },
 
       boxShadow: {
@@ -83,6 +92,57 @@ export default {
         card: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
         highlight: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
         popup: "0 10px 26px 0 rgba(214, 180, 90, 0.09)",
+        // 어둡게 딤 처리된 배경(게임 튜토리얼 오버레이) 위에 뜨는 카드용.
+        // card/popup은 밝은 배경 기준 톤이라 딤 배경 위에서는 거의 안 보여서 별도 정의.
+        float: "0 10px 24px 0 rgba(0, 0, 0, 0.16)",
+      },
+
+      // ── 게임 튜토리얼 연출용 키프레임 ──
+      // (스포트라이트 강조와 캐릭터의 가벼운 idle 연출에 사용)
+      keyframes: {
+        // 일반 설명 단계에서 포커스가 바뀔 때 한 번만 나타나는 강조.
+        // 링(1레이어) 위에 흐린 글로우(2레이어)를 겹쳐 "테두리+은은한 발광" 느낌을 낸다.
+        "tutorial-focus-in": {
+          "0%": {
+            boxShadow: "0 0 0 2px rgba(255, 107, 157, 0), 0 0 0 0 rgba(255, 107, 157, 0)",
+            opacity: "0",
+          },
+          "100%": {
+            boxShadow: "0 0 0 4px rgba(255, 107, 157, 0.24), 0 0 24px 6px rgba(255, 107, 157, 0.28)",
+            opacity: "1",
+          },
+        },
+        // 관찰 단계에서 가격 tick과 함께 한 번 재생되는 부드러운 pulse.
+        "tutorial-observe": {
+          "0%": {
+            boxShadow: "0 0 0 3px rgba(255, 107, 157, 0.18), 0 0 16px 2px rgba(255, 107, 157, 0.14)",
+          },
+          "45%": {
+            boxShadow: "0 0 0 8px rgba(255, 107, 157, 0.2), 0 0 30px 8px rgba(255, 107, 157, 0.24)",
+          },
+          "100%": {
+            boxShadow: "0 0 0 4px rgba(255, 107, 157, 0.24), 0 0 24px 6px rgba(255, 107, 157, 0.28)",
+          },
+        },
+        "tutorial-watch-beacon": {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.55" },
+          "50%": { transform: "scale(1.2)", opacity: "1" },
+        },
+        // 꼬비의 아주 약한 idle 둥실거림
+        "char-float": {
+          "0%, 100%": {
+            transform: "translateY(0) scale(var(--kkobi-scale, 1))",
+          },
+          "50%": {
+            transform: "translateY(-4px) scale(var(--kkobi-scale, 1))",
+          },
+        },
+      },
+      animation: {
+        "tutorial-focus-in": "tutorial-focus-in 0.35s ease-out both",
+        "tutorial-observe": "tutorial-observe 0.7s ease-out both",
+        "tutorial-watch-beacon": "tutorial-watch-beacon 1.2s ease-in-out infinite",
+        "char-float": "char-float 3.2s ease-in-out infinite",
       },
     },
   },

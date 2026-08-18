@@ -1,21 +1,44 @@
 <script setup>
-import { computed, onActivated, onMounted } from 'vue'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BaseCard from '@/components/common/BaseCard.vue'
+import BaseToast from '@/components/common/BaseToast.vue'
 import BottomButton from '@/components/common/BottomButton.vue'
 import AssetCompositionCard from '@/components/virtual/AssetCompositionCard.vue'
-import ProductHoldingCard from '@/components/product/ProductHoldingCard.vue'
+import HoldingPreviewSection from '@/components/virtual/HoldingPreviewSection.vue'
+import StockHoldingRow from '@/components/virtual/StockHoldingRow.vue'
+import ProductHoldingPreviewRow from '@/components/product/ProductHoldingPreviewRow.vue'
+import { INITIAL_SEED_MONEY } from '@/constants/account'
+import { PRODUCT_TYPES } from '@/constants/product'
 import { formatCurrency, formatRate, formatSignedCurrency } from '@/utils/format'
 import { useVirtualAssets } from '@/composables/useVirtualAssets'
+
+// 자산현황 대시보드에서 미리보기로 노출하는 보유자산 최대 개수
+const HOLDING_PREVIEW_LIMIT = 3
+
+// 완료 직후 쿼리로 전달되는 알림. 한 번에 하나만 노출된다.
+const COMPLETION_TOASTS = {
+  started: {
+    title: '가상투자 계좌가 만들어졌어요',
+    description: `초기 자산 ${formatCurrency(INITIAL_SEED_MONEY)}이 계좌에 반영됐습니다.`,
+  },
+  subscribed: {
+    title: '상품 가입이 완료됐어요',
+    description: '사용 가능한 현금과 보유 예금·적금 목록을 다시 불러왔습니다.',
+  },
+  terminated: {
+    title: '상품 해지가 완료됐어요',
+    description: '반환 금액과 변경된 자산 비중을 다시 불러왔습니다.',
+  },
+}
 
 const route = useRoute()
 const router = useRouter()
 
 const { account, stockHoldings, productHoldings, isLoading, isAccountMissing, errorMessage, loadAssets } = useVirtualAssets()
 
-const hasJustStarted = computed(() => route.query.started === 'true')
-const hasJustSubscribed = computed(() => route.query.subscribed === 'true')
-const hasJustTerminated = computed(() => route.query.terminated === 'true')
+const isToastVisible = ref(false)
+const toastContent = ref({ title: '', description: '' })
 
 const profitColorClass = computed(() => {
   const profit = Number(account.value?.totalProfit)
@@ -25,50 +48,71 @@ const profitColorClass = computed(() => {
   return 'text-muted'
 })
 
-function handleStart() {
-  router.push({ name: 'virtual-start' })
+const stockPreview = computed(() => stockHoldings.value.slice(0, HOLDING_PREVIEW_LIMIT))
+const productPreview = computed(() => productHoldings.value.slice(0, HOLDING_PREVIEW_LIMIT))
+const investedAmount = computed(() => {
+  const stockAsset = Number(account.value?.stockAsset)
+  const savingsAsset = Number(account.value?.savingsAsset)
+
+  return (
+    (Number.isFinite(stockAsset) ? stockAsset : 0) +
+    (Number.isFinite(savingsAsset) ? savingsAsset : 0)
+  )
+})
+
+// 계좌가 없는 사용자는 자산현황 대신 가상투자 시작 화면을 먼저 보여준다.
+watch(isAccountMissing, (missing) => {
+  if (missing) router.replace({ name: 'virtual-start' })
+})
+
+// 완료 알림을 한 번만 띄우고, 재진입 시 다시 뜨지 않도록 쿼리를 정리한다.
+function showCompletionToastIfNeeded() {
+  const toastKey = Object.keys(COMPLETION_TOASTS).find(
+    (key) => route.query[key] === 'true',
+  )
+  if (!toastKey) return
+
+  toastContent.value = COMPLETION_TOASTS[toastKey]
+  isToastVisible.value = true
+
+  const query = { ...route.query }
+  delete query[toastKey]
+  router.replace({ query })
 }
 
-function handleBrowseProducts() {
-  router.push({ name: 'products' })
+function handleBrowseStocks() {
+  router.push({ name: 'virtual-products' })
+}
+
+function handleBrowseSavings() {
+  router.push({
+    name: 'virtual-products',
+    query: { tab: PRODUCT_TYPES.DEPOSIT },
+  })
+}
+
+function handleSelectStock(holding) {
+  if (!holding.ticker) return
+  router.push({
+    name: 'security-detail',
+    params: { pk: holding.ticker },
+    query: { tradable: 'true' },
+  })
 }
 
 function handleSelectHolding(holding) {
   router.push({ name: 'product-holding-detail', params: { holdingProductId: holding.holdingProductId } })
 }
 
-function handleHoldingTrade(holding) {
-  if (!holding.securityId) return
-  router.push({
-    name: 'virtual-trade',
-    params: { securityId: holding.securityId },
-    query: { ticker: holding.ticker },
-  })
-}
+onMounted(() => {
+  loadAssets()
+  showCompletionToastIfNeeded()
+})
 
-function holdingAvgPrice(holding) {
-  return holding.averagePrice ?? null
-}
-
-function holdingProfitRate(holding) {
-  if (holding.profitRate !== undefined && holding.profitRate !== null) return holding.profitRate
-  const avg = holdingAvgPrice(holding)
-  if (holding.currentPrice !== null && avg) {
-    return ((holding.currentPrice - avg) / avg) * 100
-  }
-  return null
-}
-
-function holdingProfitColorClass(holding) {
-  const rate = holdingProfitRate(holding)
-  if (rate === null) return 'text-muted'
-  if (rate > 0) return 'text-profit'
-  if (rate < 0) return 'text-loss'
-  return 'text-muted'
-}
-
-onMounted(loadAssets)
-onActivated(loadAssets)
+onActivated(() => {
+  loadAssets()
+  showCompletionToastIfNeeded()
+})
 </script>
 
 <template>
@@ -92,67 +136,50 @@ onActivated(loadAssets)
       </div>
     </BaseCard>
 
-    <!-- 계좌 없을 때 -->
-    <template v-else-if="isAccountMissing">
-      <BaseCard color="white">
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-2">
-            <p class="text-caption font-semibold text-navy">처음이신가요?</p>
-            <h2 class="text-h2 text-ink">가상투자 계좌를 먼저 만들어 주세요</h2>
-            <p class="text-caption text-muted">초기 자산과 매월 투자할 금액을 정하면 실제 데이터가 저장된 연습 계좌를 준비해 드려요.</p>
-          </div>
-          <BottomButton color="pink" @click="handleStart">가상투자 시작하기</BottomButton>
-        </div>
-      </BaseCard>
-    </template>
+    <!-- 계좌 없을 때는 가상투자 시작 화면으로 이동하므로 별도 렌더링하지 않는다 -->
 
     <!-- 계좌 있을 때 -->
     <template v-else-if="account">
-      <!-- 가입/해지 완료 알림 -->
-      <BaseCard v-if="hasJustStarted" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">가상투자 계좌가 만들어졌어요</h2>
-          <p class="text-caption text-muted">입력한 초기 자산이 계좌에 반영됐습니다.</p>
-        </div>
-      </BaseCard>
-      <BaseCard v-if="hasJustSubscribed" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">상품 가입이 완료됐어요</h2>
-          <p class="text-caption text-muted">사용 가능한 현금과 보유 예금·적금 목록을 서버에서 다시 불러왔습니다.</p>
-        </div>
-      </BaseCard>
-      <BaseCard v-if="hasJustTerminated" color="green">
-        <div class="flex flex-col gap-2" role="status">
-          <h2 class="text-h2 text-ink">상품 해지가 완료됐어요</h2>
-          <p class="text-caption text-muted">반환 금액과 변경된 자산 비중을 서버에서 다시 불러왔습니다.</p>
-        </div>
-      </BaseCard>
-
-      <!-- 계좌 요약 -->
+      <!-- 계좌 요약: 총 자산을 가장 크게, 손익·수익률은 같은 기준선으로 정렬 -->
       <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
-          <div class="flex items-center justify-between gap-4">
-            <h2 class="text-h2 text-ink">내 가상투자 계좌</h2>
-            <span class="rounded-xl bg-blue px-pill-x py-pill-y text-caption font-semibold text-white">연습 계좌</span>
-          </div>
+          <h2 class="text-h2 text-ink">내 가상투자 계좌</h2>
           <div class="flex flex-col gap-2">
             <span class="text-caption text-muted">총 자산</span>
             <strong class="text-amount text-ink tabular-nums">{{ formatCurrency(account.totalAsset) }}</strong>
           </div>
-          <div class="grid grid-cols-2 gap-4 border-t border-line pt-4">
+          <dl class="grid grid-cols-2 gap-4 border-t border-line-soft pt-4">
             <div class="flex flex-col gap-2">
+              <dt class="text-caption text-muted">사용 가능</dt>
+              <dd class="text-h2 text-ink tabular-nums">
+                {{ formatCurrency(account.cashBalance) }}
+              </dd>
+            </div>
+            <div class="flex flex-col gap-2 border-l border-line-soft pl-4">
+              <dt class="text-caption text-muted">투자 중</dt>
+              <dd class="text-h2 text-ink tabular-nums">
+                {{ formatCurrency(investedAmount) }}
+              </dd>
+            </div>
+          </dl>
+          <div class="flex items-baseline justify-between gap-4 border-t border-line-soft pt-4">
+            <div class="flex items-baseline gap-2">
               <span class="text-caption text-muted">누적 손익</span>
               <strong :class="[profitColorClass, 'text-body tabular-nums']">
                 {{ formatSignedCurrency(account.totalProfit) }}
               </strong>
             </div>
-            <div class="flex flex-col gap-2 text-right">
+            <div class="flex items-baseline gap-2">
               <span class="text-caption text-muted">수익률</span>
               <strong :class="[profitColorClass, 'text-body tabular-nums']">
                 {{ formatRate(Number(account.totalReturnRate)) }}
               </strong>
             </div>
           </div>
+          <p class="flex items-start gap-2 text-caption text-muted tracking-tight">
+            <span aria-hidden="true">ⓘ</span>
+            <span>실제 돈이 사용되지 않는 가상투자 서비스예요.</span>
+          </p>
         </div>
       </BaseCard>
 
@@ -166,97 +193,51 @@ onActivated(loadAssets)
         :savings-ratio="Number(account.savingsRatio)"
       />
 
-      <!-- 보유 종목 -->
-      <section class="flex flex-col gap-4">
-        <h2 class="text-h2 text-ink">보유 종목</h2>
-        <BaseCard v-if="stockHoldings.length === 0" color="white" elevation="flat">
-          <div class="flex flex-col gap-2">
-            <p class="text-body text-muted tracking-tight">보유 중인 종목이 없어요</p>
-            <p class="text-caption text-muted tracking-tight">상품 탭에서 종목을 찾아 투자해 보세요.</p>
-          </div>
-        </BaseCard>
-        <BaseCard
-          v-for="holding in stockHoldings"
-          :key="holding.securityId ?? holding.ticker"
-          color="white"
-          elevation="flat"
-        >
-          <div class="flex flex-col gap-4">
-            <div class="flex items-start justify-between">
-              <div class="flex flex-col gap-2">
-                <span class="text-h2 text-ink tracking-tight">{{ holding.name ?? holding.ticker }}</span>
-                <span class="text-caption text-muted">{{ holding.ticker }}</span>
-              </div>
-              <div class="flex flex-col items-end gap-2">
-                <span class="text-body text-ink tabular-nums">
-                  {{ holding.currentPrice !== null && holding.currentPrice !== undefined ? formatCurrency(holding.currentPrice) : '--' }}
-                </span>
-                <span :class="['text-caption tabular-nums', holdingProfitColorClass(holding)]">
-                  {{ holdingProfitRate(holding) !== null ? formatRate(holdingProfitRate(holding)) : '--' }}
-                </span>
-              </div>
-            </div>
-            <div class="flex gap-4 border-t border-line pt-4">
-              <div class="flex flex-1 flex-col gap-2">
-                <span class="text-caption text-muted">보유 수량</span>
-                <span class="text-body font-semibold tabular-nums">{{ holding.quantity }}주</span>
-              </div>
-              <div class="flex flex-1 flex-col gap-2">
-                <span class="text-caption text-muted">평균 단가</span>
-                <span class="text-body font-semibold tabular-nums">
-                  {{ holdingAvgPrice(holding) !== null ? formatCurrency(holdingAvgPrice(holding)) : '--' }}
-                </span>
-              </div>
-              <div class="flex flex-1 flex-col gap-2">
-                <span class="text-caption text-muted">평가 금액</span>
-                <span class="text-body font-semibold tabular-nums">
-                  {{ holding.valuationAmount !== null && holding.valuationAmount !== undefined
-                    ? formatCurrency(holding.valuationAmount)
-                    : (holding.currentPrice !== null && holding.quantity
-                      ? formatCurrency(holding.currentPrice * holding.quantity)
-                      : '--') }}
-                </span>
-              </div>
-            </div>
-            <BottomButton v-if="holding.securityId" color="pink" @click="handleHoldingTrade(holding)">
-              매수 / 매도
-            </BottomButton>
-          </div>
-        </BaseCard>
-      </section>
+      <!-- 보유 주식 미리보기 -->
+      <HoldingPreviewSection
+        title="보유 주식"
+        :more-to="{ name: 'stock-holdings' }"
+        more-label="내 주식 보기"
+        :show-more="stockHoldings.length > 0"
+        :items="stockPreview"
+        :item-key="(item) => item.securityId ?? item.ticker"
+        empty-title="아직 보유한 주식이 없어요"
+        empty-description="가상 자산으로 첫 주식 투자를 시작해보세요."
+        empty-action-label="주식 투자해보기"
+        @select-item="handleSelectStock"
+        @empty-action="handleBrowseStocks"
+      >
+        <template #item="{ item }">
+          <StockHoldingRow :holding="item" />
+        </template>
+      </HoldingPreviewSection>
 
-      <!-- 보유 예금·적금 -->
-      <section class="flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-4">
-          <h2 class="text-h2 text-ink">보유 예금·적금</h2>
-          <span class="text-caption text-muted tabular-nums">{{ productHoldings.length }}개</span>
-        </div>
-        <div v-if="productHoldings.length" class="flex flex-col gap-4">
-          <ProductHoldingCard
-            v-for="holding in productHoldings"
-            :key="holding.holdingProductId"
-            :holding="holding"
-            @select="handleSelectHolding"
-          />
-        </div>
-        <BaseCard v-else color="yellow">
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <h3 class="text-h2 text-ink">아직 가입한 예금·적금이 없어요</h3>
-              <p class="text-caption text-muted">상품 탭에서 실제 상품 정보를 살펴보고 가입해 보세요.</p>
-            </div>
-            <BottomButton color="white" @click="handleBrowseProducts">상품 살펴보기</BottomButton>
-          </div>
-        </BaseCard>
-      </section>
+      <!-- 보유 예·적금 미리보기 -->
+      <HoldingPreviewSection
+        title="보유 예·적금"
+        :more-to="{ name: 'product-holdings' }"
+        more-label="내 예·적금 보기"
+        :show-more="productHoldings.length > 0"
+        :items="productPreview"
+        :item-key="(item) => item.holdingProductId"
+        empty-title="가입한 예·적금이 없어요"
+        empty-description="가상 자산으로 첫 예·적금 가입을 시작해보세요."
+        empty-action-label="예·적금 가입해보기"
+        @select-item="handleSelectHolding"
+        @empty-action="handleBrowseSavings"
+      >
+        <template #item="{ item }">
+          <ProductHoldingPreviewRow :holding="item" />
+        </template>
+      </HoldingPreviewSection>
     </template>
 
-    <!-- 안내 배너 -->
-    <BaseCard color="blue">
-      <div class="flex flex-col gap-2">
-        <h2 class="text-h2 text-ink">실제 돈은 사용되지 않아요</h2>
-        <p class="text-caption text-muted">가상의 자산과 실제 상품 정보로 투자 감각을 익히는 연습 서비스예요.</p>
-      </div>
-    </BaseCard>
+    <!-- 계좌 생성·상품 가입·해지 완료 토스트 -->
+    <BaseToast
+      v-model="isToastVisible"
+      :title="toastContent.title"
+      :description="toastContent.description"
+      offset="header"
+    />
   </div>
 </template>

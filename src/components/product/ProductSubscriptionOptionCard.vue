@@ -13,6 +13,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  elevation: {
+    type: String,
+    default: "default",
+  },
 });
 
 const emit = defineEmits(["select"]);
@@ -42,7 +46,7 @@ function handleSelect() {
     @keydown.enter.prevent="handleSelect"
     @keydown.space.prevent="handleSelect"
   >
-    <BaseCard :color="isSelected ? 'pink' : 'white'">
+    <BaseCard :color="isSelected ? 'pink' : 'white'" :elevation="elevation">
       <div class="flex items-center justify-between gap-4">
         <div class="flex flex-col gap-2">
           <strong class="text-h2 text-ink tabular-nums">

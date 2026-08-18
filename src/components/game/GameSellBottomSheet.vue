@@ -32,6 +32,16 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  dismissible: {
+    type: Boolean,
+    default: true,
+  },
+  // 튜토리얼이 시트 위에 안내 카드를 띄울 공간이 부족할 때만 그만큼 위로 들어올린다.
+  // 평상시(튜토리얼 밖)에는 0이라 기존 위치 그대로다.
+  liftPx: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'submit']);
@@ -62,6 +72,7 @@ const profitColorClass = computed(() => {
 });
 
 function closeSheet() {
+  if (!props.dismissible) return;
   quantity.value = 1;
   emit('update:modelValue', false);
 }
@@ -136,11 +147,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
         type="button"
         class="fixed inset-0 z-40 bg-transparent"
         aria-label="매도 창 닫기"
+        :disabled="!dismissible"
         @click="closeSheet"
       ></button>
 
       <section
-        class="game-sell-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pb-5 pt-3 shadow-popup"
+        data-tutorial-target="sell-order-card"
+        class="fixed inset-x-0 z-50 mx-auto flex max-h-[85dvh] max-w-[430px] flex-col gap-4 overflow-y-auto rounded-t-3xl bg-white px-5 pb-5 pt-3 shadow-popup"
+        :style="{ bottom: `${liftPx}px` }"
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-sell-title"
@@ -149,12 +163,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           type="button"
           class="mx-auto h-1.5 w-12 rounded-full bg-line"
           aria-label="매도 창 닫기"
+          :disabled="!dismissible"
           @click="closeSheet"
         ></button>
 
-        <h2 id="game-sell-title" class="text-amount text-ink">종목 A 매도</h2>
+        <h2 id="game-sell-title" class="text-amount text-navy">종목 A 매도</h2>
 
-        <div class="flex items-center justify-between gap-4">
+        <div data-tutorial-target="sell-price" class="flex items-center justify-between gap-4">
           <span class="text-h2 text-muted">매도 가격</span>
           <div class="flex items-baseline gap-2">
             <strong class="text-h1 text-ink tabular-nums">
@@ -164,7 +179,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div data-tutorial-target="sell-quantity" class="flex gap-3">
           <label class="sr-only" for="game-sell-quantity">매도 수량</label>
           <div
             class="flex h-12 min-w-0 flex-1 items-center gap-1 rounded-2xl border border-line bg-white px-5"
@@ -223,7 +238,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
         </div>
 
         <div class="flex flex-col gap-2 border-t border-line pt-4">
-          <div class="flex items-center justify-between gap-4">
+          <div
+            data-tutorial-target="sell-amount"
+            class="flex items-center justify-between gap-4"
+          >
             <span class="text-h2 text-muted">총 매도 금액</span>
             <strong class="text-amount text-ink tabular-nums">
               {{ formatCurrency(saleAmount) }}
@@ -259,6 +277,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
         </p>
 
         <BottomButton
+          data-tutorial-target="sell-submit"
           color="blue"
           :disabled="!canSubmit || isSubmitting"
           @click="submitOrder"
@@ -277,10 +296,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
 </template>
 
 <style scoped>
-.game-sell-sheet {
-  box-shadow: 0 -10px 28px rgb(15 23 42 / 12%);
-}
-
 .game-sell-quantity {
   appearance: textfield;
 }

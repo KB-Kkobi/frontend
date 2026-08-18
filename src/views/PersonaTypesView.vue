@@ -3,7 +3,9 @@ import { ref, onMounted } from "vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import HelpButton from "@/components/common/HelpButton.vue";
 import PersonaTypeCard from "@/components/assessment/PersonaTypeCard.vue";
+import AxisHelpPopover from "@/components/assessment/AxisHelpPopover.vue";
 import { fetchPersonas } from "@/api/personaApi";
 import { ApiError } from "@/api/http";
 
@@ -13,6 +15,7 @@ const SUBTITLE =
 const personas = ref([]);
 const isLoading = ref(true);
 const errorMessage = ref("");
+const isHelpOpen = ref(false);
 
 async function loadPersonas() {
   isLoading.value = true;
@@ -28,20 +31,28 @@ async function loadPersonas() {
   }
 }
 
+function openHelp() {
+  isHelpOpen.value = true;
+}
+
 onMounted(loadPersonas);
 </script>
 
 <template>
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <div class="flex items-center gap-2">
+      <div class="grid grid-cols-[40px_1fr_40px] items-center">
         <BackButton />
-        <h1 class="text-h1 text-ink">성향 진단 리포트</h1>
+        <h1 class="text-h1 text-ink text-center">8가지 투자 성향</h1>
+        <div aria-hidden="true"></div>
       </div>
 
-      <div class="flex flex-col gap-2">
-        <h2 class="text-h1 font-bold text-navy">8가지 투자 성향</h2>
+      <div class="flex items-start gap-1">
         <p class="whitespace-pre-line text-caption text-muted">{{ SUBTITLE }}</p>
+        <div class="relative shrink-0">
+          <HelpButton aria-label="투자 성향 3축 설명 보기" @click="openHelp" />
+          <AxisHelpPopover v-model="isHelpOpen" />
+        </div>
       </div>
 
       <BaseCard v-if="isLoading" color="white">

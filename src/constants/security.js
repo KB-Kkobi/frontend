@@ -17,14 +17,27 @@ export const SECURITY_TYPE_FILTER_OPTIONS = Object.freeze([
   { value: SECURITY_TYPES.EQUITY_ETF, label: SECURITY_TYPE_LABELS[SECURITY_TYPES.EQUITY_ETF] },
 ]);
 
-export const SECURITY_LIST_SIZE_OPTIONS = Object.freeze([20, 50, 100]);
+export const SECURITY_LIST_SIZE_OPTIONS = Object.freeze([10, 20, 50, 100]);
 
 export const SECURITY_LIST_MAX_SIZE = 100;
 
 export const SECURITY_LIST_DEFAULTS = Object.freeze({
   page: 1,
   size: SECURITY_LIST_SIZE_OPTIONS[0],
+  sort: "match",
 });
+
+export const SECURITY_SORT_OPTIONS = Object.freeze([
+  { value: "match",  label: "매칭순" },
+  { value: "volume", label: "거래량순" },
+  { value: "name",   label: "종목명순" },
+]);
+
+export const SECURITY_FILTER_TYPE_OPTIONS = Object.freeze([
+  { value: SECURITY_TYPES.STOCK, label: "주식" },
+  { value: SECURITY_TYPES.BOND_ETF, label: "채권형 ETF" },
+  { value: SECURITY_TYPES.EQUITY_ETF, label: "주식형 ETF" },
+]);
 
 export const SECURITY_QUOTE_MAX_TICKERS = 100;
 

@@ -1,8 +1,9 @@
 <script setup>
+import { computed } from 'vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import AssetCompositionRow from '@/components/virtual/AssetCompositionRow.vue'
 
-defineProps({
+const props = defineProps({
   cashBalance: {
     type: Number,
     default: null,
@@ -28,33 +29,74 @@ defineProps({
     required: true,
   },
 })
+
+function normalizeRatio(value) {
+  const ratio = Number(value)
+  if (!Number.isFinite(ratio)) return 0
+  return Math.min(100, Math.max(0, ratio))
+}
+
+const assetSegments = computed(() => [
+  {
+    key: 'cash',
+    label: '현금',
+    amount: props.cashBalance,
+    ratio: normalizeRatio(props.cashRatio),
+    barColor: 'lavender',
+    barClass: 'bg-lavender',
+  },
+  {
+    key: 'stock',
+    label: '주식',
+    amount: props.stockAsset,
+    ratio: normalizeRatio(props.stockRatio),
+    barColor: 'pink',
+    barClass: 'bg-pink',
+  },
+  {
+    key: 'savings',
+    label: '예·적금',
+    amount: props.savingsAsset,
+    ratio: normalizeRatio(props.savingsRatio),
+    barColor: 'green',
+    barClass: 'bg-green',
+  },
+])
+
+const assetCompositionLabel = computed(() =>
+  assetSegments.value
+    .map((segment) => `${segment.label} ${segment.ratio.toFixed(1)}%`)
+    .join(', '),
+)
 </script>
 
 <template>
   <BaseCard color="white">
     <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-2">
-        <h2 class="text-h2 text-ink">자산 구성</h2>
-        <p class="text-caption text-muted">서버에 저장된 현금과 보유 자산을 기준으로 계산했어요.</p>
+      <h2 class="text-h2 text-ink">자산 구성</h2>
+
+      <div
+        class="flex h-2 overflow-hidden rounded-full bg-segment"
+        role="img"
+        :aria-label="assetCompositionLabel"
+      >
+        <span
+          v-for="segment in assetSegments"
+          v-show="segment.ratio > 0"
+          :key="segment.key"
+          :class="[segment.barClass, 'h-full shrink-0']"
+          :style="{ width: `${segment.ratio}%` }"
+        ></span>
       </div>
-      <dl class="flex flex-col gap-4">
+
+      <dl class="flex flex-col gap-2">
         <AssetCompositionRow
-          label="사용 가능한 현금"
-          :amount="cashBalance"
-          :ratio="cashRatio"
-        />
-        <AssetCompositionRow
-          class="border-t border-line pt-4"
-          label="주식 자산"
-          :amount="stockAsset"
-          :ratio="stockRatio"
-        />
-        <AssetCompositionRow
-          class="border-t border-line pt-4"
-          label="예금·적금 자산"
-          :amount="savingsAsset"
-          :ratio="savingsRatio"
-          amount-class="text-profit"
+          v-for="segment in assetSegments"
+          :key="segment.key"
+          :label="segment.label"
+          :amount="segment.amount"
+          :ratio="segment.ratio"
+          :bar-color="segment.barColor"
         />
       </dl>
     </div>

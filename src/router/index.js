@@ -13,14 +13,19 @@ import VirtualAssetsView from '@/views/VirtualAssetsView.vue'
 import VirtualProductsView from '@/views/VirtualProductsView.vue'
 import VirtualHistoryView from '@/views/VirtualHistoryView.vue'
 import VirtualInvestStartView from '@/views/VirtualInvestStartView.vue'
+import StockHoldingsView from '@/views/StockHoldingsView.vue'
 import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import MyProfileView from '@/views/MyProfileView.vue'
 import FriendManagementView from '@/views/FriendManagementView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
+import GameTutorialView from '@/views/GameTutorialView.vue'
+import GameStartView from '@/views/GameStartView.vue'
 import GameView from '@/views/GameView.vue'
 import AssessmentResultView from '@/views/AssessmentResultView.vue'
+import PersonaTypesView from '@/views/PersonaTypesView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import PasswordResetView from '@/views/PasswordResetView.vue'
@@ -69,6 +74,11 @@ const router = createRouter({
           component: ProductHoldingsView,
         },
         {
+          path: 'stocks',
+          name: 'stock-holdings',
+          component: StockHoldingsView,
+        },
+        {
           path: 'holdings/:holdingProductId',
           name: 'product-holding-detail',
           component: ProductHoldingDetailView,
@@ -100,6 +110,12 @@ const router = createRouter({
     },
     { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { requiresAuth: true } },
     { path: '/my', name: 'my', component: MyPageView, meta: { requiresAuth: true } },
+    {
+      path: '/my/profile',
+      name: 'my-profile',
+      component: MyProfileView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
     {
       path: '/my/friends',
       name: 'friend-management',
@@ -137,6 +153,18 @@ const router = createRouter({
       meta: { requiresAuth: true, hideBottomTabBar: true },
     },
     {
+      path: '/game/tutorial',
+      name: 'game-tutorial',
+      component: GameTutorialView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
+    {
+      path: '/game/start',
+      name: 'game-start',
+      component: GameStartView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
+    },
+    {
       path: '/game',
       name: 'game',
       component: GameView,
@@ -149,6 +177,12 @@ const router = createRouter({
       path: '/assessment/result',
       name: 'assessment-result',
       component: AssessmentResultView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assessment/personas',
+      name: 'persona-types',
+      component: PersonaTypesView,
       meta: { requiresAuth: true },
     },
   ],

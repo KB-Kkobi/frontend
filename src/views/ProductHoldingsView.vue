@@ -5,6 +5,7 @@ import { ApiError } from "@/api/http";
 import { fetchProductHoldings } from "@/api/productApi";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import ProductHoldingCard from "@/components/product/ProductHoldingCard.vue";
 
@@ -44,7 +45,7 @@ async function loadHoldings() {
 }
 
 function handleBrowseProducts() {
-  router.push({ name: "products" });
+  router.push({ name: "virtual-products" });
 }
 
 function handleSelectHolding(holding) {
@@ -117,17 +118,13 @@ onMounted(loadHoldings);
       </BottomButton>
     </template>
 
-    <BaseCard v-else color="yellow">
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <h2 class="text-h2 text-ink">아직 보유한 예적금이 없어요</h2>
-          <p class="text-caption text-muted">
-            상품을 둘러보고 나에게 맞는 예금이나 적금에 가입해 보세요.
-          </p>
+    <BaseCard v-else color="white" elevation="flat">
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex flex-col gap-1">
+          <p class="text-body text-ink tracking-tight">가입한 예·적금이 없어요</p>
+          <p class="text-caption text-muted tracking-tight">첫 상품을 찾아보세요.</p>
         </div>
-        <BottomButton @click="handleBrowseProducts">
-          예적금 상품 둘러보기
-        </BottomButton>
+        <BasePill as="button" label="상품 보기" color="pink" variant="outline" @click="handleBrowseProducts" />
       </div>
     </BaseCard>
   </div>

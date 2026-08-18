@@ -10,8 +10,9 @@ import BaseCard from '@/components/common/BaseCard.vue';
 import BasePill from '@/components/common/BasePill.vue';
 import BottomButton from '@/components/common/BottomButton.vue';
 import PageContainer from '@/components/common/PageContainer.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import MarketLineChart from '@/components/game/MarketLineChart.vue';
-import { GAME_INTRO_PREVIEW_PRICES, GAME_INTRO_STEPS } from '@/constants/game';
+import { GAME_INTRO_PREVIEW_PRICES } from '@/constants/game';
 import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
@@ -77,8 +78,8 @@ function handleGoHome() {
   router.replace({ name: 'home' });
 }
 
-function handleOpenAllocation() {
-  router.push({ name: 'game-allocation' });
+function handleOpenTutorial() {
+  router.push({ name: 'game-tutorial' });
 }
 
 onMounted(loadGameStatus);
@@ -128,38 +129,38 @@ onMounted(loadGameStatus);
         <BackButton />
       </div>
 
-      <header class="flex flex-col gap-2">
+      <PageHeader>
         <p class="text-caption text-muted">
-          {{ nickname ? `${nickname}님` : '회원님' }}, 반가워요
+          <strong class="font-semibold text-navy">
+            {{ nickname ? nickname : '회원' }}
+          </strong>
+          님, 반가워요
         </p>
-        <h1 class="text-amount text-ink">
-          3분만 직접<br />
-          투자해볼까요?
-        </h1>
-        <p class="text-body text-muted">
+        <h1 class="text-amount text-ink">3분만 직접 투자해볼까요?</h1>
+        <p class="text-caption text-muted tracking-tight">
           주식이
-          <strong class="font-semibold text-ink">실시간으로 오르내리는 3분</strong>
-          동안<br />
-          당신의 선택으로 성향을 알아봐요.
+          <strong class="font-semibold text-navy"
+            >실시간으로 오르내리는 3분</strong
+          >
+          동안<br />당신의 선택으로 성향을 알아봐요.
         </p>
-      </header>
+      </PageHeader>
 
-      <BaseCard>
+      <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-2">
             <div class="flex flex-col gap-2">
               <div class="flex items-center gap-2">
                 <h2 class="text-h2 text-ink">시장종합지수</h2>
-                <BasePill label="미리보기" color="yellow" />
               </div>
               <p class="text-caption text-muted">
                 종목 A 가격은 이 지수를 그대로 따라가요
               </p>
             </div>
-            <BasePill label="8개월차" color="pink" variant="outline" />
+            <BasePill label="미리보기" color="pink" />
           </div>
 
-          <div class="text-blue" aria-label="시장종합지수 예시 차트">
+          <div class="text-pink" aria-label="시장종합지수 예시 차트">
             <MarketLineChart
               :prices="GAME_INTRO_PREVIEW_PRICES"
               :total-ticks="GAME_INTRO_PREVIEW_PRICES.length"
@@ -180,54 +181,11 @@ onMounted(loadGameStatus);
         </div>
       </BaseCard>
 
-      <section class="flex flex-col gap-4" aria-labelledby="game-rule-title">
-        <h2 id="game-rule-title" class="text-h2 text-ink">
-          게임은 이렇게 진행돼요
-        </h2>
-
-        <BaseCard color="yellow">
-          <ol class="flex flex-col gap-4">
-            <li
-              v-for="(step, index) in GAME_INTRO_STEPS"
-              :key="step.title"
-              class="flex items-start gap-4"
-            >
-              <span
-                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow text-caption font-bold text-ink"
-              >
-                {{ index + 1 }}
-              </span>
-              <div class="flex flex-col gap-2">
-                <h3 class="text-h2 text-ink">{{ step.title }}</h3>
-                <p class="text-caption text-muted">{{ step.description }}</p>
-              </div>
-            </li>
-          </ol>
-        </BaseCard>
-      </section>
-
-      <BaseCard color="yellow">
-        <div class="flex items-start gap-4">
-          <BaseAlertIcon class="h-6 w-6 shrink-0 text-pink" />
-          <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-ink">시작하기 전에 확인해 주세요</h2>
-            <p class="text-caption text-ink">
-              게임 결과는 상품 추천과 가상투자 서비스의 기준으로 사용돼요.
-              신중하게 선택해 주세요.
-            </p>
-            <p class="text-caption font-semibold text-error">
-              진단은 한 번만 가능하며, 완료 후에는 다시 진행할 수 없어요.
-            </p>
-            <p class="text-caption text-muted">
-              게임을 완료하지 않으면 상품 추천과 가상투자 서비스를 이용할 수
-              없어요.
-            </p>
-          </div>
-        </div>
-      </BaseCard>
-
-      <BottomButton color="yellow" @click="handleOpenAllocation">
-        시작 자산 정하기
+      <p class="text-center text-caption text-muted">
+        본 게임 전에 조작법을 익혀볼게요
+      </p>
+      <BottomButton color="pink" @click="handleOpenTutorial">
+        튜토리얼 시작하기
       </BottomButton>
     </div>
   </PageContainer>

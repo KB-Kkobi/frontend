@@ -38,7 +38,7 @@ const props = defineProps({
   color: {
     type: String,
     required: true,
-    validator: (value) => ["yellow", "blue", "pink"].includes(value),
+    validator: (value) => ["yellow", "blue", "green", "pink"].includes(value),
   },
 });
 
@@ -57,12 +57,14 @@ const sliderMaximum = computed(() =>
 const colorClasses = computed(() => ({
   yellow: "text-yellow",
   blue: "text-blue",
+  green: "text-green",
   pink: "text-pink",
 })[props.color]);
 
 const progressClasses = computed(() => ({
   yellow: "bg-yellow",
   blue: "bg-blue",
+  green: "bg-green",
   pink: "bg-pink",
 })[props.color]);
 

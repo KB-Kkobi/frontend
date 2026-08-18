@@ -29,21 +29,27 @@ function normalizeListPage(page) {
   return parsed;
 }
 
-function buildSecurityListQuery({ type, page, size, keyword } = {}) {
+function buildSecurityListQuery({ types, page, size, keyword, sort } = {}) {
   const query = new URLSearchParams();
   query.set("page", String(normalizeListPage(page ?? SECURITY_LIST_DEFAULTS.page)));
   query.set("size", String(clampListSize(size ?? SECURITY_LIST_DEFAULTS.size)));
 
-  if (type !== undefined && type !== null && type !== "") {
-    const normalized = normalizeSecurityType(type);
-    if (!isSecurityType(normalized)) {
-      throw new Error(`type 파라미터 값이 올바르지 않습니다: ${type}`);
+  if (Array.isArray(types) && types.length > 0) {
+    for (const t of types) {
+      const normalized = normalizeSecurityType(t);
+      if (!isSecurityType(normalized)) {
+        throw new Error(`types 파라미터 값이 올바르지 않습니다: ${t}`);
+      }
+      query.append("types", normalized);
     }
-    query.set("type", normalized);
   }
 
   if (keyword && typeof keyword === "string" && keyword.trim()) {
     query.set("keyword", keyword.trim());
+  }
+
+  if (sort && typeof sort === "string" && sort.trim()) {
+    query.set("sort", sort.trim());
   }
 
   return query.toString();
@@ -56,6 +62,7 @@ function normalizeSecurityListItem(item) {
     name: item?.name ?? "",
     type: item?.type ?? null,
     kisSupported: Boolean(item?.kisSupported),
+    matchScore: item?.matchScore != null ? Number(item.matchScore) : null,
   };
 }
 
@@ -155,7 +162,7 @@ function sanitizeQuoteTickers(tickers) {
 
 /**
  * 증권 목록 조회.
- * @param {{ type?: string, page?: number, size?: number, keyword?: string }} params
+ * @param {{ types?: string[], page?: number, size?: number, keyword?: string }} params
  */
 export async function fetchSecurityList(params) {
   const queryString = buildSecurityListQuery(params);

@@ -7,6 +7,7 @@ import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import {
   PRODUCT_TYPES,
   getProductHoldingStatus,
@@ -52,9 +53,9 @@ const progressRate = computed(() => {
 });
 const remainingDaysLabel = computed(() => {
   const remainingDays = Number(holding.value?.remainingDays);
-  if (!Number.isFinite(remainingDays)) return "만기까지 남은 기간을 확인할 수 없어요.";
-  if (remainingDays <= 0) return "만기일이 도래했어요.";
-  return `만기까지 ${remainingDays.toLocaleString("ko-KR")}일 남았어요.`;
+  if (!Number.isFinite(remainingDays)) return "만기까지 남은 기간을 확인할 수 없어요";
+  if (remainingDays <= 0) return "만기일이 도래했어요";
+  return `만기까지 ${remainingDays.toLocaleString("ko-KR")}일 남았어요`;
 });
 const evaluationGain = computed(() => {
   const currentValue = Number(holding.value?.currentValue);
@@ -80,8 +81,8 @@ const installmentSteps = computed(() => {
 
 function getStepClasses(step) {
   if (step.state === "paid") return "bg-pink text-white";
-  if (step.state === "next") return "bg-yellow text-ink";
-  return "bg-surface text-muted";
+  if (step.state === "next") return "bg-pink-soft text-pink";
+  return "border border-line-soft text-muted";
 }
 
 function getErrorMessage(error) {
@@ -147,17 +148,13 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
       <BaseCard color="white" elevation="highlight">
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-soft text-h2 text-ink"
-              >
-                {{ holding.financialCompanyName?.charAt(0) || "금" }}
-              </span>
-              <div class="flex flex-col gap-2">
+            <div class="flex min-w-0 items-center gap-4">
+              <ProductBankLogo :name="holding.financialCompanyName" />
+              <div class="flex min-w-0 flex-col gap-2">
                 <p class="text-caption text-muted">
                   {{ formatNullableText(holding.financialCompanyName) }}
                 </p>
-                <h2 class="text-h2 text-ink">
+                <h2 class="break-words text-h2 text-ink">
                   {{ formatNullableText(holding.productName) }}
                 </h2>
                 <p class="text-caption text-muted tabular-nums">
@@ -188,7 +185,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
         </div>
       </BaseCard>
 
-      <BaseCard v-if="isSaving" color="blue">
+      <BaseCard v-if="isSaving" color="white">
         <div class="flex flex-col gap-4">
           <div class="flex items-center justify-between gap-4">
             <h2 class="text-h2 text-ink">납입 현황</h2>
@@ -219,7 +216,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
             </div>
             <div class="flex flex-col gap-2 text-right">
               <span class="text-caption text-muted">납입 금액</span>
-              <strong class="text-body text-blue tabular-nums">
+              <strong class="text-body text-pink tabular-nums">
                 {{ formatCurrency(holding.joinAmount) }}
               </strong>
             </div>
@@ -287,12 +284,15 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
         </div>
       </BaseCard>
 
-      <BaseCard v-if="!isSaving" color="yellow">
-        <div class="flex flex-col gap-2">
-          <h2 class="text-h2 text-profit">아직 만기가 아니에요</h2>
-          <p class="text-caption text-muted">
-            {{ remainingDaysLabel }} 만기 전에 해지하면 예상 이자와 달라질 수 있어요.
-          </p>
+      <BaseCard v-if="!isSaving" color="white" elevation="flat">
+        <div class="flex gap-4">
+          <span class="text-body text-pink" aria-hidden="true">ⓘ</span>
+          <div class="flex flex-col gap-2">
+            <h2 class="text-h2 text-ink">{{ remainingDaysLabel }}</h2>
+            <p class="text-caption text-muted">
+              만기 전에 해지하면 예상 이자가 달라질 수 있어요.
+            </p>
+          </div>
         </div>
       </BaseCard>
 

@@ -1,35 +1,27 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { AccountApiError, createAccount } from "@/api/accountApi";
-import InvestmentAmountField from "@/components/account/InvestmentAmountField.vue";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
-import {
-  ACCOUNT_AMOUNT_LIMITS,
-  ACCOUNT_SETUP_DEFAULTS,
-  INVESTMENT_PERIOD_MONTHS,
-  MONTHLY_INVESTMENT_OPTIONS,
-  SEED_MONEY_OPTIONS,
-} from "@/constants/account";
+import { INITIAL_SEED_MONEY } from "@/constants/account";
 import { formatCurrency } from "@/utils/format";
+
+const CONFIRM_MESSAGE = "가상투자를 시작할까요?";
 
 const router = useRouter();
 
-const seedMoney = ref(ACCOUNT_SETUP_DEFAULTS.seedMoney);
-const monthlyInvestAmount = ref(
-  ACCOUNT_SETUP_DEFAULTS.monthlyInvestAmount,
-);
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const isConfirmVisible = ref(false);
 
-const projectedInvestmentAmount = computed(
-  () =>
-    seedMoney.value +
-    monthlyInvestAmount.value * INVESTMENT_PERIOD_MONTHS,
-);
+function handleOpenConfirm() {
+  if (isSubmitting.value) return;
+  isConfirmVisible.value = true;
+}
 
 async function handleSubmit() {
   if (isSubmitting.value) return;
@@ -38,10 +30,7 @@ async function handleSubmit() {
   errorMessage.value = "";
 
   try {
-    await createAccount({
-      seedMoney: seedMoney.value,
-      monthlyInvestAmount: monthlyInvestAmount.value,
-    });
+    await createAccount();
     await router.replace({
       name: "virtual-assets",
       query: { started: "true" },
@@ -63,84 +52,38 @@ async function handleSubmit() {
 
 <template>
   <PageContainer>
-    <form
-      class="flex flex-col gap-6 py-6"
-      @submit.prevent="handleSubmit"
-    >
+    <div class="flex flex-col gap-6 py-6">
       <BackButton />
 
       <div class="flex flex-col gap-2">
         <h1 class="flex flex-col gap-2 text-h1 text-ink">
-          <span>투자를 시작하기 전,</span>
-          <span class="text-pink">나에게 맞는 조건을 설정해요</span>
+          <span>부담 없이 연습할 수 있도록,</span>
+          <span class="text-pink">초기 자산을 드려요</span>
         </h1>
         <p class="text-caption text-muted">
-          설정한 금액은 언제든 마이페이지에서 바꿀 수 있어요.
+          따로 설정할 내용은 없어요. 바로 가상투자를 시작할 수 있습니다.
         </p>
       </div>
 
-      <BaseCard color="white">
-        <div class="flex flex-col gap-6">
-          <InvestmentAmountField
-            id="seed-money"
-            v-model="seedMoney"
-            title="초기 자산"
-            description="가상투자를 시작할 시드머니예요"
-            icon="wallet"
-            :options="SEED_MONEY_OPTIONS"
-            :maximum="ACCOUNT_AMOUNT_LIMITS.seedMoney"
-          />
-
-          <InvestmentAmountField
-            id="monthly-investment-amount"
-            v-model="monthlyInvestAmount"
-            title="월 투자금"
-            description="매월 자동으로 추가 투자될 금액이에요"
-            icon="calendar"
-            :options="MONTHLY_INVESTMENT_OPTIONS"
-            :maximum="ACCOUNT_AMOUNT_LIMITS.monthlyInvestAmount"
-          />
+      <BaseCard color="white" elevation="highlight">
+        <div class="flex flex-col items-center gap-2 text-center">
+          <p class="text-caption text-muted">초기 투자금</p>
+          <strong class="text-amount text-navy tabular-nums">
+            {{ formatCurrency(INITIAL_SEED_MONEY) }}
+          </strong>
+          <p class="text-caption text-muted">
+            모든 사용자에게 동일하게 지급돼요
+          </p>
         </div>
       </BaseCard>
 
       <BaseCard color="blue">
-        <div class="flex items-center gap-4">
-          <span
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-blue"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-6 w-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M7 3V6M17 3V6M4 9H20M5 5H19C19.6 5 20 5.4 20 6V19C20 19.6 19.6 20 19 20H5C4.4 20 4 19.6 4 19V6C4 5.4 4.4 5 5 5Z"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              />
-              <path
-                d="M8 14H16"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-              />
-            </svg>
-          </span>
-
-          <div class="flex min-w-0 flex-col gap-2">
-            <p class="text-caption font-semibold text-blue">
-              {{ INVESTMENT_PERIOD_MONTHS }}개월 후 총 투자 예정 금액
-            </p>
-            <strong class="text-h2 text-ink tabular-nums">
-              {{ formatCurrency(projectedInvestmentAmount) }}
-            </strong>
-            <p class="text-caption text-muted">
-              초기 자산 + 월 투자금 × {{ INVESTMENT_PERIOD_MONTHS }}개월
-            </p>
-          </div>
+        <div class="flex flex-col gap-2">
+          <h2 class="text-h2 text-ink">실제 돈은 사용되지 않아요</h2>
+          <p class="text-caption text-muted">
+            지급된 가상 자산으로 실제 상품 정보를 보며 투자 감각을 익히는
+            연습 계좌예요.
+          </p>
         </div>
       </BaseCard>
 
@@ -148,9 +91,25 @@ async function handleSubmit() {
         {{ errorMessage }}
       </p>
 
-      <BottomButton type="submit" color="yellow" :disabled="isSubmitting">
+      <BottomButton color="pink" :disabled="isSubmitting" @click="handleOpenConfirm">
         {{ isSubmitting ? "계좌를 만드는 중이에요" : "가상투자 시작하기" }}
       </BottomButton>
-    </form>
+    </div>
+
+    <!-- 가상투자 시작 확인 모달 -->
+    <BaseModal
+      v-model="isConfirmVisible"
+      :message="CONFIRM_MESSAGE"
+      confirm-text="시작하기"
+      cancel-text="취소"
+      @confirm="handleSubmit"
+    >
+      <template #content>
+        <div class="flex flex-col gap-2 text-center text-caption text-muted tracking-tight">
+          <p>500만 원의 가상 자산이 연습 계좌에 지급돼요.</p>
+          <p>실제 돈은 사용되지 않아요.</p>
+        </div>
+      </template>
+    </BaseModal>
   </PageContainer>
 </template>

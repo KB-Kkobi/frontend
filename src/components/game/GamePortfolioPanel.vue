@@ -48,6 +48,23 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  buyDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  sellDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  cancelDepositDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  highlightedAsset: {
+    type: String,
+    default: null,
+    validator: (v) => v === null || ["stock", "cash", "deposit"].includes(v),
+  },
 });
 
 const stockEvaluationAmount = computed(() =>
@@ -60,7 +77,8 @@ const stockProfitAmount = computed(() => {
   return stockEvaluationAmount.value - props.stockPrincipal;
 });
 const stockProfitRate = computed(() => {
-  if (stockProfitAmount.value === null || props.stockPrincipal <= 0) return null;
+  if (stockProfitAmount.value === null || props.stockPrincipal <= 0)
+    return null;
   return (stockProfitAmount.value / props.stockPrincipal) * 100;
 });
 const totalAssetAmount = computed(
@@ -94,6 +112,13 @@ const totalProfitColorClass = computed(() => {
   if (totalProfitAmount.value < 0) return 'text-loss';
   return 'text-muted';
 });
+function assetRowClass(asset) {
+  return [
+    'transition-colors duration-500 rounded-2xl',
+    props.highlightedAsset === asset ? 'bg-pink-soft' : '',
+  ];
+}
+
 const depositStatusText = computed(() => {
   if (props.depositStatus === 'CANCELLED') return '해지 완료';
   if (props.depositStatus === 'MATURED') return '만기 완료';
@@ -106,10 +131,13 @@ const depositStatusText = computed(() => {
   <section class="flex flex-col gap-6 py-2" aria-labelledby="portfolio-title">
     <h2 id="portfolio-title" class="sr-only">현재 자산 현황</h2>
 
-    <div class="flex flex-col gap-2 rounded-2xl bg-yellow-soft p-4">
+    <div
+      data-tutorial-target="total-asset"
+      class="flex flex-col gap-2 rounded-2xl border border-line bg-white p-4"
+    >
       <div class="flex items-center justify-between gap-4">
         <strong class="text-h2 text-ink">현재 총자산</strong>
-        <strong class="text-amount text-ink tabular-nums">
+        <strong class="text-amount text-navy tabular-nums">
           {{ formatCurrency(totalAssetAmount) }}
         </strong>
       </div>
@@ -119,7 +147,9 @@ const depositStatusText = computed(() => {
           {{ formatCurrency(GAME_SEED_MONEY) }}
         </span>
       </div>
-      <div class="flex items-center justify-between gap-4 border-t border-line pt-2">
+      <div
+        class="flex items-center justify-between gap-4 border-t border-line pt-2"
+      >
         <span class="text-caption text-muted">전체 손익</span>
         <span
           :class="[
@@ -133,7 +163,10 @@ const depositStatusText = computed(() => {
       </div>
     </div>
 
-    <div class="flex items-start justify-between gap-4">
+    <div
+      data-tutorial-target="holding-stock"
+      :class="['flex items-start justify-between gap-4', assetRowClass('stock')]"
+    >
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex items-baseline gap-2">
           <strong class="text-h1 text-ink">종목 A</strong>
@@ -162,62 +195,78 @@ const depositStatusText = computed(() => {
       </div>
     </div>
 
-    <div
-      class="flex items-center justify-between gap-4 border-t border-line pt-6"
-    >
-      <div class="flex items-baseline gap-2">
-        <strong class="text-h1 text-ink">현금</strong>
-        <span class="text-body text-muted tabular-nums">
-          {{ cashRatio.toFixed(0) }}%
-        </span>
-      </div>
-      <strong class="text-h1 text-ink tabular-nums">
-        {{ formatCurrency(cashAmount) }}
-      </strong>
-    </div>
-
-    <div
-      class="flex items-start justify-between gap-4 border-t border-line pt-6"
-    >
-      <div class="flex min-w-0 flex-col gap-1">
+    <div class="border-t border-line pt-6">
+      <div
+        data-tutorial-target="cash"
+        :class="['flex items-center justify-between gap-4', assetRowClass('cash')]"
+      >
         <div class="flex items-baseline gap-2">
-          <strong class="text-h1 text-ink">예금</strong>
+          <strong class="text-h1 text-ink">현금</strong>
           <span class="text-body text-muted tabular-nums">
-            {{ depositRatio.toFixed(0) }}%
+            {{ cashRatio.toFixed(0) }}%
           </span>
         </div>
-        <p class="text-caption text-muted">{{ depositStatusText }}</p>
+        <strong class="text-h1 text-ink tabular-nums">
+          {{ formatCurrency(cashAmount) }}
+        </strong>
       </div>
-      <strong class="text-h1 text-ink tabular-nums">
-        {{ formatCurrency(depositAmount) }}
-      </strong>
     </div>
 
-    <div class="grid grid-cols-2 gap-3 pt-2">
-      <BottomButton
-        color="pink"
-        :disabled="
-          isTradingDisabled ||
-          cashAmount === 0 ||
-          !currentStockPrice ||
-          cashAmount < currentStockPrice
-        "
-        @click="emit('buy')"
-        >매수</BottomButton
+    <div class="border-t border-line pt-6">
+      <div
+        data-tutorial-target="deposit"
+        :class="['flex items-start justify-between gap-4', assetRowClass('deposit')]"
       >
-      <BottomButton
-        color="blue"
-        :disabled="isTradingDisabled || stockQuantity === 0"
-        @click="emit('sell')"
-        >매도</BottomButton
-      >
+        <div class="flex min-w-0 flex-col gap-1">
+          <div class="flex items-baseline gap-2">
+            <strong class="text-h1 text-ink">예금</strong>
+            <span class="text-body text-muted tabular-nums">
+              {{ depositRatio.toFixed(0) }}%
+            </span>
+          </div>
+          <p class="text-caption text-muted">{{ depositStatusText }}</p>
+        </div>
+        <strong class="text-h1 text-ink tabular-nums">
+          {{ formatCurrency(depositAmount) }}
+        </strong>
+      </div>
     </div>
-    <BottomButton
-      color="white"
-      :disabled="depositStatus !== 'ACTIVE' || depositAmount === 0"
-      @click="emit('cancel-deposit')"
-    >
-      예금 해지하기
-    </BottomButton>
+
+    <div class="flex flex-col gap-2">
+      <slot name="message" />
+
+      <div class="grid grid-cols-2 gap-3">
+        <BottomButton
+          data-tutorial-target="buy-button"
+          color="pink"
+          :disabled="
+            buyDisabled ||
+            isTradingDisabled ||
+            cashAmount === 0 ||
+            !currentStockPrice ||
+            cashAmount < currentStockPrice
+          "
+          @click="emit('buy')"
+          >매수</BottomButton
+        >
+        <BottomButton
+          data-tutorial-target="sell-button"
+          color="blue"
+          :disabled="sellDisabled || isTradingDisabled || stockQuantity === 0"
+          @click="emit('sell')"
+          >매도</BottomButton
+        >
+      </div>
+      <BottomButton
+        data-tutorial-target="cancel-deposit-button"
+        color="white"
+        :disabled="
+          cancelDepositDisabled || depositStatus !== 'ACTIVE' || depositAmount === 0
+        "
+        @click="emit('cancel-deposit')"
+      >
+        예금 해지하기
+      </BottomButton>
+    </div>
   </section>
 </template>

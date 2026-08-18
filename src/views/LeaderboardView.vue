@@ -10,6 +10,7 @@ import PageHeader from "@/components/common/PageHeader.vue";
 import TabBar from "@/components/common/TabBar.vue";
 import LeaderboardPersonaSummaryCard from "@/components/leaderboard/LeaderboardPersonaSummaryCard.vue";
 import LeaderboardRankRow from "@/components/leaderboard/LeaderboardRankRow.vue";
+import { LEADERBOARD_SORT_DEFAULT, LEADERBOARD_SORT_OPTIONS } from "@/constants/leaderboard";
 
 // ── 상수 ─────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -34,13 +35,32 @@ const personaImagePath = ref(null);
 const loadedImagePersonaId = ref(null);
 // 동순위(rank 동률)가 존재할 수 있어 myRank 대신 userId로 내 행을 판별한다.
 const myUserId = ref(null);
+// 정렬 기준은 탭을 옮겨도 유지한다(성향끼리 ↔ 친구끼리 공용 상태).
+const selectedSort = ref(LEADERBOARD_SORT_DEFAULT);
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentState = computed(() => tabStates[activeTab.value]);
 const rankings = computed(() =>
   Array.isArray(currentState.value.data?.rankings) ? currentState.value.data.rankings : [],
 );
-const myRank = computed(() => currentState.value.data?.myRank ?? null);
+// 서버가 내려준 원본 myRank(기본 정렬 기준). isMyRow의 폴백 판별에만 쓰인다.
+const serverMyRank = computed(() => currentState.value.data?.myRank ?? null);
+// 정렬 기준에 따라 다시 정렬하고, 화면 표시용 순위(rank)도 그 결과 기준으로
+// 새로 매긴다. 서버가 내려준 rank는 정렬 전 기준값이라 그대로 쓰지 않고
+// serverRank로 보존해 isMyRow 폴백 판별에 사용한다.
+// 정렬 키가 동일한 값이 있으면(Array.prototype.sort는 안정 정렬) 서버 응답
+// 순서를 그대로 유지한다.
+const sortedRankings = computed(() => {
+  const sortKey = selectedSort.value === "returnRate" ? "returnRate" : "totalAsset";
+  return [...rankings.value]
+    .sort((a, b) => Number(b?.[sortKey] ?? 0) - Number(a?.[sortKey] ?? 0))
+    .map((item, index) => ({ ...item, serverRank: item.rank, rank: index + 1 }));
+});
+// 정렬 결과 기준으로 내 순위를 다시 찾는다(userId 기준 판별, myRank 고정값 사용 안 함).
+const myRank = computed(() => {
+  const index = sortedRankings.value.findIndex((item) => isMyRow(item));
+  return index !== -1 ? index + 1 : serverMyRank.value;
+});
 const personaId = computed(() => currentState.value.data?.personaId ?? null);
 const personaName = computed(() => currentState.value.data?.personaName ?? null);
 const isPersonaTab = computed(() => activeTab.value === "persona");
@@ -82,13 +102,16 @@ async function loadMyUserId() {
 }
 
 // 수익률이 같으면 서버가 동순위를 부여하므로(assignRanks) userId로 내 행을 판별한다.
-// 내 정보를 못 받아온 경우에만 순위 비교로 대체한다(동순위면 중복 표시될 수 있음).
+// 내 정보를 못 받아온 경우에만 서버 원본 순위 비교로 대체한다(동순위면 중복 표시될 수 있음).
+// myRank computed는 이 함수 결과에 의존하므로, 여기서는 myRank가 아니라
+// serverMyRank(원본 값)만 참조해 순환 참조를 만들지 않는다.
 function isMyRow(item) {
   const rowUserId = item?.userId ?? null;
   if (myUserId.value !== null && rowUserId !== null) {
     return rowUserId === myUserId.value;
   }
-  return myRank.value !== null && item?.rank === myRank.value;
+  const originalRank = item?.serverRank ?? item?.rank ?? null;
+  return serverMyRank.value !== null && originalRank === serverMyRank.value;
 }
 
 // 성향 이미지는 보조 시각 요소이므로 실패해도 화면 흐름을 막지 않는다.
@@ -184,12 +207,49 @@ onMounted(() => {
           <div v-if="rankings.length" class="flex flex-col gap-2">
             <div class="flex items-center justify-between px-4">
               <span class="text-caption text-muted tracking-tight">순위</span>
-              <span class="text-caption text-muted tracking-tight">총자산 · 수익률</span>
+              <label
+                class="relative flex cursor-pointer items-center gap-2 text-caption text-ink"
+              >
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 18V6m0 0L5 9m3-3 3 3M16 6v12m0 0 3-3m-3 3-3-3"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>
+                  {{
+                    LEADERBOARD_SORT_OPTIONS.find(
+                      (option) => option.value === selectedSort,
+                    )?.label
+                  }}
+                </span>
+                <select
+                  v-model="selectedSort"
+                  class="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="리더보드 정렬"
+                >
+                  <option
+                    v-for="option in LEADERBOARD_SORT_OPTIONS"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+              </label>
             </div>
 
             <div class="flex flex-col gap-4">
               <LeaderboardRankRow
-                v-for="item in rankings"
+                v-for="item in sortedRankings"
                 :key="item.userId ?? item.rank"
                 :rank="item.rank"
                 :nickname="item.nickname"

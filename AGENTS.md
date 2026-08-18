@@ -64,13 +64,16 @@
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
 | `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop                              |
-| `BaseCard`      | 둥근 컨테이너(`rounded-3xl p-4`). `color`로 배경, `elevation`(`flat`/`default`/`highlight`)으로 흰 카드 깊이 선택 |
-| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText` prop, `@confirm`/`@cancel` emit |
+| `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
+| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |
 | `BottomTabBar`  | 하단 탭 네비게이션                                                                                        |
+| `BaseToast`     | 일정 시간 뒤 자동으로 사라지는 완료 알림. `v-model` + `title`/`description`/`duration`(기본 3000ms) + `offset`(`page` 기본값 / `header`=상단 고정 헤더 아래) + `variant`(`success` 기본값 / `error`=제목 `text-error`) prop. 화면 상단에 고정되며 클릭을 막지 않음 |
 | `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `disabled` prop. `ghost`=`bg-surface text-muted font-normal` |
+| `HelpButton`    | 원형 (?) 도움말 버튼. `ariaLabel`(필수) + `size`(선택, 기본 20px) prop, `@click` emit. 시각 크기는 `size`×`size`px, 터치 영역은 `::before`로 44px 확보. 라벨 텍스트는 포함하지 않으므로 호출부에서 옆에 배치할 것. |
+| `ListToolbar`   | 목록 상단 툴바(정렬·필터 버튼 + 왼쪽 자유 슬롯). `sortLabel`/`filterLabel`/`showSort`/`showFilter`/`filterActive`/`filterCount` props, `@sort`/`@filter` emit. `default` slot=왼쪽 영역, `#sort` named slot=정렬 버튼 교체 |
 
 - 새 컴포넌트를 만들기 전에 이 목록부터 확인.
 - 부족한 변형이 필요하면 컴포넌트를 확장(새 `props` 값 추가)하지, 사용처에서 클래스 override로 우회하지 말 것.
@@ -91,11 +94,15 @@
 | `TradeStockHeader`    | `trade/TradeStockHeader.vue`        | 종목 헤더 카드(BaseCard). `name`/`code`/`currentPrice`/`changeRate` props. name=종목명(text-h2), code=종목코드(text-caption text-muted, 선택). 등락률 양수=text-profit, 음수=text-loss |
 | `TradeMethodToggle`   | `trade/TradeMethodToggle.vue`       | 시장가/지정가 세그먼트 토글. `method`('market'\|'limit') prop, `@update:method` emit. 선택=bg-yellow |
 | `TradePriceInput`     | `trade/TradePriceInput.vue`         | 1주당 가격 입력. `method`/`marketPrice`/`modelValue` props, `@update:modelValue` emit. 시장가=읽기전용 bg-surface |
-| `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼 + 빠른 선택 pill(1주/5주/10주/최대). `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
+| `TradeQuantityInput`  | `trade/TradeQuantityInput.vue`      | 수량 스텝퍼(직접 입력 가능, inputmode="numeric") + "최대" pill. `modelValue`/`maxQuantity` props, `@update:modelValue` emit. 스텝퍼 테두리=border-pink, 선택 pill=bg-yellow |
 | `TradeOrderSummary`   | `trade/TradeOrderSummary.vue`       | 주문 요약(주문가능금액/매도가능수량·단가×수량·주문금액). `orderableCash`/`pricePerShare`/`quantity`/`orderAmount`/`side`/`sellableQuantity` props |
 | `TradePortfolioImpact`| `trade/TradePortfolioImpact.vue`    | 포트폴리오 영향 섹션. 비중 프로그레스바(bg-yellow) + 권장 세로선(bg-ink) + 초과 경고(bg-yellow-soft). `currentRatio`/`afterRatio`/`recommendedRatio`/`show` props. null 또는 show=false면 전체 숨김 |
-| `AssetCompositionCard` | `virtual/AssetCompositionCard.vue` | 자산 구성 카드(현금·주식·예금적금 비율 표시). `cashBalance`/`cashRatio`/`stockAsset`/`stockRatio`/`savingsAsset`/`savingsRatio` props |
-| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성 행(라벨+금액+비율). `label`/`amount`/`ratio`/`amountClass`(기본 `text-ink`) props |
+| `ProductHoldingPreviewRow` | `product/ProductHoldingPreviewRow.vue` | 보유 예·적금 미리보기 행 콘텐츠(상품명·평가금액 + 적용금리·만기 D-day). `holding` prop. 자산현황 대시보드 `HoldingPreviewSection` 전용 |
+| `AssetCompositionCard` | `virtual/AssetCompositionCard.vue` | 단일 stacked bar와 금액 목록으로 현금·주식·예금적금 비율을 표시. `cashBalance`/`cashRatio`/`stockAsset`/`stockRatio`/`savingsAsset`/`savingsRatio` props |
+| `AssetCompositionRow`  | `virtual/AssetCompositionRow.vue`  | 자산 구성의 압축형 범례 행(색상 점·라벨·비율·금액). `label`/`amount`/`ratio`/`barColor`(`ink`/`pink`/`blue`/`green`/`lavender`, 기본 `ink`) props |
+| `HoldingPreviewSection` | `virtual/HoldingPreviewSection.vue` | 자산현황 대시보드의 보유자산 미리보기 섹션. `showMore`일 때 `moreLabel` 목적 링크를 표시하고 `emptyActionLabel`로 빈 상태 CTA를 구분. `title`/`moreTo`/`moreLabel`/`items`/`itemKey`/`emptyTitle`/`emptyDescription` props, `#item` scoped slot, `@select-item`/`@empty-action` emit |
+| `StockHoldingRow`      | `virtual/StockHoldingRow.vue`      | 보유 주식 행 콘텐츠(이름 + 평가금액·수익률). `holding` prop. 대시보드 미리보기와 보유 주식 전체 목록에서 공용 |
+| `GameTutorialCard`     | `game/GameTutorialCard.vue`        | 게임 튜토리얼 공통 안내 카드. Header·Character Slot·Content·Footer를 분리해 꼬비 이미지와 가변 길이 문구·버튼의 겹침을 방지 |
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행(BaseCard). 순위 원형 배지(1~3위=bg-cream-soft, 그 외=bg-surface) + 닉네임 + 총자산·수익률. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. `isMe`면 pink 카드 + "나" pill |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |
@@ -258,6 +265,8 @@ src/
 - `shadow-card`는 `develop` 기준의 크림 톤 그림자다.
 - `shadow-highlight`는 화면의 핵심 카드 한정이며 `develop`과 같은 그림자 값을 사용한다.
 - `shadow-popup`은 모달과 팝업 레이어 전용이며 `develop`과 같은 그림자 값을 사용한다.
+- `shadow-float`는 어둡게 딤 처리된 배경(게임 튜토리얼 오버레이 등) 위에 뜨는 카드 전용이다. `card`/`highlight`/`popup`은 밝은 배경 기준 크림 톤이라 딤 배경 위에서는 거의 보이지 않아 검정 톤으로 별도 정의했다.
+- `ring-pink`와 `animate-tutorial-*`은 게임 튜토리얼의 현재 설명 대상과 관찰 상태를 표시할 때만 사용한다.
 - 그림자가 적용된 카드에는 윤곽선을 사용하지 않는다.
 
 ### 텍스트와 행동

@@ -13,6 +13,7 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import ProductAssetRatioChangeCard from "@/components/product/ProductAssetRatioChangeCard.vue";
+import ProductBankLogo from "@/components/product/ProductBankLogo.vue";
 import ProductTerminationComparisonCard from "@/components/product/ProductTerminationComparisonCard.vue";
 import {
   PRODUCT_TYPES,
@@ -156,12 +157,7 @@ watch(
         <div class="flex flex-col gap-4">
           <div class="flex items-start justify-between gap-4">
             <div class="flex min-w-0 items-center gap-4">
-              <span
-                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-pink-soft text-h2 text-pink"
-                aria-hidden="true"
-              >
-                {{ estimate.financialCompanyName?.charAt(0) || "금" }}
-              </span>
+              <ProductBankLogo :name="estimate.financialCompanyName" />
               <div class="flex min-w-0 flex-col gap-2">
                 <p class="text-caption text-muted">
                   {{ formatNullableText(estimate.financialCompanyName) }}
@@ -194,17 +190,19 @@ watch(
                 {{ estimate.paidInstallments ?? 0 }}회 납입 완료
               </span>
               <span v-else class="text-muted">{{ progressRate.toFixed(1) }}% 경과</span>
-              <span class="text-yellow">{{ estimate.remainingDays }}일 남음</span>
+              <span class="text-muted">{{ estimate.remainingDays }}일 남음</span>
             </div>
           </div>
         </div>
       </BaseCard>
 
-      <BaseCard color="yellow">
+      <BaseCard color="white" elevation="flat">
         <div class="flex gap-4">
-          <span class="text-h2 text-error" aria-hidden="true">!</span>
+          <span class="text-body text-pink" aria-hidden="true">ⓘ</span>
           <div class="flex flex-col gap-2">
-            <h2 class="text-h2 text-error">아직 만기가 아니에요</h2>
+            <h2 class="text-h2 text-ink">
+              만기 전에 해지하면 이자가 줄어들 수 있어요
+            </h2>
             <p class="text-caption text-muted">
               지금 해지하면 만기까지 유지할 때보다 받을 수 있는 이자가 줄어들어요.
             </p>

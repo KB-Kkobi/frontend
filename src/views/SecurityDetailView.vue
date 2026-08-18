@@ -1,26 +1,33 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
+import BaseToast from "@/components/common/BaseToast.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import HoldingCard from "@/components/security/HoldingCard.vue";
 import SecurityInsightCard from "@/components/security/SecurityInsightCard.vue";
 import SecuritySummaryCard from "@/components/security/SecuritySummaryCard.vue";
+import TradeBottomSheet from "@/components/trade/TradeBottomSheet.vue";
 import { fetchSecurityDetail, fetchSecurityQuotes } from "@/api/securityApi";
 import { fetchHoldings } from "@/api/trade";
+import { fetchAccountAssetStatus } from "@/api/accountApi";
 import { ApiError } from "@/api/http";
 import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
 import { subscribeTick } from "@/api/stockSocket";
 
 const route = useRoute();
-const router = useRouter();
 const isVirtualInvestment = computed(() => route.query.tradable === "true");
 const security = ref(null);
 const quote = ref(null);
 const holding = ref(null);
 const isLoading = ref(false);
 const errorMessage = ref("");
+const tradeSheetOpen = ref(false);
+const tradeSide = ref("buy");
+const toastVisible = ref(false);
+const toastTitle = ref("");
+const toastDescription = ref("");
 
 let pollingTimer = null;
 let activeTicker = null;
@@ -157,11 +164,21 @@ const currentChangeRate = computed(() => quote.value?.changeRate ?? null);
 
 function handleTrade(side) {
   if (!security.value?.id) return
-  router.push({
-    name: 'virtual-trade',
-    params: { securityId: security.value.id },
-    query: { ticker: security.value.code, side },
-  })
+  tradeSide.value = side
+  tradeSheetOpen.value = true
+}
+
+async function handleOrdered({ status, side }) {
+  const sideLabel = side === 'buy' ? '매수' : '매도'
+  const isFilled = status === 'FILLED'
+  toastTitle.value = isFilled ? `${sideLabel} 완료` : `${sideLabel} 예약 접수`
+  toastDescription.value = isFilled ? '주문이 정상적으로 체결되었습니다.' : '지정가 예약이 접수되었습니다.'
+  toastVisible.value = true
+  const ticker = security.value?.code
+  await Promise.allSettled([
+    ticker ? loadHolding(ticker) : Promise.resolve(),
+    fetchAccountAssetStatus(),
+  ])
 }
 </script>
 
@@ -217,4 +234,16 @@ function handleTrade(side) {
       </div>
     </template>
   </div>
+
+  <TradeBottomSheet
+    v-if="security"
+    v-model="tradeSheetOpen"
+    :security-id="security.id"
+    :ticker="security.code"
+    :security-name="security.name"
+    :initial-side="tradeSide"
+    @ordered="handleOrdered"
+  />
+
+  <BaseToast v-model="toastVisible" :title="toastTitle" :description="toastDescription" />
 </template>

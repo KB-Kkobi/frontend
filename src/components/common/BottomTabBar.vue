@@ -1,18 +1,37 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 const route = useRoute()
 
+const PRODUCT_PATH = '/products'
+const VIRTUAL_PATH = '/virtual'
+
+// 상품·주식 상세는 상품 탭과 가상투자 탭 양쪽에서 진입할 수 있어 경로만으로 구분되지 않는다.
+// 가상투자에서 진입한 경우에만 tradable 쿼리가 붙는다 (ProductDetailView·SecurityDetailView와 동일한 기준).
+const SHARED_DETAIL_ROUTES = new Set([
+  'product-detail',
+  'product-subscribe',
+  'security-detail',
+])
+
 const tabs = [
   { path: '/', label: '홈', icon: 'home' },
-  { path: '/products', label: '상품', icon: 'products' },
-  { path: '/virtual', label: '가상투자', icon: 'virtual' },
+  { path: PRODUCT_PATH, label: '상품', icon: 'products' },
+  { path: VIRTUAL_PATH, label: '가상투자', icon: 'virtual' },
   { path: '/leaderboard', label: '리더보드', icon: 'leaderboard' },
   { path: '/my', label: '마이페이지', icon: 'my' },
 ]
 
-const isActive = (path) =>
-  path === '/' ? route.path === '/' : route.path.startsWith(path)
+const contextPath = computed(() => {
+  if (!SHARED_DETAIL_ROUTES.has(route.name)) return null
+  return route.query.tradable === 'true' ? VIRTUAL_PATH : PRODUCT_PATH
+})
+
+const isActive = (path) => {
+  if (contextPath.value) return path === contextPath.value
+  return path === '/' ? route.path === '/' : route.path.startsWith(path)
+}
 </script>
 
 <template>

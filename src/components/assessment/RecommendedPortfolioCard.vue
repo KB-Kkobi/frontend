@@ -9,10 +9,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  feature: {
-    type: String,
-    default: "",
-  },
   stockRatio: {
     type: Number,
     required: true,
@@ -70,11 +66,6 @@ const segments = computed(() =>
           </li>
         </ul>
       </div>
-
-      <p v-if="feature" class="text-caption text-muted">
-        <span aria-hidden="true">💡</span>
-        {{ feature }}
-      </p>
     </div>
   </BaseCard>
 </template>
