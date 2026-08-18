@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import PageContainer from '@/components/common/PageContainer.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import TabBar from '@/components/common/TabBar.vue'
+import NotificationBellButton from '@/components/notification/NotificationBellButton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,7 +36,11 @@ function handleTabChange(key) {
       v-if="isTabBarVisible"
       class="sticky top-0 z-10 -mx-5 flex flex-col gap-4 bg-page px-5 pb-4 pt-6"
     >
-      <PageHeader title="가상투자" />
+      <PageHeader title="가상투자">
+        <template #actions>
+          <NotificationBellButton />
+        </template>
+      </PageHeader>
       <TabBar :model-value="activeTab" :tabs="tabs" @update:model-value="handleTabChange" />
     </div>
     <RouterView v-slot="{ Component }">

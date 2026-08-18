@@ -18,6 +18,7 @@ import LeaderboardView from '@/views/LeaderboardView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import MyProfileView from '@/views/MyProfileView.vue'
 import FriendManagementView from '@/views/FriendManagementView.vue'
+import NotificationSettingsView from '@/views/NotificationSettingsView.vue'
 import SecurityDetailView from '@/views/SecurityDetailView.vue'
 import GameAllocationView from '@/views/GameAllocationView.vue'
 import GameIntroductionView from '@/views/GameIntroductionView.vue'
@@ -120,6 +121,12 @@ const router = createRouter({
       path: '/my/friends',
       name: 'friend-management',
       component: FriendManagementView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/my/notifications',
+      name: 'notification-settings',
+      component: NotificationSettingsView,
       meta: { requiresAuth: true },
     },
     {
