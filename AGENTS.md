@@ -85,6 +85,7 @@
 | 컴포넌트              | 위치                               | 용도                                                                                        |
 | --------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------- |
 | `SecuritySummaryCard` | `security/SecuritySummaryCard.vue` | 종목 현재가·등락·차트·기간 선택                                                             |
+| `SecurityListCard`    | `security/SecurityListCard.vue`    | 증권 목록 행(BaseCard elevation=flat). 이름·유형 배지·티커·실시간 시세. `security`/`quote` props, `@select` emit |
 | `HoldingCard`         | `security/HoldingCard.vue`         | 보유 수량·평균단가·평가수익률. `quantity`, `avgPrice`, `currentPrice` props                 |
 | `SecurityInsightCard` | `security/SecurityInsightCard.vue` | "알아두면 좋아요" 인사이트 카드. `period`, `productName`, `averageDailyMove`, `maxDrawdown`, `description` props |
 | `PriceChart`          | `security/PriceChart.vue`          | 캔들스틱 차트(lightweight-charts). `code`(6자리) + `period`(D/W/M) props, 기간에 따라 자동 재조회 |
@@ -108,6 +109,9 @@
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |
 | `NotificationBellButton` | `notification/NotificationBellButton.vue` | 상단 헤더용 알림 벨 + 드롭다운 팝오버. `PageHeader`의 `#actions` slot에서 사용. unread 개수는 `stores/notification.js`의 polling이 갱신하는 값을 그대로 구독(마운트 시 자체 fetch 없음). 클릭 시 별도 페이지 이동 없이 벨 아래에 알림 패널이 펼쳐지고 목록·unread count를 최신화. 알림 클릭 시 type별로 관련 화면(친구 관리/거래 내역)으로 이동, 읽음 여부와 무관하게 항상 이동. "전체 읽음"은 항상 노출(미읽음 없으면 disabled), "모두 지우기"는 확인 모달(`BaseModal`) 후 실제 DELETE API 호출. 바깥 클릭·ESC·스크롤·route 이동 시 닫힘 |
 | `NotificationListItem`  | `notification/NotificationListItem.vue` | 알림 패널 내부의 개별 알림 행(카드 아님, 얇은 divider로 구분). type별 아이콘(매수·매도·친구 신청·친구 수락, 모두 핑크 톤 통일) + 제목·본문·상대 시간. 미읽음이면 우측에 작은 pink dot + 제목 `font-semibold`. `notification` prop, `@select` emit |
+| `HomeRecommendationCard` | `home/HomeRecommendationCard.vue` | 홈 화면 "추천 금융상품" 섹션(BaseCard color=pink). `/api/securities/recommendations`(서버가 주식·주식형ETF 통합 1개 + 채권형ETF 1개를 성향 매칭 순으로 반환)와 `/api/products/recommendations`(예·적금 최고금리 1개, `fetchRecommendedSavingsProduct`)를 함께 조회해 `HomeRecommendationItemCard` + `HomeRecommendationProductItemCard` 가로 스크롤 목록(총 3장) + "더보기"(상품 탭 이동)로 표시. props 없음, 내부에서 로딩·에러·빈 상태 처리 |
+| `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 증권 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
+| `HomeRecommendationProductItemCard` | `home/HomeRecommendationProductItemCard.vue` | 홈 추천 섹션의 예·적금 카드 1개(BaseCard color=white elevation=flat, `w-40`). 예금/적금 배지·상품명·금융회사명·최고 우대 금리. `product` prop, `@select` emit |
 
 ## 개발 컨벤션
 

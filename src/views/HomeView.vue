@@ -5,6 +5,7 @@ import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import HomePersonaSummaryCard from "@/components/home/HomePersonaSummaryCard.vue";
 import HomeAssessmentIntroCard from "@/components/home/HomeAssessmentIntroCard.vue";
+import HomeRecommendationCard from "@/components/home/HomeRecommendationCard.vue";
 import HomeDailyQuizCard from "@/components/home/HomeDailyQuizCard.vue";
 import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import { fetchMyInfo } from "@/api/authApi";
@@ -78,6 +79,8 @@ onMounted(loadHomeData);
       />
 
       <HomeAssessmentIntroCard v-else />
+
+      <HomeRecommendationCard />
 
       <HomeDailyQuizCard v-if="!isLoading && !errorMessage" />
     </div>

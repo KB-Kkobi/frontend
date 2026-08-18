@@ -11,6 +11,7 @@ const PRODUCT_API_PATHS = Object.freeze({
 });
 
 const PRODUCT_HOLDINGS_API_PATH = "/api/products/holdings";
+const PRODUCT_RECOMMENDATIONS_API_PATH = "/api/products/recommendations";
 
 export const PRODUCT_API_ERROR_CODES = Object.freeze({
   INVALID_TYPE: "INVALID_TYPE",
@@ -147,6 +148,12 @@ export function fetchDepositProductList(params) {
 
 export function fetchSavingProductList(params) {
   return requestProductList(PRODUCT_TYPES.SAVING, params);
+}
+
+// 홈 화면 추천용 예·적금 1건 조회 (예금·적금 최고금리 1위 중 더 높은 쪽, 서버에서 선택)
+export async function fetchRecommendedSavingsProduct() {
+  const response = await requestProduct(PRODUCT_RECOMMENDATIONS_API_PATH);
+  return response ? normalizeProductListItem(response) : null;
 }
 
 const PRODUCT_LIST_FETCHERS = Object.freeze({

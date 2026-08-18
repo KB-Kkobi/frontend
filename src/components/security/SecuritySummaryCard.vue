@@ -97,10 +97,8 @@ function handlePeriodSelect(key) {
             :key="opt.key"
             type="button"
             :class="[
-              'py-3 px-4 text-caption',
-              opt.key === activePeriod
-                ? 'text-pink font-semibold'
-                : 'text-muted',
+              'py-3 px-4 text-caption font-normal',
+              opt.key === activePeriod ? 'text-pink' : 'text-muted',
             ]"
             @click="handlePeriodSelect(opt.key)"
           >
