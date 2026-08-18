@@ -341,6 +341,18 @@ const overlayImage = computed(
 const overlayImageScale = computed(
   () => KKOBI_EXPRESSION_SCALE[overlayContent.value?.expression] ?? 1,
 );
+const skipConfirmationContent = computed(() =>
+  isSkipConfirmationOpen.value
+    ? {
+        image: kkobiSad,
+        imageScale: KKOBI_EXPRESSION_SCALE.sad,
+        title: GAME_TUTORIAL_MESSAGES.skipTitle,
+        message: GAME_TUTORIAL_MESSAGES.skipBody,
+        primaryLabel: '계속 진행하기',
+        secondaryLabel: '건너뛰기',
+      }
+    : null,
+);
 
 function finishTutorialNavigation() {
   router.replace({ name: 'game-start' });
@@ -376,6 +388,7 @@ function handleRequestSkipTutorial() {
 }
 
 function handleCancelSkipTutorial() {
+  isSkipConfirmationOpen.value = false;
   if (
     shouldResumeAfterSkipCancel.value &&
     phase.value === TUTORIAL_PHASE.PLAYING
@@ -386,6 +399,7 @@ function handleCancelSkipTutorial() {
 }
 
 function handleSkipTutorial() {
+  isSkipConfirmationOpen.value = false;
   shouldResumeAfterSkipCancel.value = false;
   completeTutorial();
 }
@@ -659,12 +673,12 @@ onBeforeUnmount(() => {
   </PageContainer>
 
   <!-- 예·적금 해지 모달은 기존처럼 Overlay를 잠시 언마운트한다. 스킵 확인 중에는
-       Overlay의 딤만 유지하고 가이드 UI·상호작용·대상 측정만 중단한다. -->
+       같은 Overlay 안에서 딤을 유지하고 기존 가이드 카드를 스킵 대화로 교체한다. -->
   <GameTutorialOverlay
     v-if="overlayContent && !isDepositConfirmationOpen"
     ref="overlayRef"
     :visible="isOverlayVisible"
-    :suspended="isSkipConfirmationOpen"
+    :skip-confirmation="skipConfirmationContent"
     :image="overlayImage"
     :image-scale="overlayImageScale"
     :variant="overlayContent.variant || 'compact'"
@@ -688,29 +702,9 @@ onBeforeUnmount(() => {
     @next="handleOverlayNext"
     @confirm="handleOverlayConfirm"
     @skip="handleRequestSkipTutorial"
+    @skip-cancel="handleCancelSkipTutorial"
+    @skip-confirm="handleSkipTutorial"
   />
-
-  <BaseModal
-    v-model="isSkipConfirmationOpen"
-    message="튜토리얼을 건너뛰시겠습니까?"
-    confirm-text="건너뛰기"
-    confirm-color="white"
-    cancel-text="계속 진행하기"
-    cancel-color="pink"
-    tone="tutorial-skip"
-    @confirm="handleSkipTutorial"
-    @cancel="handleCancelSkipTutorial"
-  >
-    <template #visual>
-      <div class="flex justify-center">
-        <img
-          :src="kkobiSad"
-          alt=""
-          class="h-24 w-24 object-contain"
-        />
-      </div>
-    </template>
-  </BaseModal>
 
   <BaseModal
     v-model="isDepositConfirmationOpen"

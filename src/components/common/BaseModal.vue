@@ -6,12 +6,6 @@ const props = defineProps({
   message: { type: String, required: true },
   confirmText: { type: String, default: "확인" },
   cancelText: { type: String, default: "취소" },
-  cancelColor: {
-    type: String,
-    default: "white",
-    validator: (v) =>
-      ["pink", "blue", "green", "yellow", "white"].includes(v),
-  },
   confirmColor: {
     type: String,
     default: "pink",
@@ -23,8 +17,7 @@ const props = defineProps({
   tone: {
     type: String,
     default: "default",
-    validator: (v) =>
-      ["default", "neutral", "tutorial-confirm", "tutorial-skip"].includes(v),
+    validator: (v) => ["default", "neutral", "tutorial-confirm"].includes(v),
   },
 });
 
@@ -56,47 +49,38 @@ function handleBackdropClick() {
 
 <template>
   <Teleport to="body">
-    <Transition
-      :enter-active-class="tone === 'tutorial-skip' ? 'transition duration-150 ease-out' : ''"
-      :enter-from-class="tone === 'tutorial-skip' ? 'opacity-0' : ''"
-      :leave-active-class="tone === 'tutorial-skip' ? 'transition duration-150 ease-in' : ''"
-      :leave-to-class="tone === 'tutorial-skip' ? 'opacity-0' : ''"
+    <div
+      v-if="modelValue"
+      :class="[
+        'fixed inset-0 z-50 flex items-center justify-center px-5',
+        tone === 'tutorial-confirm' ? 'bg-black/15' : 'bg-black/40',
+      ]"
+      @click.self="handleBackdropClick"
     >
       <div
-        v-if="modelValue"
         :class="[
-          'fixed inset-0 flex items-center justify-center px-5',
-          tone === 'tutorial-skip' ? 'z-[70] bg-transparent' : 'z-50',
-          tone === 'tutorial-confirm' ? 'bg-black/15' : tone === 'tutorial-skip' ? '' : 'bg-black/40',
+          'flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white pt-8 px-4 pb-4',
+          tone === 'default' ? 'shadow-popup' : 'shadow-float',
         ]"
-        @click.self="handleBackdropClick"
       >
-        <div
-          :class="[
-            'flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white pt-8 px-4 pb-4',
-            tone === 'default' ? 'shadow-popup' : 'shadow-float',
-          ]"
-        >
-          <slot name="visual" />
-          <p class="text-h2 text-ink text-center tracking-tight">
-            {{ message }}
-          </p>
-          <slot name="content" />
-          <div class="flex gap-2">
-            <BottomButton
-              v-if="showCancel"
-              :color="cancelColor"
-              :disabled="cancelDisabled"
-              @click="handleCancel"
-            >
-              {{ cancelText }}
-            </BottomButton>
-            <BottomButton :color="confirmColor" @click="handleConfirm">
-              {{ confirmText }}
-            </BottomButton>
-          </div>
+        <p class="text-h2 text-ink text-center tracking-tight">
+          {{ message }}
+        </p>
+        <slot name="content" />
+        <div class="flex gap-2">
+          <BottomButton
+            v-if="showCancel"
+            color="white"
+            :disabled="cancelDisabled"
+            @click="handleCancel"
+          >
+            {{ cancelText }}
+          </BottomButton>
+          <BottomButton :color="confirmColor" @click="handleConfirm">
+            {{ confirmText }}
+          </BottomButton>
         </div>
       </div>
-    </Transition>
+    </div>
   </Teleport>
 </template>

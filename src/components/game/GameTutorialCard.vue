@@ -34,6 +34,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  prevLabel: {
+    type: String,
+    default: '이전',
+  },
   nextLabel: {
     type: String,
     default: '',
@@ -113,7 +117,7 @@ const hasFooter = computed(
               :disabled="prevDisabled"
               @click="emit('prev')"
             >
-              이전
+              {{ prevLabel }}
             </BottomButton>
             <BottomButton
               v-if="nextLabel"
