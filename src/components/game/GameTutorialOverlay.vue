@@ -30,6 +30,12 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  // 확인 모달이 오버레이 위에 떠 있는 동안 딤만 유지하고 가이드 UI와
+  // 상호작용·대상 측정은 잠시 멈춘다.
+  suspended: {
+    type: Boolean,
+    default: false,
+  },
   image: {
     type: String,
     required: true,
@@ -249,7 +255,7 @@ function isElementFullyVisible(el) {
 }
 
 async function prepareTargets(visible, generation) {
-  if (!visible) return;
+  if (!visible || props.suspended) return;
 
   await nextTick();
   if (generation !== measurementGeneration) return;
@@ -297,6 +303,7 @@ function startWatchStatus() {
 watch(
   () => [
     props.visible,
+    props.suspended,
     targetKeys.value.join("|"),
     props.interactionTarget,
     props.centerDock,
@@ -310,16 +317,16 @@ watch(
     props.lightweight,
   ],
   (nextValues, previousValues) => {
-    const [visible, targetSignature, interactionTarget] = nextValues;
+    const [visible, suspended, targetSignature, interactionTarget] = nextValues;
     const targetChanged =
       !previousValues ||
-      targetSignature !== previousValues[1] ||
-      interactionTarget !== previousValues[2];
+      targetSignature !== previousValues[2] ||
+      interactionTarget !== previousValues[3];
     const generation = ++measurementGeneration;
     stopTracking();
-    if (targetChanged) targetRectMap.value = {};
+    if (suspended || targetChanged) targetRectMap.value = {};
     stablePlacementSide.value = null;
-    void prepareTargets(visible, generation);
+    void prepareTargets(visible && !suspended, generation);
   },
   { immediate: true, flush: "sync" },
 );
@@ -340,7 +347,7 @@ const interactionEntries = computed(() =>
 );
 
 watch(
-  () => props.visible && props.lightweight,
+  () => props.visible && !props.suspended && props.lightweight,
   (isWatching) => {
     if (isWatching) {
       startWatchStatus();
@@ -389,7 +396,7 @@ function interactionGeometry(rect) {
 // 현재 DOM에서 실제로 측정된 대상만 그린다. 이전 위치 fallback을 두지 않아
 // activeEntries가 비는 순간 Spotlight도 즉시 사라진다.
 const maskEntries = computed(() =>
-  activeEntries.value.map((entry) => ({
+  (props.suspended ? [] : activeEntries.value).map((entry) => ({
     key: entry.key,
     isCard: CARD_TARGET_KEYS.has(entry.key),
     geo: activeGeometry(entry.rect, entry.key),
@@ -595,7 +602,7 @@ function isInsideProtectedArea(target) {
 }
 
 function handleTutorialKeydown(event) {
-  if (!props.visible || !overlayEl.value) return;
+  if (!props.visible || props.suspended || !overlayEl.value) return;
 
   const isInsideOverlay = isInsideProtectedArea(event.target);
   if (event.key !== 'Tab') {
@@ -664,7 +671,7 @@ onBeforeUnmount(() => {
         ></div>
 
         <button
-          v-if="skipLabel"
+          v-if="!suspended && skipLabel"
           type="button"
           class="pointer-events-auto absolute right-5 top-6 z-30 text-caption font-semibold text-white underline"
           @click="emit('skip')"
@@ -674,7 +681,7 @@ onBeforeUnmount(() => {
 
         <!-- Spotlight에는 leave 전환을 두지 않는다. target 교체 시 이전 링은 즉시
              제거하고, 같은 target의 좌표 변화만 transition-all로 부드럽게 이동한다. -->
-        <div class="absolute inset-0 z-20">
+        <div v-if="!suspended" class="absolute inset-0 z-20">
           <div
             v-for="entry in maskEntries"
             :key="spotlightKey(entry)"
@@ -691,7 +698,7 @@ onBeforeUnmount(() => {
         </div>
 
         <button
-          v-for="entry in allowInteraction ? interactionEntries : []"
+          v-for="entry in !suspended && allowInteraction ? interactionEntries : []"
           :key="`interaction-${entry.key}`"
           type="button"
           class="pointer-events-auto absolute z-30 bg-transparent"
@@ -704,6 +711,7 @@ onBeforeUnmount(() => {
              새 target 측정 중에는 이전 stable 좌표를 유지하고, 준비된 새 좌표로만
              한 번 이동한다. -->
         <div
+          v-if="!suspended"
           ref="dockEl"
           class="pointer-events-none absolute inset-x-0 top-0 z-40 transition-transform duration-300 ease-out"
           :style="dockStyle"

@@ -65,7 +65,7 @@
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
 | `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop                              |
 | `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
-| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
+| `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`confirmColor`/`cancelColor`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`/`tutorial-skip`) prop, `#visual`/`#content` slot, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
 | `BackButton`    | 뒤로가기 버튼                                                                                             |
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |

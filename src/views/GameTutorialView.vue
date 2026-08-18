@@ -658,13 +658,13 @@ onBeforeUnmount(() => {
     </div>
   </PageContainer>
 
-  <!-- 확인 모달이 열려 있는 동안에는 튜토리얼 Overlay 자체를 언마운트한다.
-       BaseModal(z-50)이 Overlay(z-[60]) 아래 깔려 클릭이 막히는 것을 막고,
-       모달이 닫히면 Overlay가 새로 마운트되며 깨끗한 상태로 다시 측정된다. -->
+  <!-- 예·적금 해지 모달은 기존처럼 Overlay를 잠시 언마운트한다. 스킵 확인 중에는
+       Overlay의 딤만 유지하고 가이드 UI·상호작용·대상 측정만 중단한다. -->
   <GameTutorialOverlay
-    v-if="overlayContent && !isDepositConfirmationOpen && !isSkipConfirmationOpen"
+    v-if="overlayContent && !isDepositConfirmationOpen"
     ref="overlayRef"
     :visible="isOverlayVisible"
+    :suspended="isSkipConfirmationOpen"
     :image="overlayImage"
     :image-scale="overlayImageScale"
     :variant="overlayContent.variant || 'compact'"
@@ -694,10 +694,23 @@ onBeforeUnmount(() => {
     v-model="isSkipConfirmationOpen"
     message="튜토리얼을 건너뛰시겠습니까?"
     confirm-text="건너뛰기"
+    confirm-color="white"
     cancel-text="계속 진행하기"
+    cancel-color="pink"
+    tone="tutorial-skip"
     @confirm="handleSkipTutorial"
     @cancel="handleCancelSkipTutorial"
-  />
+  >
+    <template #visual>
+      <div class="flex justify-center">
+        <img
+          :src="kkobiSad"
+          alt=""
+          class="h-24 w-24 object-contain"
+        />
+      </div>
+    </template>
+  </BaseModal>
 
   <BaseModal
     v-model="isDepositConfirmationOpen"
