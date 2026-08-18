@@ -26,6 +26,10 @@ export function fetchFriends() {
   return get(FRIENDS_PATH);
 }
 
+export function cancelSentFriendRequest(friendshipId) {
+  return remove(`${FRIENDS_PATH}/requests/${friendshipId}`);
+}
+
 export function deleteFriend(friendUserId) {
   return remove(`${FRIENDS_PATH}/${friendUserId}`);
 }

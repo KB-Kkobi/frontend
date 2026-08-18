@@ -1,8 +1,9 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, computed } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
   acceptFriendRequest,
+  cancelSentFriendRequest,
   deleteFriend,
   fetchFriends,
   fetchReceivedFriendRequests,
@@ -26,8 +27,15 @@ const friendsSectionRef = ref(null);
 const highlightedSection = ref(null);
 let highlightTimer = null;
 
-function focusDeepLinkedSection() {
+// 받은 요청은 즉시 처리할 액션이 있어 요청이 있으면 자동으로 펼치고, 사용자가 접어도
+// 새 요청이 추가되면 다시 펼친다. 보낸 요청은 확인용 정보라 항상 사용자의 선택을 따른다.
+const isReceivedOpen = ref(false);
+const isSentOpen = ref(false);
+
+async function focusDeepLinkedSection() {
   const section = route.query.section;
+  if (section === "received") isReceivedOpen.value = true;
+
   const targetEl =
     section === "received"
       ? receivedSectionRef.value
@@ -37,6 +45,7 @@ function focusDeepLinkedSection() {
 
   if (!targetEl) return;
 
+  await nextTick();
   targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
   highlightedSection.value = section;
 
@@ -63,9 +72,21 @@ const processingRequestAction = ref("");
 const deletingFriendId = ref(null);
 const selectedFriend = ref(null);
 const isDeleteModalOpen = ref(false);
+const cancellingFriendshipId = ref(null);
+const selectedSentRequest = ref(null);
+const isCancelRequestModalOpen = ref(false);
 const sentRequests = ref([]);
 const sentRequestErrorMessage = ref("");
 const isSentRequestsLoading = ref(true);
+
+// 받은 요청이 새로 늘어나면(0→1, 1→2 등) 사용자가 접어놨어도 다시 펼친다.
+// 줄어드는 경우엔(수락/거절/폴링) 사용자가 보고 있는 상태를 강제로 접지 않는다.
+watch(
+  () => receivedRequests.value.length,
+  (next, prev) => {
+    if (next > prev) isReceivedOpen.value = true;
+  },
+);
 
 const deleteConfirmationMessage = computed(() =>
   selectedFriend.value
@@ -275,6 +296,39 @@ async function handleDeleteFriend() {
   }
 }
 
+function handleOpenCancelRequestModal(request) {
+  if (cancellingFriendshipId.value !== null) return;
+  selectedSentRequest.value = request;
+  isCancelRequestModalOpen.value = true;
+}
+
+function handleDismissCancelRequestModal() {
+  selectedSentRequest.value = null;
+}
+
+async function handleConfirmCancelRequest() {
+  const request = selectedSentRequest.value;
+  if (!request || cancellingFriendshipId.value !== null) return;
+
+  cancellingFriendshipId.value = request.friendshipId;
+
+  try {
+    await cancelSentFriendRequest(request.friendshipId);
+    // 로컬에서 바로 빼지 않고 서버를 다시 조회해 최종 목록을 맞춘다.
+    await loadSentRequests();
+    showToast("success", "친구 요청을 취소했어요.");
+  } catch (error) {
+    showToast(
+      "error",
+      getErrorMessage(error, "친구 요청을 취소하지 못했어요."),
+    );
+    await loadSentRequests({ silent: true });
+  } finally {
+    cancellingFriendshipId.value = null;
+    selectedSentRequest.value = null;
+  }
+}
+
 onMounted(async () => {
   await Promise.all([loadFriendData(), loadSentRequests()]);
   friendDataPollTimer = setInterval(pollFriendData, FRIEND_POLL_INTERVAL_MS);
@@ -314,98 +368,152 @@ onBeforeUnmount(() => {
   <BaseCard color="white">
     <section
       ref="receivedSectionRef"
-      class="flex flex-col gap-3 rounded-2xl transition-colors duration-700"
+      class="rounded-2xl transition-colors duration-700"
       :class="highlightedSection === 'received' ? 'bg-pink-soft' : ''"
     >
-      <div class="flex items-center gap-2">
-        <h2 class="text-h2 text-ink">받은 친구 요청</h2>
-        <BasePill v-if="receivedRequests.length" variant="ghost" :label="String(receivedRequests.length)" />
-      </div>
-
-      <p v-if="isReceivedRequestsLoading" class="text-caption text-muted" role="status">
-        받은 친구 요청을 불러오는 중입니다.
-      </p>
-      <p v-else-if="receivedRequestErrorMessage" class="text-caption text-error" role="alert">
-        {{ receivedRequestErrorMessage }}
-      </p>
-      <p v-else-if="receivedRequests.length === 0" class="text-caption text-muted">
-        새로운 친구 요청이 없어요.
-      </p>
-      <ul v-else class="flex flex-col divide-y divide-line-soft">
-        <li
-          v-for="request in receivedRequests"
-          :key="request.friendshipId"
-          class="flex items-center gap-3 py-3"
+      <button
+        type="button"
+        class="flex w-full items-center justify-between gap-2 py-1 text-left"
+        :aria-expanded="isReceivedOpen"
+        @click="isReceivedOpen = !isReceivedOpen"
+      >
+        <span class="flex items-center gap-2">
+          <h2 class="text-h2 text-ink">받은 친구 요청</h2>
+          <BasePill variant="ghost" :label="String(receivedRequests.length)" />
+        </span>
+        <svg
+          class="h-5 w-5 shrink-0 text-muted transition-transform duration-200"
+          :class="isReceivedOpen ? 'rotate-180' : ''"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
         >
-          <span
-            class="min-w-0 flex-1 truncate text-body font-semibold text-ink"
-            :title="request.nickname"
-          >
-            {{ request.nickname }}
-          </span>
-          <div class="flex shrink-0 items-center gap-2">
-            <BasePill
-              as="button"
-              type="button"
-              color="green"
-              :label="
-                isProcessingRequest(request.friendshipId, 'accept')
-                  ? '처리 중'
-                  : '수락'
-              "
-              :disabled="processingRequestId !== null"
-              @click="handleAcceptRequest(request)"
-            />
-            <BasePill
-              as="button"
-              type="button"
-              color="pink"
-              variant="outline"
-              :label="
-                isProcessingRequest(request.friendshipId, 'reject')
-                  ? '처리 중'
-                  : '거절'
-              "
-              :disabled="processingRequestId !== null"
-              @click="handleRejectRequest(request)"
-            />
-          </div>
-        </li>
-      </ul>
+          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      <div class="grid transition-all duration-200 ease-out" :class="isReceivedOpen ? 'grid-rows-expand' : 'grid-rows-collapse'">
+        <div class="min-h-0 overflow-hidden">
+        <div class="flex flex-col gap-3 pt-3">
+          <p v-if="isReceivedRequestsLoading" class="text-caption text-muted" role="status">
+            받은 친구 요청을 불러오는 중입니다.
+          </p>
+          <p v-else-if="receivedRequestErrorMessage" class="text-caption text-error" role="alert">
+            {{ receivedRequestErrorMessage }}
+          </p>
+          <p v-else-if="receivedRequests.length === 0" class="text-caption text-muted">
+            새로운 친구 요청이 없어요.
+          </p>
+          <ul v-else class="flex flex-col divide-y divide-line-soft">
+            <li
+              v-for="request in receivedRequests"
+              :key="request.friendshipId"
+              class="flex items-center gap-3 py-3"
+            >
+              <span
+                class="min-w-0 flex-1 truncate text-body font-semibold text-ink"
+                :title="request.nickname"
+              >
+                {{ request.nickname }}
+              </span>
+              <div class="flex shrink-0 items-center gap-2">
+                <BasePill
+                  as="button"
+                  type="button"
+                  color="green"
+                  :label="
+                    isProcessingRequest(request.friendshipId, 'accept')
+                      ? '처리 중'
+                      : '수락'
+                  "
+                  :disabled="processingRequestId !== null"
+                  @click="handleAcceptRequest(request)"
+                />
+                <BasePill
+                  as="button"
+                  type="button"
+                  color="pink"
+                  variant="outline"
+                  :label="
+                    isProcessingRequest(request.friendshipId, 'reject')
+                      ? '처리 중'
+                      : '거절'
+                  "
+                  :disabled="processingRequestId !== null"
+                  @click="handleRejectRequest(request)"
+                />
+              </div>
+            </li>
+          </ul>
+        </div>
+        </div>
+      </div>
     </section>
   </BaseCard>
 
   <BaseCard color="white">
-    <section class="flex flex-col gap-3">
-      <div class="flex items-center gap-2">
-        <h2 class="text-h2 text-ink">보낸 친구 요청</h2>
-        <BasePill v-if="sentRequests.length" variant="ghost" :label="String(sentRequests.length)" />
-      </div>
-
-      <p v-if="isSentRequestsLoading" class="text-caption text-muted" role="status">
-        보낸 친구 요청을 불러오는 중입니다.
-      </p>
-      <p v-else-if="sentRequestErrorMessage" class="text-caption text-error" role="alert">
-        {{ sentRequestErrorMessage }}
-      </p>
-      <p v-else-if="sentRequests.length === 0" class="text-caption text-muted">
-        아직 보낸 친구 요청이 없어요.
-      </p>
-      <ul v-else class="flex flex-col divide-y divide-line-soft">
-        <li
-          v-for="request in sentRequests"
-          :key="request.friendshipId"
-          class="flex items-center gap-3 py-3"
+    <section>
+      <button
+        type="button"
+        class="flex w-full items-center justify-between gap-2 py-1 text-left"
+        :aria-expanded="isSentOpen"
+        @click="isSentOpen = !isSentOpen"
+      >
+        <span class="flex items-center gap-2">
+          <h2 class="text-h2 text-ink">보낸 친구 요청</h2>
+          <BasePill variant="ghost" :label="String(sentRequests.length)" />
+        </span>
+        <svg
+          class="h-5 w-5 shrink-0 text-muted transition-transform duration-200"
+          :class="isSentOpen ? 'rotate-180' : ''"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
         >
-          <span
-            class="min-w-0 flex-1 truncate text-body text-ink"
-            :title="request.nickname"
-          >
-            {{ request.nickname }}
-          </span>
-          <BasePill variant="ghost" label="대기중" />
-        </li>
-      </ul>
+          <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+
+      <div class="grid transition-all duration-200 ease-out" :class="isSentOpen ? 'grid-rows-expand' : 'grid-rows-collapse'">
+        <div class="min-h-0 overflow-hidden">
+        <div class="flex flex-col gap-3 pt-3">
+          <p v-if="isSentRequestsLoading" class="text-caption text-muted" role="status">
+            보낸 친구 요청을 불러오는 중입니다.
+          </p>
+          <p v-else-if="sentRequestErrorMessage" class="text-caption text-error" role="alert">
+            {{ sentRequestErrorMessage }}
+          </p>
+          <p v-else-if="sentRequests.length === 0" class="text-caption text-muted">
+            아직 보낸 친구 요청이 없어요.
+          </p>
+          <ul v-else class="flex flex-col divide-y divide-line-soft">
+            <li
+              v-for="request in sentRequests"
+              :key="request.friendshipId"
+              class="flex items-center gap-3 py-3"
+            >
+              <span
+                class="min-w-0 flex-1 truncate text-body text-ink"
+                :title="request.nickname"
+              >
+                {{ request.nickname }}
+              </span>
+              <div class="flex shrink-0 items-center gap-3">
+                <BasePill variant="ghost" label="대기중" />
+                <button
+                  type="button"
+                  class="rounded px-1 py-1 text-caption font-semibold text-pink transition-opacity disabled:cursor-not-allowed disabled:opacity-40 active:opacity-60"
+                  :disabled="cancellingFriendshipId !== null"
+                  @click="handleOpenCancelRequestModal(request)"
+                >
+                  {{ cancellingFriendshipId === request.friendshipId ? "취소 중" : "취소" }}
+                </button>
+              </div>
+            </li>
+          </ul>
+        </div>
+        </div>
+      </div>
     </section>
   </BaseCard>
 
@@ -460,6 +568,22 @@ onBeforeUnmount(() => {
     @confirm="handleDeleteFriend"
     @cancel="handleCancelDelete"
   />
+
+  <BaseModal
+    v-model="isCancelRequestModalOpen"
+    message="친구 요청을 취소할까요?"
+    confirm-text="요청 취소"
+    cancel-text="취소"
+    :cancel-disabled="cancellingFriendshipId !== null"
+    @confirm="handleConfirmCancelRequest"
+    @cancel="handleDismissCancelRequestModal"
+  >
+    <template #content>
+      <p class="text-center text-caption text-muted tracking-tight">
+        상대방에게 보낸 친구 요청이 취소됩니다.
+      </p>
+    </template>
+  </BaseModal>
 
   <BaseToast v-model="isToastVisible" :title="toastTitle" :variant="toastVariant" />
 </template>
