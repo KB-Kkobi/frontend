@@ -14,7 +14,7 @@ defineProps({
   density: {
     type: String,
     default: "default",
-    validator: (v) => ["default", "tutorial"].includes(v),
+    validator: (v) => ["default", "tutorial", "tight"].includes(v),
   },
 });
 
@@ -38,6 +38,7 @@ const ELEVATION_CLASSES = {
 const DENSITY_CLASSES = {
   default: "p-4",
   tutorial: "px-4 pt-tutorial-card-y pb-4",
+  tight: "px-4 py-3",
 };
 
 </script>

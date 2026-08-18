@@ -6,6 +6,7 @@ export const CHART_STROKE_WIDTH = 2.5;
 export const CHART_MARKER_RADIUS_PX = 5;
 export const CHART_PADDING = 2;
 export const CHART_FILL_OPACITY_TOP = 0.18;
+export const CHART_BASELINE_RANGE_PERCENT = 35;
 
 export const GAME_INTRO_PREVIEW_PRICES = [
   13200, 13450, 13150, 12700, 12950, 13600,
