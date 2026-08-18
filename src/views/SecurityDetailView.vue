@@ -15,6 +15,7 @@ import { fetchAccountAssetStatus } from "@/api/accountApi";
 import { ApiError } from "@/api/http";
 import { SECURITY_QUOTE_POLL_INTERVAL_MS } from "@/constants/security";
 import { subscribeTick } from "@/api/stockSocket";
+import { isMarketOpen, getNextMarketOpenText } from "@/utils/market";
 
 const route = useRoute();
 const isVirtualInvestment = computed(() => route.query.tradable === "true");
@@ -163,9 +164,18 @@ const currentChange = computed(() => quote.value?.change ?? null);
 const currentChangeRate = computed(() => quote.value?.changeRate ?? null);
 
 function handleTrade(side) {
-  if (!security.value?.id) return
-  tradeSide.value = side
-  tradeSheetOpen.value = true
+  if (!security.value?.id) return;
+
+  const market = security.value.market;
+  if (isMarketOpen(market) === false) {
+    toastTitle.value = "지금은 거래할 수 없어요";
+    toastDescription.value = getNextMarketOpenText(market);
+    toastVisible.value = true;
+    return;
+  }
+
+  tradeSide.value = side;
+  tradeSheetOpen.value = true;
 }
 
 async function handleOrdered({ status, side }) {

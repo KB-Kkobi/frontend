@@ -1,7 +1,6 @@
 <script setup>
 import { watch } from 'vue'
 import BaseBottomSheet from '@/components/common/BaseBottomSheet.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BottomButton from '@/components/common/BottomButton.vue'
 import TradeSideToggle from '@/components/trade/TradeSideToggle.vue'
@@ -38,17 +37,14 @@ const {
   isLoading,
   isSubmitting,
   orderError,
-  showConfirmModal,
   orderableInfo,
   pricePerShare,
   orderAmount,
   maxQuantity,
-  confirmMessage,
   buttonLabel,
   buttonColor,
   isButtonDisabled,
   loadOrderable,
-  handleOpenConfirm,
   submitOrder,
   resetState,
 } = useTradeOrder({ securityId: props.securityId, ticker: props.ticker })
@@ -132,20 +128,10 @@ async function handleConfirm() {
       <BottomButton
         :color="buttonColor"
         :disabled="isButtonDisabled"
-        @click="handleOpenConfirm"
+        @click="handleConfirm"
       >
         {{ buttonLabel }}
       </BottomButton>
     </div>
   </BaseBottomSheet>
-
-  <!-- 주문 확인 모달 (BaseBottomSheet 바깥) -->
-  <BaseModal
-    v-model="showConfirmModal"
-    :message="confirmMessage"
-    :confirm-text="buttonLabel"
-    :confirm-color="buttonColor"
-    cancel-text="취소"
-    @confirm="handleConfirm"
-  />
 </template>
