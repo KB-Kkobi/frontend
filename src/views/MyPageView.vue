@@ -6,6 +6,7 @@ import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
+import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import { useAuthStore } from "@/stores/auth";
 import { clearGameSession } from "@/utils/gameStorage";
 
@@ -61,6 +62,14 @@ function handleMenuSelect(item) {
   console.log("마이페이지 메뉴:", item.id);
 }
 
+function handleSettingSelect(item) {
+  if (item.id === "notifications") {
+    router.push({ name: "notification-settings" });
+    return;
+  }
+  handleMenuSelect(item);
+}
+
 async function handleLogout() {
   try {
     await logoutUser();
@@ -77,7 +86,11 @@ onMounted(loadProfile);
 <template>
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <PageHeader title="마이페이지" />
+      <PageHeader title="마이페이지">
+        <template #actions>
+          <NotificationBellButton />
+        </template>
+      </PageHeader>
 
       <section>
         <BaseCard color="white">
@@ -124,7 +137,7 @@ onMounted(loadProfile);
 
       <section class="flex flex-col gap-4">
         <h2 class="text-h2 text-ink">설정</h2>
-        <MyPageMenuCard :items="SETTING_ITEMS" @select="handleMenuSelect" />
+        <MyPageMenuCard :items="SETTING_ITEMS" @select="handleSettingSelect" />
       </section>
 
       <section class="flex flex-col gap-4">

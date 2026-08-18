@@ -20,6 +20,7 @@ import HelpButton from "@/components/common/HelpButton.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import ListToolbar from "@/components/common/ListToolbar.vue";
 import BasePagination from "@/components/common/BasePagination.vue";
 import SearchInput from "@/components/common/SearchInput.vue";
@@ -572,6 +573,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex flex-col gap-6" :class="standalone ? 'py-6' : ''">
     <PageHeader v-if="standalone">
+      <template #actions>
+        <NotificationBellButton />
+      </template>
       <h1 class="text-h1 text-ink">상품</h1>
       <p class="text-caption text-muted">
         나에게 맞는 예금·적금·증권 상품을 확인해 보세요.

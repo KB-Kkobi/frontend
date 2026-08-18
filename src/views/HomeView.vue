@@ -7,6 +7,7 @@ import HomePersonaSummaryCard from "@/components/home/HomePersonaSummaryCard.vue
 import HomeAssessmentIntroCard from "@/components/home/HomeAssessmentIntroCard.vue";
 import HomeRecommendationCard from "@/components/home/HomeRecommendationCard.vue";
 import HomeDailyQuizCard from "@/components/home/HomeDailyQuizCard.vue";
+import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import { fetchMyInfo } from "@/api/authApi";
 import { fetchAssessmentResult } from "@/api/assessmentApi";
 import { ApiError } from "@/api/http";
@@ -39,6 +40,9 @@ onMounted(loadHomeData);
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
       <PageHeader>
+        <template #actions>
+          <NotificationBellButton />
+        </template>
         <h1 class="text-h1 text-ink">
           안녕하세요<span v-if="nickname">, {{ nickname }}님</span>! 👋
         </h1>

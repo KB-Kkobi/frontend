@@ -63,7 +63,7 @@
 | 컴포넌트        | 용도                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
-| `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop                              |
+| `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop. `#actions` named slot으로 우측 상단 아이콘(알림 벨 등) 배치 가능 |
 | `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
 | `BottomButton`  | 하단·행동 버튼. `color` prop으로 스타일 선택, `shape` prop(`rounded` 기본값 / `pill`)으로 모서리 형태 선택 |
@@ -74,6 +74,7 @@
 | `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `disabled` prop. `ghost`=`bg-surface text-muted font-normal` |
 | `HelpButton`    | 원형 (?) 도움말 버튼. `ariaLabel`(필수) + `size`(선택, 기본 20px) prop, `@click` emit. 시각 크기는 `size`×`size`px, 터치 영역은 `::before`로 44px 확보. 라벨 텍스트는 포함하지 않으므로 호출부에서 옆에 배치할 것. |
 | `ListToolbar`   | 목록 상단 툴바(정렬·필터 버튼 + 왼쪽 자유 슬롯). `sortLabel`/`filterLabel`/`showSort`/`showFilter`/`filterActive`/`filterCount` props, `@sort`/`@filter` emit. `default` slot=왼쪽 영역, `#sort` named slot=정렬 버튼 교체 |
+| `BaseSwitch`    | ON/OFF 토글 스위치. `modelValue`(필수) + `disabled` prop, `@update:modelValue` emit                       |
 
 - 새 컴포넌트를 만들기 전에 이 목록부터 확인.
 - 부족한 변형이 필요하면 컴포넌트를 확장(새 `props` 값 추가)하지, 사용처에서 클래스 override로 우회하지 말 것.
@@ -88,7 +89,7 @@
 | `HoldingCard`         | `security/HoldingCard.vue`         | 보유 수량·평균단가·평가수익률. `quantity`, `avgPrice`, `currentPrice` props                 |
 | `SecurityInsightCard` | `security/SecurityInsightCard.vue` | "알아두면 좋아요" 인사이트 카드. `period`, `productName`, `averageDailyMove`, `maxDrawdown`, `description` props |
 | `PriceChart`          | `security/PriceChart.vue`          | 캔들스틱 차트(lightweight-charts). `code`(6자리) + `period`(D/W/M) props, 기간에 따라 자동 재조회 |
-| `TransactionCard`     | `transaction/TransactionCard.vue`  | 거래 내역·대기 주문 공통 카드. `name`/`subLabel`/`pill`/`datetime`/`stats`/`isCancelable`/`cancelText` props, `@cancel` emit |
+| `TransactionCard`     | `transaction/TransactionCard.vue`  | 거래 내역·대기 주문 공통 카드. `name`/`subLabel`/`pill`/`datetime`/`stats`/`isCancelable`/`cancelText`/`highlighted`(알림에서 진입 시 잠깐 강조, `color="pink"`+`elevation="highlight"`) props, `@cancel` emit |
 | `MyPageMenuCard`      | `mypage/MyPageMenuCard.vue`         | 마이페이지의 아이콘·라벨 메뉴 목록. `items` prop, `@select` emit                                |
 | `TradeSideToggle`     | `trade/TradeSideToggle.vue`         | 매수/매도 전체 폭 세그먼트 토글. `side`('buy'\|'sell') prop, `@update:side` emit. 매수=bg-pink, 매도=bg-surface |
 | `TradeStockHeader`    | `trade/TradeStockHeader.vue`        | 종목 헤더 카드(BaseCard). `name`/`code`/`currentPrice`/`changeRate` props. name=종목명(text-h2), code=종목코드(text-caption text-muted, 선택). 등락률 양수=text-profit, 음수=text-loss |
@@ -106,6 +107,8 @@
 | `LeaderboardPersonaSummaryCard` | `leaderboard/LeaderboardPersonaSummaryCard.vue` | 성향끼리 리더보드 요약 카드(BaseCard highlight). 성향 이미지 + 성향명(`text-h1 font-bold text-navy`) + 내 순위. `personaName`/`imagePath`/`myRank`/`participantCount` props |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행(BaseCard). 순위 원형 배지(1~3위=bg-cream-soft, 그 외=bg-surface) + 닉네임 + 총자산·수익률. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. `isMe`면 pink 카드 + "나" pill |
 | `LeaderboardRankRow`   | `leaderboard/LeaderboardRankRow.vue` | 리더보드 순위 행 카드. `rank`/`nickname`/`personaName`/`totalAsset`/`returnRate`/`isMe` props. 1~3위는 순위 숫자를 `text-h2 font-bold`로 강조, 4위 이하는 `text-body text-muted`. `isMe`면 `BaseCard color="pink"`(그림자 없음)로 배경 강조 + `BasePill` "나" 배지(`variant="outline"`) 표시 |
+| `NotificationBellButton` | `notification/NotificationBellButton.vue` | 상단 헤더용 알림 벨 + 드롭다운 팝오버. `PageHeader`의 `#actions` slot에서 사용. unread 개수는 `stores/notification.js`의 polling이 갱신하는 값을 그대로 구독(마운트 시 자체 fetch 없음). 클릭 시 별도 페이지 이동 없이 벨 아래에 알림 패널이 펼쳐지고 목록·unread count를 최신화. 알림 클릭 시 type별로 관련 화면(친구 관리/거래 내역)으로 이동, 읽음 여부와 무관하게 항상 이동. "전체 읽음"은 항상 노출(미읽음 없으면 disabled), "모두 지우기"는 확인 모달(`BaseModal`) 후 실제 DELETE API 호출. 바깥 클릭·ESC·스크롤·route 이동 시 닫힘 |
+| `NotificationListItem`  | `notification/NotificationListItem.vue` | 알림 패널 내부의 개별 알림 행(카드 아님, 얇은 divider로 구분). type별 아이콘(매수·매도·친구 신청·친구 수락, 모두 핑크 톤 통일) + 제목·본문·상대 시간. 미읽음이면 우측에 작은 pink dot + 제목 `font-semibold`. `notification` prop, `@select` emit |
 | `HomeRecommendationCard` | `home/HomeRecommendationCard.vue` | 홈 화면 "추천 금융상품" 섹션(BaseCard color=pink). `/api/securities/recommendations`(서버가 주식·주식형ETF 통합 1개 + 채권형ETF 1개를 성향 매칭 순으로 반환)와 `/api/products/recommendations`(예·적금 최고금리 1개, `fetchRecommendedSavingsProduct`)를 함께 조회해 `HomeRecommendationItemCard` + `HomeRecommendationProductItemCard` 가로 스크롤 목록(총 3장) + "더보기"(상품 탭 이동)로 표시. props 없음, 내부에서 로딩·에러·빈 상태 처리 |
 | `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 증권 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
 | `HomeRecommendationProductItemCard` | `home/HomeRecommendationProductItemCard.vue` | 홈 추천 섹션의 예·적금 카드 1개(BaseCard color=white elevation=flat, `w-40`). 예금/적금 배지·상품명·금융회사명·최고 우대 금리. `product` prop, `@select` emit |

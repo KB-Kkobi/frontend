@@ -79,8 +79,22 @@ export default {
         "tutorial-card-y": "6px",
       },
 
+      width: {
+        "notification-panel": "336px",
+      },
+
+      maxWidth: {
+        "notification-panel": "calc(100vw - 2rem)",
+      },
+
+      gridTemplateRows: {
+        collapse: "0fr",
+        expand: "1fr",
+      },
+
       maxHeight: {
         "tutorial-card": "38dvh",
+        "notification-panel": "380px",
       },
 
       gridTemplateColumns: {

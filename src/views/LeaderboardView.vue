@@ -10,6 +10,7 @@ import PageHeader from "@/components/common/PageHeader.vue";
 import TabBar from "@/components/common/TabBar.vue";
 import LeaderboardPersonaSummaryCard from "@/components/leaderboard/LeaderboardPersonaSummaryCard.vue";
 import LeaderboardRankRow from "@/components/leaderboard/LeaderboardRankRow.vue";
+import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import { LEADERBOARD_SORT_DEFAULT, LEADERBOARD_SORT_OPTIONS } from "@/constants/leaderboard";
 
 // ── 상수 ─────────────────────────────────────────────────────────────────────
@@ -152,7 +153,11 @@ onMounted(() => {
       <PageHeader
         title="리더보드"
         description="나와 비슷한 금융 성향의 사용자 또는 친구들과 투자 성과를 비교해보세요."
-      />
+      >
+        <template #actions>
+          <NotificationBellButton />
+        </template>
+      </PageHeader>
 
       <TabBar v-model="activeTab" :tabs="TABS" />
 
