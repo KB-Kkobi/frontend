@@ -3,6 +3,12 @@ export const PRODUCT_TYPES = Object.freeze({
   SAVING: "SAVING",
 });
 
+export const PRODUCT_LIST_TABS = Object.freeze({
+  SECURITY: "SECURITY",
+  DEPOSIT: PRODUCT_TYPES.DEPOSIT,
+  SAVING: PRODUCT_TYPES.SAVING,
+});
+
 export const PRODUCT_TYPE_OPTIONS = Object.freeze([
   { key: PRODUCT_TYPES.DEPOSIT, label: "예금" },
   { key: PRODUCT_TYPES.SAVING, label: "적금" },

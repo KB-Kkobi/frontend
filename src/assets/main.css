@@ -6,10 +6,17 @@
 @tailwind utilities;
 
 @layer base {
+  /* 가상투자 내부 3탭 스와이프 외에는 어떤 화면에서도 가로 스와이프로 브라우저/WebView의
+     기본 오버스크롤 navigation(엣지 스와이프 뒤로가기 등)이 발생하지 않도록 전역 차단한다. */
+  html {
+    overscroll-behavior-x: none;
+  }
+
   body {
     @apply bg-white font-sans text-body text-ink tracking-tight;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-x: none;
   }
 }
 

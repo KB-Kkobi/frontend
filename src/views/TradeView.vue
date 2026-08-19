@@ -117,6 +117,8 @@ async function loadOrderable() {
 }
 
 async function submitOrder() {
+  if (isSubmitting.value) return
+
   orderError.value = null
 
   if (quantity.value <= 0) {

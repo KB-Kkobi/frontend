@@ -12,7 +12,12 @@ const isCashBalanceLoading = ref(false);
 const hasCashBalanceError = ref(false);
 
 async function loadCashBalance() {
-  isCashBalanceLoading.value = true;
+  // 최초 조회일 때만 "불러오는 중" 문구를 보여준다. 재진입 시 재조회까지 매번
+  // 문구가 깜빡이며 나타났다 사라지는 것을 막기 위함.
+  const isInitialLoad = cashBalance.value === null;
+  if (isInitialLoad) {
+    isCashBalanceLoading.value = true;
+  }
   hasCashBalanceError.value = false;
 
   try {
@@ -28,7 +33,12 @@ async function loadCashBalance() {
     }
 
     cashBalance.value = nextCashBalance;
-  } catch {
+  } catch (error) {
+    if (!isInitialLoad) {
+      // 백그라운드 재조회 실패는 화면에 이미 떠 있는 값을 그대로 유지한다.
+      console.error("[VirtualProductsView] 잔액 재조회 실패", error);
+      return;
+    }
     cashBalance.value = null;
     hasCashBalanceError.value = true;
   } finally {

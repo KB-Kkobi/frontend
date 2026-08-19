@@ -35,9 +35,19 @@ export function useHistoryOrders() {
     return items
   })
 
+  // 최초 조회 여부. keep-alive 재진입마다 onActivated에서 다시 호출되는데, 이미 목록이
+  // 떠 있는 상태에서까지 로딩 카드로 바꿔치기하면 탭을 다시 들어갈 때마다 기존 내역이
+  // "잠깐 보였다가 사라지는" 것처럼 보인다. 최초 조회일 때만 로딩 카드를 보여주고,
+  // 재조회는 화면을 그대로 둔 채 조용히 최신화한다.
+  let hasLoadedOnce = false
+
   async function loadHistory(fromDate) {
-    isLoading.value = true
-    hasError.value = false
+    const isInitialLoad = !hasLoadedOnce
+
+    if (isInitialLoad) {
+      isLoading.value = true
+      hasError.value = false
+    }
     fromDateStr.value = fromDate
 
     try {
@@ -60,7 +70,13 @@ export function useHistoryOrders() {
 
       rawStockOrders.value = orders
       rawProductHistory.value = Array.isArray(productData) ? productData : []
+      hasLoadedOnce = true
     } catch (err) {
+      if (!isInitialLoad) {
+        // 백그라운드 재조회 실패는 화면에 이미 떠 있는 목록을 그대로 유지한다.
+        console.error('[useHistoryOrders] 내역 재조회 실패', err)
+        return
+      }
       console.error('[useHistoryOrders] 내역 조회 실패', err)
       hasError.value = true
     } finally {

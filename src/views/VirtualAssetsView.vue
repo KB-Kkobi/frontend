@@ -9,7 +9,7 @@ import HoldingPreviewSection from '@/components/virtual/HoldingPreviewSection.vu
 import StockHoldingRow from '@/components/virtual/StockHoldingRow.vue'
 import ProductHoldingPreviewRow from '@/components/product/ProductHoldingPreviewRow.vue'
 import { INITIAL_SEED_MONEY } from '@/constants/account'
-import { PRODUCT_TYPES } from '@/constants/product'
+import { PRODUCT_LIST_TABS } from '@/constants/product'
 import { formatCurrency, formatRate, formatSignedCurrency } from '@/utils/format'
 import { useVirtualAssets } from '@/composables/useVirtualAssets'
 
@@ -81,13 +81,16 @@ function showCompletionToastIfNeeded() {
 }
 
 function handleBrowseStocks() {
-  router.push({ name: 'virtual-products' })
+  router.push({
+    name: 'virtual-products',
+    query: { tab: PRODUCT_LIST_TABS.SECURITY },
+  })
 }
 
 function handleBrowseSavings() {
   router.push({
     name: 'virtual-products',
-    query: { tab: PRODUCT_TYPES.DEPOSIT },
+    query: { tab: PRODUCT_LIST_TABS.DEPOSIT },
   })
 }
 
@@ -197,7 +200,7 @@ onActivated(() => {
       <HoldingPreviewSection
         title="보유 주식"
         :more-to="{ name: 'stock-holdings' }"
-        more-label="내 주식 보기"
+        more-label="보유 주식 보기"
         :show-more="stockHoldings.length > 0"
         :items="stockPreview"
         :item-key="(item) => item.securityId ?? item.ticker"
@@ -216,7 +219,7 @@ onActivated(() => {
       <HoldingPreviewSection
         title="보유 예·적금"
         :more-to="{ name: 'product-holdings' }"
-        more-label="내 예·적금 보기"
+        more-label="보유 예·적금 보기"
         :show-more="productHoldings.length > 0"
         :items="productPreview"
         :item-key="(item) => item.holdingProductId"

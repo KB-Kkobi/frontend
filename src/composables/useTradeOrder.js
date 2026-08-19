@@ -102,6 +102,8 @@ export function useTradeOrder({ securityId, ticker }) {
    * @returns {{ status: string, message: string } | null} 성공 시 객체, 실패 시 null
    */
   async function submitOrder() {
+    if (isSubmitting.value) return null
+
     orderError.value = null
 
     if (quantity.value <= 0) {
@@ -130,16 +132,17 @@ export function useTradeOrder({ securityId, ticker }) {
       const resultStatus = result?.status ?? result?.orderStatus
 
       const currentSide = side.value
+      const currentMethod = method.value
 
       if (resultStatus === ORDER_STATUS.FILLED) {
-        return { status: ORDER_STATUS.FILLED, side: currentSide }
+        return { status: ORDER_STATUS.FILLED, side: currentSide, method: currentMethod }
       }
 
       // PENDING(지정가 예약 접수) 및 기타
       limitPrice.value = null
       quantity.value = maxQuantity.value > 0 ? 1 : 0
       await loadOrderable()
-      return { status: resultStatus ?? ORDER_STATUS.PENDING, side: currentSide }
+      return { status: resultStatus ?? ORDER_STATUS.PENDING, side: currentSide, method: currentMethod }
     } catch (err) {
       const code = err?.code ?? null
       orderError.value =

@@ -178,11 +178,17 @@ function handleTrade(side) {
   tradeSheetOpen.value = true;
 }
 
-async function handleOrdered({ status, side }) {
+async function handleOrdered({ status, side, method }) {
   const sideLabel = side === 'buy' ? '매수' : '매도'
   const isFilled = status === 'FILLED'
   toastTitle.value = isFilled ? `${sideLabel} 완료` : `${sideLabel} 예약 접수`
-  toastDescription.value = isFilled ? '주문이 정상적으로 체결되었습니다.' : '지정가 예약이 접수되었습니다.'
+  if (method === 'market') {
+    toastDescription.value = '시장가로 체결되었습니다.'
+  } else if (isFilled) {
+    toastDescription.value = '지정가로 체결되었습니다.'
+  } else {
+    toastDescription.value = '지정가 예약 주문이 접수되었습니다.'
+  }
   toastVisible.value = true
   const ticker = security.value?.code
   await Promise.allSettled([

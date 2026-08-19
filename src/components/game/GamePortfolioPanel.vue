@@ -128,7 +128,7 @@ const depositStatusText = computed(() => {
 </script>
 
 <template>
-  <section class="flex flex-col gap-6 py-2" aria-labelledby="portfolio-title">
+  <section class="flex flex-col gap-4 py-2" aria-labelledby="portfolio-title">
     <h2 id="portfolio-title" class="sr-only">현재 자산 현황</h2>
 
     <div
@@ -195,7 +195,7 @@ const depositStatusText = computed(() => {
       </div>
     </div>
 
-    <div class="border-t border-line pt-6">
+    <div class="border-t border-line pt-4">
       <div
         data-tutorial-target="cash"
         :class="['flex items-center justify-between gap-4', assetRowClass('cash')]"
@@ -212,7 +212,7 @@ const depositStatusText = computed(() => {
       </div>
     </div>
 
-    <div class="border-t border-line pt-6">
+    <div class="border-t border-line pt-4">
       <div
         data-tutorial-target="deposit"
         :class="['flex items-start justify-between gap-4', assetRowClass('deposit')]"
