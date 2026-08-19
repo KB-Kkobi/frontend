@@ -74,7 +74,7 @@
 | `TabBar`        | 상단 밑줄형 세그먼트 탭. `tabs` 배열 + `v-model`로 선택 상태 관리                                         |
 | `BottomTabBar`  | 하단 탭 네비게이션                                                                                        |
 | `BaseToast`     | 일정 시간 뒤 자동으로 사라지는 완료 알림. `v-model` + `title`/`description`/`duration`(기본 3000ms) + `offset`(`page` 기본값 / `header`=상단 고정 헤더 아래) + `variant`(`success` 기본값 / `error`=제목 `text-error`) prop. 화면 상단에 고정되며 클릭을 막지 않음 |
-| `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `disabled` prop. `ghost`=`bg-surface text-muted font-normal` |
+| `BasePill`      | 짧은 라벨 배지(pill). `label` + `color`(`pink`/`blue`/`green`/`yellow`/`lavender`) + `variant`(`filled`/`outline`/`ghost`) + `as`(`span`/`button`) + `fullWidth` + `wrap` + `disabled` prop. `wrap`이면 긴 라벨 줄바꿈 허용. `ghost`=`bg-surface text-muted font-normal` |
 | `HelpButton`    | 원형 (?) 도움말 버튼. `ariaLabel`(필수) + `size`(선택, 기본 20px) prop, `@click` emit. 시각 크기는 `size`×`size`px, 터치 영역은 `::before`로 44px 확보. 라벨 텍스트는 포함하지 않으므로 호출부에서 옆에 배치할 것. |
 | `ListToolbar`   | 목록 상단 툴바(정렬·필터 버튼 + 왼쪽 자유 슬롯). `sortLabel`/`filterLabel`/`showSort`/`showFilter`/`filterActive`/`filterCount` props, `@sort`/`@filter` emit. `default` slot=왼쪽 영역, `#sort` named slot=정렬 버튼 교체 |
 | `BaseSwitch`    | ON/OFF 토글 스위치. `modelValue`(필수) + `disabled` prop, `@update:modelValue` emit                       |
@@ -115,6 +115,8 @@
 | `HomeRecommendationCard` | `home/HomeRecommendationCard.vue` | 홈 화면 "추천 금융상품" 섹션(BaseCard color=pink). `/api/securities/recommendations`(서버가 주식·주식형ETF 통합 1개 + 채권형ETF 1개를 성향 매칭 순으로 반환)와 `/api/products/recommendations`(예·적금 최고금리 1개, `fetchRecommendedSavingsProduct`)를 함께 조회해 `HomeRecommendationItemCard` + `HomeRecommendationProductItemCard` 가로 스크롤 목록(총 3장) + "더보기"(상품 탭 이동)로 표시. props 없음, 내부에서 로딩·에러·빈 상태 처리 |
 | `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 증권 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
 | `HomeRecommendationProductItemCard` | `home/HomeRecommendationProductItemCard.vue` | 홈 추천 섹션의 예·적금 카드 1개(BaseCard color=white elevation=flat, `w-40`). 예금/적금 배지·상품명·금융회사명·최고 우대 금리. `product` prop, `@select` emit |
+| `PersonaReasonCard`    | `assessment/PersonaReasonCard.vue` | 성향별 진단 근거의 제목·강조 문장·요약을 표시. `title`/`prefix`/`highlight`/`suffix`/`summary` props |
+| `PortfolioReasonCard`  | `assessment/PortfolioReasonCard.vue` | 성향별 추천 포트폴리오 배분 이유 두 문단을 표시. `firstReason`/`secondReason` props |
 
 ## 개발 컨벤션
 

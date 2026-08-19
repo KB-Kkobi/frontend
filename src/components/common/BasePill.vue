@@ -19,6 +19,7 @@ const props = defineProps({
     default: 'span',
   },
   fullWidth: Boolean,
+  wrap: Boolean,
   disabled: Boolean,
 })
 
@@ -54,6 +55,10 @@ const colorClasses = computed(() => {
 const layoutClasses = computed(() =>
   props.fullWidth ? 'w-full justify-center' : 'shrink-0',
 )
+
+const whitespaceClass = computed(() =>
+  props.wrap ? 'whitespace-normal' : 'whitespace-nowrap',
+)
 </script>
 
 <template>
@@ -61,8 +66,9 @@ const layoutClasses = computed(() =>
     :is="as"
     :disabled="as === 'button' ? disabled : undefined"
     :class="[
-      'inline-flex items-center whitespace-nowrap rounded-full py-pill-y px-pill-x text-caption tracking-tight disabled:cursor-not-allowed disabled:opacity-50',
+      'inline-flex items-center rounded-full py-pill-y px-pill-x text-caption tracking-tight disabled:cursor-not-allowed disabled:opacity-50',
       layoutClasses,
+      whitespaceClass,
       colorClasses,
     ]"
   >

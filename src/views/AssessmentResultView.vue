@@ -7,8 +7,10 @@ import BaseCard from "@/components/common/BaseCard.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PersonaSummaryCard from "@/components/assessment/PersonaSummaryCard.vue";
 import StrengthCautionCard from "@/components/assessment/StrengthCautionCard.vue";
+import PersonaReasonCard from "@/components/assessment/PersonaReasonCard.vue";
 import AxisScoreCard from "@/components/assessment/AxisScoreCard.vue";
 import RecommendedPortfolioCard from "@/components/assessment/RecommendedPortfolioCard.vue";
+import PortfolioReasonCard from "@/components/assessment/PortfolioReasonCard.vue";
 import { fetchAssessmentResult } from "@/api/assessmentApi";
 import { ApiError } from "@/api/http";
 
@@ -105,6 +107,14 @@ onMounted(loadAssessmentResult);
           :caution="result.persona.caution"
         />
 
+        <PersonaReasonCard
+          :title="result.persona.reasonTitle"
+          :prefix="result.persona.reasonPrefix"
+          :highlight="result.persona.reasonHighlight"
+          :suffix="result.persona.reasonSuffix"
+          :summary="result.persona.reasonSummary"
+        />
+
         <AxisScoreCard
           :scores="{
             rtScore: result.rtScore,
@@ -118,6 +128,12 @@ onMounted(loadAssessmentResult);
           :stock-ratio="result.persona.stockRatio"
           :bond-ratio="result.persona.bondRatio"
           :deposit-ratio="result.persona.depositRatio"
+        />
+
+        <PortfolioReasonCard
+          v-if="result.persona.portfolioReasonFirst || result.persona.portfolioReasonSecond"
+          :first-reason="result.persona.portfolioReasonFirst"
+          :second-reason="result.persona.portfolioReasonSecond"
         />
 
         <div class="flex flex-col items-center gap-4">
