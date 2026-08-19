@@ -84,10 +84,10 @@ function handleSelect() {
           <p v-else class="shrink-0 text-caption text-muted">실시간 시세 미지원</p>
         </div>
 
-        <!-- 행 2: 티커 · 유형 · 매칭도 | 등락률 -->
+        <!-- 행 2: 티커 · 유형 · 성향 적합도 | 등락률 -->
         <div class="flex items-center gap-4">
           <p class="min-w-0 flex-1 text-caption text-muted tabular-nums">
-            {{ security.ticker }} · {{ typeLabel }}<template v-if="matchScore !== null"> · <span class="text-ink font-semibold">매칭 {{ matchScore }}%</span></template>
+            {{ security.ticker }} · {{ typeLabel }}<template v-if="matchScore !== null"> · <span class="text-ink font-semibold">성향 적합도 {{ matchScore }}%</span></template>
           </p>
           <div class="flex shrink-0 items-center gap-2">
             <p
