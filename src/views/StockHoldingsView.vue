@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ApiError } from "@/api/http";
 import { fetchHoldings } from "@/api/trade";
+import { PRODUCT_LIST_TABS } from "@/constants/product";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
@@ -45,7 +46,10 @@ async function loadHoldings() {
 }
 
 function handleBrowseProducts() {
-  router.push({ name: "virtual-products" });
+  router.push({
+    name: "virtual-products",
+    query: { tab: PRODUCT_LIST_TABS.SECURITY },
+  });
 }
 
 function handleSelectHolding(holding) {

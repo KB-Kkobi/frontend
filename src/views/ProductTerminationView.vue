@@ -229,7 +229,7 @@ watch(
         {{ terminationErrorMessage }}
       </p>
 
-      <div class="sticky bottom-20 flex gap-2 bg-base py-4">
+      <div class="flex gap-2">
         <BottomButton
           color="danger"
           :disabled="isTerminating"
