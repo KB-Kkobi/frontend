@@ -121,7 +121,7 @@ watch(() => route.params.holdingProductId, loadHolding, { immediate: true });
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 pt-6">
     <header class="flex items-center gap-2">
       <BackButton />
       <h1 class="text-h1 text-ink">{{ pageTitle }}</h1>
