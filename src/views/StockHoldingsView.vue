@@ -65,13 +65,10 @@ onMounted(loadHoldings);
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6 pt-6">
     <header class="flex items-center gap-2">
       <BackButton />
-      <div class="flex flex-col gap-2">
-        <h1 class="text-h1 text-ink">보유 주식</h1>
-        <p class="text-caption text-muted">보유 중인 주식 종목을 확인해 보세요.</p>
-      </div>
+      <h1 class="text-h1 text-ink">보유 주식</h1>
     </header>
 
     <BaseCard v-if="isLoading" color="blue">
@@ -92,24 +89,26 @@ onMounted(loadHoldings);
     </BaseCard>
 
     <template v-else-if="holdings.length">
-      <div class="flex items-center justify-between gap-4">
-        <h2 class="text-h2 text-ink">보유 주식</h2>
-        <p class="text-caption text-muted tabular-nums">총 {{ holdings.length }}개</p>
-      </div>
-
       <div class="flex flex-col gap-4">
-        <div
-          v-for="holding in holdings"
-          :key="holding.securityId ?? holding.ticker"
-          role="button"
-          tabindex="0"
-          @click="handleSelectHolding(holding)"
-          @keydown.enter.prevent="handleSelectHolding(holding)"
-          @keydown.space.prevent="handleSelectHolding(holding)"
-        >
-          <BaseCard color="white" elevation="flat">
-            <StockHoldingRow :holding="holding" />
-          </BaseCard>
+        <div class="flex items-center justify-end gap-4">
+          <h2 class="sr-only">보유 주식 목록</h2>
+          <p class="text-caption text-muted tabular-nums">총 {{ holdings.length }}개</p>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <div
+            v-for="holding in holdings"
+            :key="holding.securityId ?? holding.ticker"
+            role="button"
+            tabindex="0"
+            @click="handleSelectHolding(holding)"
+            @keydown.enter.prevent="handleSelectHolding(holding)"
+            @keydown.space.prevent="handleSelectHolding(holding)"
+          >
+            <BaseCard color="white" elevation="flat">
+              <StockHoldingRow :holding="holding" />
+            </BaseCard>
+          </div>
         </div>
       </div>
     </template>

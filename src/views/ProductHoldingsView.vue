@@ -63,13 +63,10 @@ onMounted(loadHoldings);
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6 pt-6">
     <header class="flex items-center gap-2">
       <BackButton />
-      <div class="flex flex-col gap-4">
-        <h1 class="text-h1 text-ink">보유 예·적금</h1>
-        <p class="text-caption text-muted">가입한 예금과 적금을 확인해 보세요.</p>
-      </div>
+      <h1 class="text-h1 text-ink">보유 예·적금</h1>
     </header>
 
     <BaseCard v-if="hasSubscriptionSuccess" color="green">
@@ -101,9 +98,9 @@ onMounted(loadHoldings);
     </BaseCard>
 
     <template v-else-if="holdings.length">
-      <section class="mt-4 flex flex-col gap-4">
-        <div class="flex items-center justify-between gap-4">
-          <h2 class="text-h2 text-ink">보유 예·적금</h2>
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-end gap-4">
+          <h2 class="sr-only">보유 예·적금 목록</h2>
           <p class="text-caption text-muted tabular-nums">
             총 {{ holdings.length }}개
           </p>
@@ -117,7 +114,7 @@ onMounted(loadHoldings);
             @select="handleSelectHolding"
           />
         </div>
-      </section>
+      </div>
 
       <BottomButton color="white" @click="handleBrowseProducts">
         다른 상품 둘러보기
