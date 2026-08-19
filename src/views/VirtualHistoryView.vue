@@ -251,19 +251,35 @@ watch(filteredItems, (items) => {
 })
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
+// keep-alive 안에서는 onActivated가 최초 mount 시에도 onMounted 직후 호출된다.
+// 아무 guard 없이 두 훅에서 모두 조회하면 최초 진입에서 같은 데이터를 두 번
+// 연속 요청하게 되어(중복 API 호출 + isLoading 재토글) 진입 순간 UI가 깜빡이는
+// 원인이 된다. 최초 활성화는 onMounted가 이미 처리했으므로 건너뛰고,
+// 이후 재진입(다른 탭 갔다가 돌아오는 경우)부터만 최신화한다.
+let isFirstActivation = true
+
 onMounted(() => {
   applyNotificationQuery()
   loadHistory(periodFromDate.value)
   loadPendingOrders()
 })
 
-// keep-alive 재진입 시 내역 최신화
+// keep-alive 재진입 시 내역 최신화. 탭 전환 CSS transition과 같은 프레임에 무거운
+// 목록 재조회·재렌더링이 겹치면 애니메이션 첫 프레임이 끊겨 보일 수 있어, 한 프레임
+// 미뤄서 transition이 먼저 시작된 뒤에 데이터 갱신이 뒤따르게 한다.
 onActivated(() => {
-  if (activeSegment.value === 'history') {
-    loadHistory(periodFromDate.value)
-  } else {
-    loadPendingOrders()
+  if (isFirstActivation) {
+    isFirstActivation = false
+    return
   }
+
+  requestAnimationFrame(() => {
+    if (activeSegment.value === 'history') {
+      loadHistory(periodFromDate.value)
+    } else {
+      loadPendingOrders()
+    }
+  })
 })
 
 onBeforeUnmount(() => {
@@ -366,33 +382,38 @@ onBeforeUnmount(() => {
         @cancel="handleCancelRequest(order.securityOrderId ?? order.id)"
       />
     </div>
+
+    <!-- FilterSheet·BaseModal은 내부적으로 <Teleport to="body">를 쓰고 닫혀있을 때는
+         v-if로 아예 렌더링되지 않으므로, 여기 이 div 안에 둬도 화면 위치·레이아웃·평소
+         렌더링 비용에는 영향이 없다. 대신 이 컴포넌트의 template root를 하나로 유지해야
+         상위 <Transition>이 자산현황·투자하기와 동일하게 enter/leave 애니메이션을
+         적용한다 — root가 여러 개(fragment)면 Vue가 애니메이션 자체를 건너뛴다. -->
+    <FilterSheet
+      :open="isHistoryFilterOpen"
+      title="필터"
+      description="기간과 종류를 함께 선택할 수 있어요."
+      :groups="historyFilterGroups"
+      :model-value="historyFilterValue"
+      @update:open="isHistoryFilterOpen = $event"
+      @apply="handleHistoryFilterApply"
+    />
+    <FilterSheet
+      :open="isPendingFilterOpen"
+      title="필터"
+      :groups="pendingFilterGroups"
+      :model-value="pendingFilterValue"
+      @update:open="isPendingFilterOpen = $event"
+      @apply="handlePendingFilterApply"
+    />
+
+    <!-- 주문 취소 확인 모달 -->
+    <BaseModal
+      v-model="showCancelModal"
+      message="주문을 취소하시겠어요?"
+      confirm-text="주문 취소"
+      cancel-text="돌아가기"
+      confirm-color="pink"
+      @confirm="handleConfirmCancel"
+    />
   </div>
-
-  <FilterSheet
-    :open="isHistoryFilterOpen"
-    title="필터"
-    description="기간과 종류를 함께 선택할 수 있어요."
-    :groups="historyFilterGroups"
-    :model-value="historyFilterValue"
-    @update:open="isHistoryFilterOpen = $event"
-    @apply="handleHistoryFilterApply"
-  />
-  <FilterSheet
-    :open="isPendingFilterOpen"
-    title="필터"
-    :groups="pendingFilterGroups"
-    :model-value="pendingFilterValue"
-    @update:open="isPendingFilterOpen = $event"
-    @apply="handlePendingFilterApply"
-  />
-
-  <!-- 주문 취소 확인 모달 -->
-  <BaseModal
-    v-model="showCancelModal"
-    message="주문을 취소하시겠어요?"
-    confirm-text="주문 취소"
-    cancel-text="돌아가기"
-    confirm-color="pink"
-    @confirm="handleConfirmCancel"
-  />
 </template>

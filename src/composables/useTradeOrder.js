@@ -102,6 +102,8 @@ export function useTradeOrder({ securityId, ticker }) {
    * @returns {{ status: string, message: string } | null} 성공 시 객체, 실패 시 null
    */
   async function submitOrder() {
+    if (isSubmitting.value) return null
+
     orderError.value = null
 
     if (quantity.value <= 0) {

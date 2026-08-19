@@ -1,5 +1,12 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  onActivated,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
 import { ApiError, resolveApiUrl } from "@/api/http";
@@ -26,6 +33,7 @@ import BasePagination from "@/components/common/BasePagination.vue";
 import SearchInput from "@/components/common/SearchInput.vue";
 import {
   PREFERENTIAL_CONDITION_OPTIONS,
+  PRODUCT_LIST_TABS,
   PRODUCT_LIST_DEFAULTS,
   PRODUCT_SEARCH_DEBOUNCE_MS,
   PRODUCT_SORT_OPTIONS,
@@ -60,21 +68,15 @@ const props = defineProps({
 
 const emit = defineEmits(["select-security", "select-product"]);
 
-const LIST_TABS = Object.freeze({
-  DEPOSIT: PRODUCT_TYPES.DEPOSIT,
-  SAVING: PRODUCT_TYPES.SAVING,
-  SECURITY: "SECURITY",
-});
-
 const LIST_TAB_OPTIONS = Object.freeze([
-  { key: LIST_TABS.SECURITY, label: "주식" },
-  { key: LIST_TABS.DEPOSIT, label: "예금" },
-  { key: LIST_TABS.SAVING, label: "적금" },
+  { key: PRODUCT_LIST_TABS.SECURITY, label: "주식" },
+  { key: PRODUCT_LIST_TABS.DEPOSIT, label: "예금" },
+  { key: PRODUCT_LIST_TABS.SAVING, label: "적금" },
 ]);
 const router = useRouter();
 const route = useRoute();
 
-const TAB_KEYS = new Set(Object.values(LIST_TABS));
+const TAB_KEYS = new Set(Object.values(PRODUCT_LIST_TABS));
 
 function parseInitialTab(value, fallbackTab) {
   return TAB_KEYS.has(value) ? value : fallbackTab;
@@ -115,7 +117,7 @@ function parseInitialOptionValues(value, options) {
 
 const initialQuery = route.query;
 // 상품 탭은 독립/가상투자 모드 모두 주식 탭을 먼저 보여준다.
-const defaultTab = LIST_TABS.SECURITY;
+const defaultTab = PRODUCT_LIST_TABS.SECURITY;
 const initialSavingTerms = parseInitialSavingTerms(initialQuery);
 
 const activeTab = ref(parseInitialTab(initialQuery.tab, defaultTab));
@@ -170,8 +172,12 @@ const recommendReason = computed(
   () => PERSONA_RECOMMEND_REASONS[latestAssessment.value?.personaCode] ?? "",
 );
 
-const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
-const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
+const isSecurityTab = computed(
+  () => activeTab.value === PRODUCT_LIST_TABS.SECURITY,
+);
+const isSaving = computed(
+  () => activeTab.value === PRODUCT_LIST_TABS.SAVING,
+);
 
 const activeTabLabel = computed(() =>
   isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
@@ -389,6 +395,12 @@ function handleSelectTab(tabKey) {
   resetPage();
 }
 
+function syncActiveTabFromRoute() {
+  const nextTab = parseInitialTab(route.query.tab, defaultTab);
+  if (activeTab.value === nextTab) return;
+  handleSelectTab(nextTab);
+}
+
 function applyKeyword(keyword) {
   appliedKeyword.value = keyword.trim();
   resetPage();
@@ -562,6 +574,11 @@ watch(
 
 onMounted(() => {
   if (props.standalone) loadLatestAssessment();
+});
+
+// 가상투자 화면은 keep-alive 대상이므로 재진입할 때 URL이 요청한 탭을 다시 반영한다.
+onActivated(() => {
+  if (!props.standalone) syncActiveTabFromRoute();
 });
 
 onBeforeUnmount(() => {
@@ -825,9 +842,9 @@ onBeforeUnmount(() => {
         @filter="handleOpenSecurityFilter"
       >
         <div class="flex items-center gap-2">
-          <span class="text-caption text-muted">매칭률</span>
+          <span class="text-caption text-muted">성향 적합도</span>
           <HelpButton
-            aria-label="매칭률 설명 보기"
+            aria-label="성향 적합도 설명 보기"
             @click="showMatchInfoModal = true"
           />
         </div>
@@ -868,29 +885,29 @@ onBeforeUnmount(() => {
         </template>
       </ListToolbar>
 
-      <!-- 매칭률 안내 모달 -->
+      <!-- 성향 적합도 안내 모달 -->
       <BaseModal
         v-model="showMatchInfoModal"
-        message="매칭률이란?"
+        message="성향 적합도란?"
         confirm-text="확인"
         :show-cancel="false"
       >
         <template #content>
           <div class="flex flex-col gap-4 text-body text-ink tracking-tight">
             <p>
-              매칭률은 내 투자 성향과 종목의 특성을 비교해, 얼마나 잘 어울리는지
+              성향 적합도는 내 투자 성향과 종목의 특성을 비교해 얼마나 잘 맞는지를
               나타내는 수치예요.
             </p>
             <p>100%에 가까울수록 내 성향과 잘 맞는 종목이에요.</p>
             <p class="text-caption text-muted">
-              단, 매칭률이 높다고 수익률이 높은 건 아니에요. 성향이 얼마나
+              단, 성향 적합도가 높다고 수익률이 높은 건 아니에요. 성향이 얼마나
               비슷한지를 나타낼 뿐, 투자 결과를 보장하지 않아요.
             </p>
             <p
               v-if="!hasAssessment"
               class="border-t border-line-soft pt-4 text-caption text-muted"
             >
-              성향 진단을 완료하면 각 종목의 매칭률을 바로 확인할 수 있어요.
+              성향 진단을 완료하면 각 종목의 성향 적합도를 바로 확인할 수 있어요.
             </p>
           </div>
         </template>

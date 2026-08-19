@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ApiError } from "@/api/http";
 import { fetchProductHoldings } from "@/api/productApi";
+import { PRODUCT_LIST_TABS } from "@/constants/product";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
@@ -45,7 +46,10 @@ async function loadHoldings() {
 }
 
 function handleBrowseProducts() {
-  router.push({ name: "virtual-products" });
+  router.push({
+    name: "virtual-products",
+    query: { tab: PRODUCT_LIST_TABS.DEPOSIT },
+  });
 }
 
 function handleSelectHolding(holding) {
@@ -62,8 +66,8 @@ onMounted(loadHoldings);
   <div class="flex flex-col gap-6">
     <header class="flex items-center gap-2">
       <BackButton />
-      <div class="flex flex-col gap-2">
-        <h1 class="text-h1 text-ink">내 예적금</h1>
+      <div class="flex flex-col gap-4">
+        <h1 class="text-h1 text-ink">보유 예·적금</h1>
         <p class="text-caption text-muted">가입한 예금과 적금을 확인해 보세요.</p>
       </div>
     </header>
@@ -72,14 +76,14 @@ onMounted(loadHoldings);
       <div class="flex flex-col gap-2" role="status">
         <h2 class="text-h2 text-ink">상품 가입이 완료됐어요</h2>
         <p class="text-caption text-muted">
-          가입한 상품이 보유 상품 목록에 반영되었습니다.
+          가입한 상품이 보유 예·적금 목록에 반영되었습니다.
         </p>
       </div>
     </BaseCard>
 
     <BaseCard v-if="isLoading" color="blue">
       <div class="flex flex-col gap-2" role="status">
-        <h2 class="text-h2 text-ink">보유 상품을 불러오는 중이에요</h2>
+        <h2 class="text-h2 text-ink">보유 예·적금을 불러오는 중이에요</h2>
         <p class="text-caption text-muted">잠시만 기다려 주세요.</p>
       </div>
     </BaseCard>
@@ -87,7 +91,7 @@ onMounted(loadHoldings);
     <BaseCard v-else-if="errorMessage" color="white" elevation="flat">
       <div class="flex flex-col gap-4" role="alert">
         <div class="flex flex-col gap-2">
-          <h2 class="text-h2 text-ink">보유 상품을 불러오지 못했어요</h2>
+          <h2 class="text-h2 text-ink">보유 예·적금을 불러오지 못했어요</h2>
           <p class="text-caption text-muted">{{ errorMessage }}</p>
         </div>
         <BottomButton color="white" @click="loadHoldings">
@@ -97,21 +101,23 @@ onMounted(loadHoldings);
     </BaseCard>
 
     <template v-else-if="holdings.length">
-      <div class="flex items-center justify-between gap-4">
-        <h2 class="text-h2 text-ink">보유 상품</h2>
-        <p class="text-caption text-muted tabular-nums">
-          총 {{ holdings.length }}개
-        </p>
-      </div>
+      <section class="mt-4 flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-h2 text-ink">보유 예·적금</h2>
+          <p class="text-caption text-muted tabular-nums">
+            총 {{ holdings.length }}개
+          </p>
+        </div>
 
-      <div class="flex flex-col gap-4">
-        <ProductHoldingCard
-          v-for="holding in holdings"
-          :key="holding.holdingProductId"
-          :holding="holding"
-          @select="handleSelectHolding"
-        />
-      </div>
+        <div class="flex flex-col gap-4">
+          <ProductHoldingCard
+            v-for="holding in holdings"
+            :key="holding.holdingProductId"
+            :holding="holding"
+            @select="handleSelectHolding"
+          />
+        </div>
+      </section>
 
       <BottomButton color="white" @click="handleBrowseProducts">
         다른 상품 둘러보기
