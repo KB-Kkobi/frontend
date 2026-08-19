@@ -76,7 +76,7 @@ function handleInput(event) {
 </script>
 
 <template>
-  <section class="flex flex-col gap-4">
+  <section class="flex flex-col gap-2">
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-2">
         <label :for="id" class="text-h2 font-bold text-ink">{{ label }}</label>

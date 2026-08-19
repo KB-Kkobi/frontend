@@ -30,13 +30,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showBaseline: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const gradientId = `market-line-chart-fill-${Math.random().toString(36).slice(2)}`;
 
 const innerWidth = CHART_VIEWBOX_WIDTH - CHART_PADDING * 2;
 const innerHeight = CHART_VIEWBOX_HEIGHT - CHART_PADDING * 2;
-const baselineY = CHART_PADDING + innerHeight;
+const baselineY = CHART_VIEWBOX_HEIGHT;
+const centerBaselineY = CHART_PADDING + innerHeight / 2;
 
 const points = computed(() => {
   const { prices, totalTicks, priceMin, priceMax } = props;
@@ -78,7 +83,14 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
     xmlns="http://www.w3.org/2000/svg"
   >
     <defs>
-      <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient
+        :id="gradientId"
+        gradientUnits="userSpaceOnUse"
+        :x1="0"
+        :y1="CHART_PADDING"
+        :x2="0"
+        :y2="baselineY"
+      >
         <stop offset="0%" stop-color="currentColor" :stop-opacity="CHART_FILL_OPACITY_TOP" />
         <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
       </linearGradient>
@@ -89,6 +101,19 @@ const lastPoint = computed(() => points.value[points.value.length - 1] ?? null);
       :points="areaPoints"
       :fill="`url(#${gradientId})`"
       stroke="none"
+    />
+
+    <line
+      v-if="showBaseline"
+      class="text-line"
+      :x1="CHART_PADDING"
+      :y1="centerBaselineY"
+      :x2="CHART_PADDING + innerWidth"
+      :y2="centerBaselineY"
+      stroke="currentColor"
+      stroke-width="1"
+      stroke-dasharray="3 3"
+      vector-effect="non-scaling-stroke"
     />
 
     <polyline

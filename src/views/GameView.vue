@@ -15,6 +15,7 @@ import GamePortfolioPanel from '@/components/game/GamePortfolioPanel.vue';
 import GameSellBottomSheet from '@/components/game/GameSellBottomSheet.vue';
 import MarketIndexCard from '@/components/game/MarketIndexCard.vue';
 import {
+  CHART_BASELINE_RANGE_PERCENT,
   DEFAULT_SCENARIO_ID,
   GAME_DEPOSIT_MONTHS,
   GAME_EVENT_RESUME_DELAY_MS,
@@ -31,8 +32,6 @@ const {
   currentTick,
   visibleTicks,
   totalTickCount,
-  priceMin,
-  priceMax,
   start,
   restore,
   pause,
@@ -71,6 +70,15 @@ const isRestoredCompletedGame = ref(
 );
 
 const prices = computed(() => visibleTicks.value.map((tick) => tick.price));
+const chartRangeHalfWidth = computed(
+  () => initialStockPrice.value * (CHART_BASELINE_RANGE_PERCENT / 100),
+);
+const chartPriceMin = computed(
+  () => initialStockPrice.value - chartRangeHalfWidth.value,
+);
+const chartPriceMax = computed(
+  () => initialStockPrice.value + chartRangeHalfWidth.value,
+);
 const stockAmount = computed(() => gameStart.value?.stockAmount ?? 0);
 const cashAmount = computed(() => gameStart.value?.cashAmount ?? 0);
 const depositAmount = computed(() => gameStart.value?.depositAmount ?? 0);
@@ -396,8 +404,8 @@ onMounted(loadScenario);
 </script>
 
 <template>
-  <PageContainer>
-    <div class="flex flex-col gap-4 py-6">
+  <PageContainer compact>
+    <div class="flex flex-col gap-4 pt-6 pb-2">
       <p v-if="isLoading" class="text-caption text-muted">불러오는 중...</p>
       <p v-else-if="errorMessage" class="text-caption text-error" role="alert">
         {{ errorMessage }}
@@ -407,9 +415,10 @@ onMounted(loadScenario);
           :current-tick="currentTick"
           :prices="prices"
           :total-ticks="totalTickCount"
-          :price-min="priceMin"
-          :price-max="priceMax"
+          :price-min="chartPriceMin"
+          :price-max="chartPriceMax"
           :banner-event="bannerEvent"
+          show-baseline
         />
         <BaseCard v-if="gameStart" color="white">
           <GamePortfolioPanel

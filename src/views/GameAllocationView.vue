@@ -110,19 +110,21 @@ async function handleStartGame() {
 </script>
 
 <template>
-  <PageContainer>
-    <form class="flex flex-col gap-6 py-6" @submit.prevent="handleStartGame">
+  <PageContainer compact>
+    <form class="flex flex-col gap-4 pt-6 pb-2" @submit.prevent="handleStartGame">
       <header class="flex flex-col gap-4">
         <BackButton />
-        <h1 class="text-amount text-ink">시작 자산 설정</h1>
-        <p class="text-body text-muted">
-          1,000만원을 어떻게 나눌지 정해 주세요.<br />
-          이 선택도 성향 진단에 함께 반영돼요.
-        </p>
+        <div class="flex flex-col gap-2">
+          <h1 class="text-amount text-ink">시작 자산 설정</h1>
+          <p class="text-body text-muted">
+            1,000만원을 어떻게 나눌지 정해 주세요.<br />
+            이 선택도 성향 진단에 함께 반영돼요.
+          </p>
+        </div>
       </header>
 
-      <BaseCard color="white" elevation="highlight">
-        <div class="flex flex-col gap-6">
+      <BaseCard color="white" elevation="highlight" density="tight">
+        <div class="flex flex-col gap-4">
           <section
             class="flex flex-col gap-4"
             aria-labelledby="seed-money-title"
@@ -131,7 +133,7 @@ async function handleStartGame() {
             <div
               class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-base p-4"
             >
-              <strong class="text-amount text-ink tabular-nums">
+              <strong class="text-h1 text-ink tabular-nums">
                 {{ formatCurrency(GAME_SEED_MONEY) }}
               </strong>
               <span class="text-caption font-semibold text-muted">
@@ -139,9 +141,7 @@ async function handleStartGame() {
               </span>
             </div>
             <p class="text-caption text-muted">
-              게임에서 운용할 가상 자산이에요.
-            </p>
-            <p class="text-caption text-muted">
+              게임에서 운용할 가상 자산이에요.<br />
               세 자산의 합계가 1,000만원이 되도록 배분해 주세요.
             </p>
 
@@ -219,7 +219,7 @@ async function handleStartGame() {
         </div>
       </BaseCard>
 
-      <BaseCard :color="isAllocationComplete ? 'blue' : 'yellow'">
+      <BaseCard :color="isAllocationComplete ? 'blue' : 'yellow'" density="tight">
         <div class="flex items-center justify-between gap-4">
           <div class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
@@ -254,16 +254,11 @@ async function handleStartGame() {
                 }}
               </strong>
             </div>
-            <p class="text-caption text-muted">
-              <template v-if="isAllocationComplete">
-                시작 자산 100%를 모두 배분했습니다.
-              </template>
-              <template v-else>
-                <span class="whitespace-nowrap">
-                  남은 비율 {{ remainingRatio.toFixed(0) }}%
-                </span>
-                만큼 더 배분해 주세요.
-              </template>
+            <p v-if="!isAllocationComplete" class="text-caption text-muted">
+              <span class="whitespace-nowrap">
+                남은 비율 {{ remainingRatio.toFixed(0) }}%
+              </span>
+              만큼 더 배분해 주세요.
             </p>
           </div>
           <strong class="shrink-0 text-h2 text-ink tabular-nums">
