@@ -1,6 +1,5 @@
 <script setup>
 import BaseCard from "@/components/common/BaseCard.vue";
-import BasePill from "@/components/common/BasePill.vue";
 
 defineProps({
   firstReason: {
@@ -27,24 +26,13 @@ defineProps({
       <div class="border-t border-line-soft" />
 
       <div class="flex flex-col gap-4">
-        <div v-if="firstReason" class="flex flex-col items-start gap-2">
-          <BasePill label="주식 배분" color="pink" variant="filled" />
-          <p class="text-body text-ink tracking-tight">
-            {{ firstReason }}
-          </p>
-        </div>
+        <p v-if="firstReason" class="text-body text-ink tracking-tight">
+          {{ firstReason }}
+        </p>
 
-        <div
-          v-if="firstReason && secondReason"
-          class="border-t border-dashed border-line-soft"
-        />
-
-        <div v-if="secondReason" class="flex flex-col items-start gap-2">
-          <BasePill label="채권·예적금 배분" color="blue" variant="filled" />
-          <p class="text-body text-ink tracking-tight">
-            {{ secondReason }}
-          </p>
-        </div>
+        <p v-if="secondReason" class="text-body text-ink tracking-tight">
+          {{ secondReason }}
+        </p>
       </div>
     </div>
   </BaseCard>
