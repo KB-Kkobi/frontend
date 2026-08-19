@@ -41,16 +41,38 @@ const normalizedPrefix = computed(() => props.prefix.trimEnd());
       <div class="border-t border-line-soft" />
 
       <div class="flex flex-col gap-4">
-        <p class="text-body font-semibold text-pink tracking-tight">{{ title }}</p>
+        <div class="flex items-center gap-2 text-pink">
+          <svg
+            class="h-4 w-4 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="10.5" cy="10.5" r="5.5" stroke="currentColor" stroke-width="2" />
+            <path
+              d="m14.5 14.5 4.5 4.5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="m8.25 10.5 1.5 1.5 3-3.25"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <p class="text-body font-semibold tracking-tight">{{ title }}</p>
+        </div>
 
         <div>
           <p class="text-body text-ink tracking-tight">
             <span>{{ normalizedPrefix }}</span>{{ " " }}<strong class="font-semibold">{{
               highlight
             }}</strong
-            >{{ suffix }}
+            >{{ suffix }}{{ " " }}{{ summary }}
           </p>
-          <p class="text-body text-ink tracking-tight">{{ summary }}</p>
         </div>
       </div>
     </div>

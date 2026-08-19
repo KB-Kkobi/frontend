@@ -166,15 +166,47 @@ const isFilterOpen = ref(false);
 const isSecurityFilterOpen = ref(false);
 const showMatchInfoModal = ref(false);
 const hasAssessment = computed(() => latestAssessment.value !== null);
-const recommendReason = computed(
-  () => PERSONA_RECOMMEND_REASONS[latestAssessment.value?.personaCode] ?? "",
-);
-
 const isSecurityTab = computed(() => activeTab.value === LIST_TABS.SECURITY);
 const isSaving = computed(() => activeTab.value === LIST_TABS.SAVING);
 
+const recommendReason = computed(() => {
+  if (activeTab.value === LIST_TABS.DEPOSIT) {
+    return "안전하게 맡겨둘 돈은 금리가 높은 예금부터 보여드려요. 원하는 기간과 조건에 맞춰 비교할 수도 있어요.";
+  }
+  if (isSaving.value) {
+    return "꾸준히 모을 돈은 금리가 높은 적금부터 보여드려요. 원하는 기간과 조건에 맞춰 비교할 수도 있어요.";
+  }
+  return PERSONA_RECOMMEND_REASONS[latestAssessment.value?.personaCode] ?? "";
+});
+
 const activeTabLabel = computed(() =>
   isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
+);
+
+const recommendedRatio = computed(() => {
+  const ratios = latestAssessment.value?.recommendedRatio;
+  if (isSecurityTab.value) {
+    const stockRatio = Number(ratios?.stockRatio);
+    const bondRatio = Number(ratios?.bondRatio);
+
+    return Number.isFinite(stockRatio) && Number.isFinite(bondRatio)
+      ? stockRatio + bondRatio
+      : null;
+  }
+
+  const numericValue = Number(ratios?.depositRatio);
+
+  return Number.isFinite(numericValue) ? numericValue : null;
+});
+
+const recommendedRatioLabel = computed(() =>
+  recommendedRatio.value === null
+    ? ""
+    : `${isSecurityTab.value ? "주식·채권" : "예·적금"} ${recommendedRatio.value}%`,
+);
+
+const recommendedRatioColor = computed(() =>
+  isSecurityTab.value ? "pink" : "green",
 );
 
 const activeFilterCount = computed(
@@ -291,7 +323,7 @@ async function loadLatestAssessment() {
         };
       }
     } catch {
-      // 성향 본문은 유지하고 이미지가 없을 때만 텍스트 카드로 표시한다.
+      // 이미지 조회 실패는 상품 탐색 흐름을 막지 않는다.
     }
   } catch (error) {
     latestAssessment.value = null;
@@ -590,11 +622,15 @@ onBeforeUnmount(() => {
       <div v-else-if="latestAssessment" class="flex items-center gap-4">
         <div class="flex min-w-0 flex-1 flex-col gap-2">
           <p class="text-caption text-muted">성향</p>
-          <h2 class="text-h1 text-ink">{{ latestAssessment.typeName }}</h2>
-          <p class="text-body text-muted tracking-tight">
-            {{ latestAssessment.investmentFeature }}
-          </p>
-          <p v-if="recommendReason" class="text-caption text-pink">
+          <div class="flex items-center gap-2">
+            <h2 class="text-h1 text-ink">{{ latestAssessment.typeName }}</h2>
+            <BasePill
+              v-if="recommendedRatioLabel"
+              :label="recommendedRatioLabel"
+              :color="recommendedRatioColor"
+            />
+          </div>
+          <p v-if="recommendReason" class="text-caption text-muted tracking-tight">
             {{ recommendReason }}
           </p>
         </div>

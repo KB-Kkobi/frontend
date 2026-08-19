@@ -73,7 +73,7 @@ const reasons = computed(() =>
               :class="item.dotClass"
               aria-hidden="true"
             />
-            <h3 class="text-body text-ink">
+            <h3 class="text-body font-semibold text-ink">
               {{ item.label }} <span class="tabular-nums">{{ item.ratio }}%</span>
             </h3>
           </div>
