@@ -41,14 +41,17 @@ const normalizedPrefix = computed(() => props.prefix.trimEnd());
       <div class="border-t border-line-soft" />
 
       <div class="flex flex-col gap-4">
-        <p class="text-body font-bold text-pink tracking-tight">{{ title }}</p>
+        <p class="text-body font-semibold text-pink tracking-tight">{{ title }}</p>
 
-        <p class="text-body text-ink tracking-tight">
-          <span>{{ normalizedPrefix }}</span>{{ " " }}<strong class="font-bold">{{ highlight }}</strong
-          >{{ suffix }}
-        </p>
-
-        <p class="text-body text-ink tracking-tight">{{ summary }}</p>
+        <div>
+          <p class="text-body text-ink tracking-tight">
+            <span>{{ normalizedPrefix }}</span>{{ " " }}<strong class="font-semibold">{{
+              highlight
+            }}</strong
+            >{{ suffix }}
+          </p>
+          <p class="text-body text-ink tracking-tight">{{ summary }}</p>
+        </div>
       </div>
     </div>
   </BaseCard>

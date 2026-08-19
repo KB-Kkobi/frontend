@@ -116,7 +116,7 @@
 | `HomeRecommendationItemCard` | `home/HomeRecommendationItemCard.vue` | 홈 추천 섹션의 증권 카드 1개(BaseCard color=white elevation=flat, `w-40`). 유형 배지·이름·현재가·등락률·매칭도 배지. `security`/`quote`/`matchScore` props, `@select` emit |
 | `HomeRecommendationProductItemCard` | `home/HomeRecommendationProductItemCard.vue` | 홈 추천 섹션의 예·적금 카드 1개(BaseCard color=white elevation=flat, `w-40`). 예금/적금 배지·상품명·금융회사명·최고 우대 금리. `product` prop, `@select` emit |
 | `PersonaReasonCard`    | `assessment/PersonaReasonCard.vue` | 성향별 진단 근거의 제목·강조 문장·요약을 표시. `title`/`prefix`/`highlight`/`suffix`/`summary` props |
-| `PortfolioReasonCard`  | `assessment/PortfolioReasonCard.vue` | 성향별 추천 포트폴리오 배분 이유 두 문단을 표시. `firstReason`/`secondReason` props |
+| `PortfolioReasonCard`  | `assessment/PortfolioReasonCard.vue` | 성향별 추천 포트폴리오의 주식·채권·예적금 비율과 자산별 배분 이유를 표시. `stockReason`/`bondReason`/`depositReason`/`stockRatio`/`bondRatio`/`depositRatio` props |
 
 ## 개발 컨벤션
 

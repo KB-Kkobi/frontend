@@ -41,7 +41,7 @@ export function getAxisBadgesFromCode(axisCode) {
 export const PORTFOLIO_SEGMENT_DEFINITIONS = Object.freeze([
   { key: "stockRatio", label: "주식", color: "pink" },
   { key: "bondRatio", label: "채권", color: "blue" },
-  { key: "depositRatio", label: "예적금", color: "green" },
+  { key: "depositRatio", label: "예·적금", color: "green" },
 ]);
 
 export const RADAR_AXIS_ORDER = Object.freeze(["rtScore", "rpScore", "lhScore"]);

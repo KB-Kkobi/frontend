@@ -131,9 +131,17 @@ onMounted(loadAssessmentResult);
         />
 
         <PortfolioReasonCard
-          v-if="result.persona.portfolioReasonFirst || result.persona.portfolioReasonSecond"
-          :first-reason="result.persona.portfolioReasonFirst"
-          :second-reason="result.persona.portfolioReasonSecond"
+          v-if="
+            result.persona.portfolioStockReason ||
+            result.persona.portfolioBondReason ||
+            result.persona.portfolioDepositReason
+          "
+          :stock-reason="result.persona.portfolioStockReason"
+          :bond-reason="result.persona.portfolioBondReason"
+          :deposit-reason="result.persona.portfolioDepositReason"
+          :stock-ratio="result.persona.stockRatio"
+          :bond-ratio="result.persona.bondRatio"
+          :deposit-ratio="result.persona.depositRatio"
         />
 
         <div class="flex flex-col items-center gap-4">
