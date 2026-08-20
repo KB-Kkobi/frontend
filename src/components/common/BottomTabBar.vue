@@ -1,11 +1,16 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useAssessmentStore } from '@/stores/assessment'
 
 const route = useRoute()
+const assessmentStore = useAssessmentStore()
 
 const PRODUCT_PATH = '/products'
 const VIRTUAL_PATH = '/virtual'
+const LEADERBOARD_PATH = '/leaderboard'
+// 성향 분석을 완료해야 의미가 있는 탭 — 완료 전에는 잠금 아이콘을 얹고 진입을 막는다.
+const ASSESSMENT_LOCKED_PATHS = new Set([VIRTUAL_PATH, LEADERBOARD_PATH])
 
 // 상품·주식 상세는 상품 탭과 가상투자 탭 양쪽에서 진입할 수 있어 경로만으로 구분되지 않는다.
 // 가상투자에서 진입한 경우에만 tradable 쿼리가 붙는다 (ProductDetailView·SecurityDetailView와 동일한 기준).
@@ -32,6 +37,9 @@ const isActive = (path) => {
   if (contextPath.value) return path === contextPath.value
   return path === '/' ? route.path === '/' : route.path.startsWith(path)
 }
+
+const isLocked = (path) =>
+  ASSESSMENT_LOCKED_PATHS.has(path) && !assessmentStore.hasCompleted
 </script>
 
 <template>
@@ -41,11 +49,19 @@ const isActive = (path) => {
   >
     <ul class="flex items-stretch">
       <li v-for="tab in tabs" :key="tab.path" class="flex-1">
-        <RouterLink
-          :to="tab.path"
+        <component
+          :is="isLocked(tab.path) ? 'div' : RouterLink"
+          v-bind="isLocked(tab.path) ? { role: 'button', 'aria-disabled': 'true', tabindex: '-1' } : { to: tab.path }"
           class="flex flex-col items-center gap-2 py-3"
-          :class="isActive(tab.path) ? 'text-blue' : 'text-muted'"
+          :class="
+            isLocked(tab.path)
+              ? 'text-muted'
+              : isActive(tab.path)
+                ? 'text-blue'
+                : 'text-muted'
+          "
         >
+          <span class="relative">
           <svg
             v-if="tab.icon === 'home'"
             class="h-6 w-6"
@@ -168,8 +184,21 @@ const isActive = (path) => {
             />
           </svg>
 
+          <svg
+            v-if="isLocked(tab.path)"
+            class="absolute -right-1.5 -top-1 h-3.5 w-3.5 rounded-full bg-white text-muted"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2" />
+            <path d="M8 10.5V7.5C8 5.29 9.79 3.5 12 3.5C14.21 3.5 16 5.29 16 7.5V10.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          </span>
+
           <span class="text-caption font-semibold">{{ tab.label }}</span>
-        </RouterLink>
+        </component>
       </li>
     </ul>
   </nav>

@@ -29,22 +29,13 @@ function handleSelect() {
       aria-hidden="true"
     >
       <svg
-        v-if="notification.type === 'TRADE_BUY_FILLED'"
+        v-if="notification.type === 'TRADE_BUY_FILLED' || notification.type === 'TRADE_SELL_FILLED'"
         class="h-4 w-4"
         viewBox="0 0 24 24"
         fill="none"
       >
-        <path d="M12 19V5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-        <path d="M5 12L12 5L19 12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <svg
-        v-else-if="notification.type === 'TRADE_SELL_FILLED'"
-        class="h-4 w-4"
-        viewBox="0 0 24 24"
-        fill="none"
-      >
-        <path d="M12 5V19" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-        <path d="M5 12L12 19L19 12" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 5V19H20" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M7 15L10.5 11.5L13.5 14L19 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
       <svg
         v-else-if="notification.type === 'FRIEND_REQUEST_RECEIVED'"
