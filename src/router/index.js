@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAssessmentStore } from '@/stores/assessment'
 import { useAuthStore } from '@/stores/auth'
 import { readGameStartSession } from '@/utils/gameStorage'
 import HomeView from '@/views/HomeView.vue'
@@ -51,7 +52,7 @@ const router = createRouter({
     {
       path: '/virtual',
       component: VirtualInvestView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAssessment: true },
       children: [
         { path: '', redirect: { name: 'virtual-assets' } },
         {
@@ -107,9 +108,14 @@ const router = createRouter({
       path: '/virtual/start',
       name: 'virtual-start',
       component: VirtualInvestStartView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAssessment: true },
     },
-    { path: '/leaderboard', name: 'leaderboard', component: LeaderboardView, meta: { requiresAuth: true } },
+    {
+      path: '/leaderboard',
+      name: 'leaderboard',
+      component: LeaderboardView,
+      meta: { requiresAuth: true, requiresAssessment: true },
+    },
     { path: '/my', name: 'my', component: MyPageView, meta: { requiresAuth: true } },
     {
       path: '/my/profile',
@@ -195,7 +201,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
@@ -204,6 +210,14 @@ router.beforeEach((to) => {
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: 'home' }
+  }
+
+  if (to.meta.requiresAssessment) {
+    const assessment = useAssessmentStore()
+    await assessment.loadResult()
+    if (!assessment.hasCompleted) {
+      return { name: 'home' }
+    }
   }
 })
 

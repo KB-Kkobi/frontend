@@ -13,8 +13,10 @@ import RecommendedPortfolioCard from "@/components/assessment/RecommendedPortfol
 import PortfolioReasonCard from "@/components/assessment/PortfolioReasonCard.vue";
 import { fetchAssessmentResult } from "@/api/assessmentApi";
 import { ApiError } from "@/api/http";
+import { useAssessmentStore } from "@/stores/assessment";
 
 const router = useRouter();
+const assessmentStore = useAssessmentStore();
 
 const result = ref(null);
 const isLoading = ref(true);
@@ -29,6 +31,7 @@ async function loadAssessmentResult() {
   try {
     result.value = await fetchAssessmentResult();
     hasNoAssessment.value = result.value === null;
+    assessmentStore.setResult(result.value);
   } catch (error) {
     errorMessage.value =
       error instanceof ApiError ? error.message : "진단 결과를 불러오지 못했습니다.";

@@ -2,6 +2,7 @@
 import { computed, watch } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import BottomTabBar from "@/components/common/BottomTabBar.vue";
+import { useAssessmentStore } from "@/stores/assessment";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
 
@@ -12,15 +13,18 @@ const hasBottomTabBar = computed(() => !route.meta.hideBottomTabBar);
 // 그래야 화면을 이동해도 timer가 중복 생성되거나 끊기지 않는다.
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
+const assessmentStore = useAssessmentStore();
 
 watch(
   () => authStore.isAuthenticated,
   (isAuthenticated) => {
     if (isAuthenticated) {
       notificationStore.startPolling();
+      assessmentStore.loadResult();
     } else {
       notificationStore.stopPolling();
       notificationStore.resetUnread();
+      assessmentStore.reset();
     }
   },
   { immediate: true },

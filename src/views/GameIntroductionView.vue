@@ -82,6 +82,10 @@ function handleOpenTutorial() {
   router.push({ name: 'game-tutorial' });
 }
 
+function handleBrowseProducts() {
+  router.push({ name: 'products' });
+}
+
 onMounted(loadGameStatus);
 </script>
 
@@ -186,6 +190,9 @@ onMounted(loadGameStatus);
       </p>
       <BottomButton color="pink" @click="handleOpenTutorial">
         튜토리얼 시작하기
+      </BottomButton>
+      <BottomButton color="white" @click="handleBrowseProducts">
+        상품 먼저 둘러보기
       </BottomButton>
     </div>
   </PageContainer>

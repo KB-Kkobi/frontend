@@ -69,7 +69,7 @@ const props = defineProps({
 const emit = defineEmits(["select-security", "select-product"]);
 
 const LIST_TAB_OPTIONS = Object.freeze([
-  { key: PRODUCT_LIST_TABS.SECURITY, label: "주식" },
+  { key: PRODUCT_LIST_TABS.SECURITY, label: "증권" },
   { key: PRODUCT_LIST_TABS.DEPOSIT, label: "예금" },
   { key: PRODUCT_LIST_TABS.SAVING, label: "적금" },
 ]);
