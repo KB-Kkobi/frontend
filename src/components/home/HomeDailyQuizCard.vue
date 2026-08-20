@@ -13,6 +13,14 @@ const isSubmitting = ref(false);
 const submitError = ref("");
 const result = ref(null);
 
+const displayResult = computed(() => {
+  if (result.value) return result.value;
+  if (quiz.value?.hasParticipatedToday && quiz.value.answer) {
+    return { answer: quiz.value.answer, explanation: quiz.value.explanation };
+  }
+  return null;
+});
+
 const hasNoAccount = computed(
   () =>
     !!quiz.value &&
@@ -78,22 +86,22 @@ onMounted(loadTodayQuiz);
 
       <p class="text-body text-ink">{{ quiz.question }}</p>
 
-      <template v-if="result">
+      <template v-if="displayResult">
         <div class="flex flex-col gap-2">
-          <p :class="result.correct ? 'text-success' : 'text-error'" class="text-h2 font-bold">
+          <p
+            v-if="result"
+            :class="result.correct ? 'text-success' : 'text-error'"
+            class="text-h2 font-bold"
+          >
             {{ result.correct ? "정답이에요! 🎉" : "아쉬워요, 오답이에요" }}
           </p>
-          <p class="text-caption text-muted">정답: {{ result.answer }}</p>
-          <p class="text-body text-ink">{{ result.explanation }}</p>
+          <p class="text-caption text-muted">정답: {{ displayResult.answer }}</p>
+          <p class="text-body text-ink">{{ displayResult.explanation }}</p>
         </div>
 
-        <p v-if="result.correct" class="text-caption text-muted">
+        <p v-if="result && result.correct" class="text-caption text-muted">
           가상 투자금 {{ formatCurrency(result.rewardAmount) }}이 적립됐어요
         </p>
-      </template>
-
-      <template v-else-if="quiz.hasParticipatedToday">
-        <BasePill label="참여 완료" color="green" />
       </template>
 
       <template v-else>
