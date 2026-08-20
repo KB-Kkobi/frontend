@@ -29,6 +29,7 @@ export const SECURITY_LIST_DEFAULTS = Object.freeze({
 
 export const SECURITY_SORT_OPTIONS = Object.freeze([
   { value: "match",  label: "성향 적합도순" },
+  { value: "change", label: "수익률순" },
   { value: "volume", label: "거래량순" },
   { value: "name",   label: "종목명순" },
 ]);
