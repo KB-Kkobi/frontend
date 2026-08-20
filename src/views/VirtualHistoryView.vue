@@ -138,8 +138,8 @@ function orderMethodLabel(orderMethod) {
 function buildPendingStats(order) {
   return [
     { label: '주문 수량', value: order.quantity != null ? `${order.quantity}주` : '--' },
-    { label: '주문 가격', value: order.price != null ? formatPrice(order.price) : '시장가' },
-    { label: '주문 방식', value: orderMethodLabel(order.orderMethod) },
+    { label: '주문 가격', value: order.orderPrice != null ? formatPrice(order.orderPrice) : '시장가' },
+    { label: '거래 금액', value: '--' },
   ]
 }
 
