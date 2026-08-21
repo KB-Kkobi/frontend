@@ -41,7 +41,11 @@ function handleStartGame() {
   router.push({ name: "game-introduction" });
 }
 
-function handleRecommendProducts() {
+function handleSetFinancialGoal() {
+  router.push({ name: "financial-goal" });
+}
+
+function handleBrowseProducts() {
   router.push({ name: "products" });
 }
 
@@ -152,8 +156,11 @@ onMounted(loadAssessmentResult);
           >
             다른 유형도 궁금하다면 8가지 유형 전체보기 &gt;
           </button>
-          <BottomButton color="pink" shape="pill" @click="handleRecommendProducts">
-            내 성향 상품 추천받기
+          <BottomButton color="pink" shape="pill" @click="handleBrowseProducts">
+            성향으로 상품 보기
+          </BottomButton>
+          <BottomButton color="white" shape="pill" @click="handleSetFinancialGoal">
+            목표 기간도 반영하기
           </BottomButton>
         </div>
       </template>

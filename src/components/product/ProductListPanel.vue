@@ -9,6 +9,10 @@ import {
 } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchLatestAssessment } from "@/api/assessmentApi";
+import {
+  fetchFinancialGoal,
+  fetchFinancialGoalRecommendations,
+} from "@/api/financialGoalApi";
 import { ApiError, resolveApiUrl } from "@/api/http";
 import { fetchPersonas } from "@/api/personaApi";
 import { PERSONA_RECOMMEND_REASONS } from "@/constants/persona";
@@ -37,7 +41,6 @@ import {
   PRODUCT_LIST_DEFAULTS,
   PRODUCT_SEARCH_DEBOUNCE_MS,
   PRODUCT_SORT_OPTIONS,
-  PRODUCT_TYPES,
   RESERVE_TYPE_OPTIONS,
   SAVING_TERM_OPTIONS,
   getProductTypeLabel,
@@ -106,7 +109,7 @@ function parseInitialSavingTerms(query) {
   return sortSavingTerms(
     parseInitialList(query.savingTerms ?? query.savingTerm)
       .map(Number)
-      .filter((savingTerm) => SAVING_TERM_OPTIONS.includes(savingTerm)),
+      .filter((savingTerm) => Number.isInteger(savingTerm) && savingTerm > 0),
   );
 }
 
@@ -160,6 +163,8 @@ const totalElements = ref(0);
 const totalPages = ref(0);
 const isLoading = ref(false);
 const errorMessage = ref("");
+const goalRecommendation = ref(null);
+const isGoalContextLoading = ref(props.standalone);
 const latestAssessment = ref(null);
 const isAssessmentLoading = ref(props.standalone);
 const assessmentMessage = ref("");
@@ -168,23 +173,42 @@ const isFilterOpen = ref(false);
 const isSecurityFilterOpen = ref(false);
 const showMatchInfoModal = ref(false);
 const hasAssessment = computed(() => latestAssessment.value !== null);
+const hasFinancialGoal = computed(() => goalRecommendation.value !== null);
 const isSecurityTab = computed(
   () => activeTab.value === PRODUCT_LIST_TABS.SECURITY,
 );
 const isSaving = computed(
   () => activeTab.value === PRODUCT_LIST_TABS.SAVING,
 );
+const isGoalRecommendationActive = computed(() => {
+  if (!goalRecommendation.value || isSecurityTab.value) return false;
+
+  return (
+    selectedSavingTerms.value.length === 0 &&
+    !appliedKeyword.value &&
+    selectedReserveTypes.value.length === 0 &&
+    selectedPreferentialConditions.value.length === 0 &&
+    selectedSort.value === PRODUCT_LIST_DEFAULTS.sort
+  );
+});
+const pageTitle = "상품";
+const pageDescription = "주식과 예·적금을 한곳에서 비교해 보세요.";
 
 const recommendReason = computed(() => {
   if (activeTab.value === PRODUCT_LIST_TABS.DEPOSIT) {
+    if (hasFinancialGoal.value) {
+      return "목표 시점 전에 만기가 오는 예금 중 금리가 높은 상품부터 보여드려요. 원하는 조건에 맞춰 비교할 수도 있어요.";
+    }
     return "안전하게 맡겨둘 돈은 금리가 높은 예금부터 보여드려요. 원하는 기간과 조건에 맞춰 비교할 수도 있어요.";
   }
-  if (isSaving.value) {
+  if (activeTab.value === PRODUCT_LIST_TABS.SAVING) {
+    if (hasFinancialGoal.value) {
+      return "목표 시점에 맞춰 만기가 오는 적금 중 금리가 높은 상품부터 보여드려요. 원하는 조건에 맞춰 비교할 수도 있어요.";
+    }
     return "꾸준히 모을 돈은 금리가 높은 적금부터 보여드려요. 원하는 기간과 조건에 맞춰 비교할 수도 있어요.";
   }
   return PERSONA_RECOMMEND_REASONS[latestAssessment.value?.personaCode] ?? "";
 });
-
 const activeTabLabel = computed(() =>
   isSecurityTab.value ? "주식" : getProductTypeLabel(activeTab.value),
 );
@@ -278,8 +302,20 @@ function getSecurityErrorMessage(error) {
 }
 
 async function loadProducts() {
+  if (isGoalRecommendationActive.value) {
+    const recommendation = await fetchFinancialGoalRecommendations({
+      productType: activeTab.value,
+      page: currentPage.value,
+      size: PRODUCT_LIST_DEFAULTS.size,
+    });
+    goalRecommendation.value = recommendation.goal;
+    applyProductResponse(recommendation.products);
+    return;
+  }
+
   const response = await fetchProductList(activeTab.value, {
     keyword: appliedKeyword.value,
+    preferredSavingTerm: goalRecommendation.value?.recommendedSavingTerm,
     savingTerms: selectedSavingTerms.value.length
       ? selectedSavingTerms.value
       : SAVING_TERM_OPTIONS,
@@ -290,11 +326,35 @@ async function loadProducts() {
     sort: selectedSort.value,
   });
 
-  products.value = response.content;
+  applyProductResponse(response);
+}
+
+function applyProductResponse(response) {
+  products.value = (response?.content ?? []).map((product) => ({
+    ...product,
+    financialCompanyName:
+      product.financialCompanyName ?? product.financialCompnayName ?? null,
+    joinWay: product.joinWay ?? product.joinway ?? null,
+  }));
   securities.value = [];
-  currentPage.value = response.page;
-  totalElements.value = response.totalElements;
-  totalPages.value = response.totalPages;
+  currentPage.value = response?.page ?? PRODUCT_LIST_DEFAULTS.page;
+  totalElements.value = response?.totalElements ?? 0;
+  totalPages.value = response?.totalPages ?? 0;
+}
+
+async function loadGoalContext() {
+  if (!props.standalone) return;
+
+  isGoalContextLoading.value = true;
+
+  try {
+    goalRecommendation.value = await fetchFinancialGoal();
+  } catch {
+    goalRecommendation.value = null;
+  } finally {
+    isGoalContextLoading.value = false;
+    loadList();
+  }
 }
 
 async function loadLatestAssessment() {
@@ -393,6 +453,7 @@ async function loadList() {
   errorMessage.value = "";
 
   try {
+    if (isGoalContextLoading.value) return;
     if (isSecurityTab.value) {
       await loadSecurities();
     } else {
@@ -605,7 +666,10 @@ watch(
 );
 
 onMounted(() => {
-  if (props.standalone) loadLatestAssessment();
+  if (props.standalone) {
+    loadLatestAssessment();
+    loadGoalContext();
+  }
 });
 
 // 가상투자 화면은 keep-alive 대상이므로 재진입할 때 URL이 요청한 탭을 다시 반영한다.
@@ -625,13 +689,17 @@ onBeforeUnmount(() => {
       <template #actions>
         <NotificationBellButton />
       </template>
-      <h1 class="text-h1 text-ink">상품</h1>
-      <p class="text-caption text-muted">
-        나에게 맞는 예금·적금·증권 상품을 확인해 보세요.
+      <h1 class="text-h1 text-ink">{{ pageTitle }}</h1>
+      <p class="text-caption text-muted tracking-tight">
+        {{ pageDescription }}
       </p>
     </PageHeader>
 
-    <BaseCard v-if="standalone" color="white" elevation="highlight">
+    <BaseCard
+      v-if="standalone"
+      color="white"
+      elevation="highlight"
+    >
       <div v-if="isAssessmentLoading" class="flex flex-col gap-2" role="status">
         <p class="text-caption text-muted">성향</p>
         <h2 class="text-h2 text-ink">나의 투자 성향을 불러오는 중이에요</h2>

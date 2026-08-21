@@ -30,6 +30,7 @@ import PersonaTypesView from '@/views/PersonaTypesView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import LoginView from '@/views/LoginView.vue'
 import PasswordResetView from '@/views/PasswordResetView.vue'
+import FinancialGoalView from '@/views/FinancialGoalView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -191,6 +192,12 @@ const router = createRouter({
       name: 'persona-types',
       component: PersonaTypesView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/financial-goal',
+      name: 'financial-goal',
+      component: FinancialGoalView,
+      meta: { requiresAuth: true, hideBottomTabBar: true },
     },
   ],
 })

@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { fetchMyProfile, logoutUser } from "@/api/authApi";
+import { fetchFinancialGoal } from "@/api/financialGoalApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
@@ -9,11 +10,14 @@ import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
 import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
 import { useAuthStore } from "@/stores/auth";
 import { clearGameSession } from "@/utils/gameStorage";
+import { formatKoreanShortAmount } from "@/utils/format";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const nickname = ref("");
 const isProfileLoading = ref(true);
+const financialGoal = ref(null);
+const isFinancialGoalLoading = ref(true);
 
 const REPORT_ITEMS = [
   { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
@@ -50,8 +54,23 @@ async function loadProfile() {
   }
 }
 
+async function loadFinancialGoal() {
+  isFinancialGoalLoading.value = true;
+  try {
+    financialGoal.value = await fetchFinancialGoal();
+  } catch {
+    financialGoal.value = null;
+  } finally {
+    isFinancialGoalLoading.value = false;
+  }
+}
+
 function handleAssessmentSelect() {
   router.push({ name: "assessment-result" });
+}
+
+function handleFinancialGoal() {
+  router.push({ name: "financial-goal" });
 }
 
 function handleFriendSelect() {
@@ -80,7 +99,10 @@ async function handleLogout() {
   }
 }
 
-onMounted(loadProfile);
+onMounted(() => {
+  loadProfile();
+  loadFinancialGoal();
+});
 </script>
 
 <template>
@@ -128,6 +150,34 @@ onMounted(loadProfile);
       <section class="flex flex-col gap-4">
         <h2 class="text-h2 text-ink">투자 성향</h2>
         <MyPageMenuCard :items="REPORT_ITEMS" @select="handleAssessmentSelect" />
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="text-h2 text-ink">준비 중인 목표</h2>
+        <BaseCard color="white" elevation="flat">
+          <button
+            type="button"
+            class="flex w-full items-center gap-4 text-left"
+            @click="handleFinancialGoal"
+          >
+            <span class="flex min-w-0 flex-1 flex-col gap-2">
+              <strong class="text-body font-semibold text-ink">
+                <template v-if="isFinancialGoalLoading">목표를 확인하고 있어요</template>
+                <template v-else-if="financialGoal">{{ financialGoal.goalName }}</template>
+                <template v-else>아직 정한 목표가 없어요</template>
+              </strong>
+              <span class="text-caption text-muted">
+                <template v-if="financialGoal">
+                  {{ formatKoreanShortAmount(financialGoal.currentAmount) }} 준비 · 목표 {{ formatKoreanShortAmount(financialGoal.targetAmount) }}
+                </template>
+                <template v-else>필요한 금액과 시기를 정해둘 수 있어요.</template>
+              </span>
+            </span>
+            <span class="shrink-0 text-caption font-semibold text-pink">
+              {{ financialGoal ? "수정" : "정하기" }}
+            </span>
+          </button>
+        </BaseCard>
       </section>
 
       <section class="flex flex-col gap-4">
