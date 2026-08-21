@@ -11,6 +11,9 @@ import NotificationBellButton from "@/components/notification/NotificationBellBu
 import { fetchMyInfo } from "@/api/authApi";
 import { fetchAssessmentResult } from "@/api/assessmentApi";
 import { ApiError } from "@/api/http";
+import { useAssessmentStore } from "@/stores/assessment";
+
+const assessmentStore = useAssessmentStore();
 
 const nickname = ref("");
 const assessmentResult = ref(null);
@@ -25,6 +28,7 @@ async function loadHomeData() {
     const [myInfo, result] = await Promise.all([fetchMyInfo(), fetchAssessmentResult()]);
     nickname.value = myInfo.nickname;
     assessmentResult.value = result;
+    assessmentStore.setResult(result);
   } catch (error) {
     errorMessage.value =
       error instanceof ApiError ? error.message : "홈 정보를 불러오지 못했습니다.";
@@ -44,9 +48,9 @@ onMounted(loadHomeData);
           <NotificationBellButton />
         </template>
         <h1 class="text-h1 text-ink">
-          안녕하세요<span v-if="nickname">, {{ nickname }}님</span>! 👋
+          안녕하세요<span v-if="nickname">, {{ nickname }}님</span>!
         </h1>
-        <p class="text-caption text-muted">오늘도 현명한 투자를 응원해요! 💛</p>
+        <p class="text-caption text-muted">오늘도 현명한 투자를 응원해요!</p>
       </PageHeader>
 
       <BaseCard v-if="isLoading" color="white">
@@ -80,7 +84,7 @@ onMounted(loadHomeData);
 
       <HomeAssessmentIntroCard v-else />
 
-      <HomeRecommendationCard />
+      <HomeRecommendationCard v-if="assessmentResult" />
 
       <HomeDailyQuizCard v-if="!isLoading && !errorMessage" />
     </div>

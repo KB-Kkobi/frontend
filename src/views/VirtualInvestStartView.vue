@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { AccountApiError, createAccount } from "@/api/accountApi";
-import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
@@ -53,8 +52,6 @@ async function handleSubmit() {
 <template>
   <PageContainer>
     <div class="flex flex-col gap-6 py-6">
-      <BackButton />
-
       <div class="flex flex-col gap-2">
         <h1 class="flex flex-col gap-2 text-h1 text-ink">
           <span>부담 없이 연습할 수 있도록,</span>

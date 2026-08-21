@@ -3,6 +3,7 @@ import {
   computed,
   onActivated,
   onBeforeUnmount,
+  onDeactivated,
   onMounted,
   ref,
   watch,
@@ -49,6 +50,7 @@ import {
 import {
   SECURITY_FILTER_TYPE_OPTIONS,
   SECURITY_LIST_DEFAULTS,
+  SECURITY_QUOTE_POLL_INTERVAL_MS,
   SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
 import {
@@ -72,7 +74,7 @@ const props = defineProps({
 const emit = defineEmits(["select-security", "select-product"]);
 
 const LIST_TAB_OPTIONS = Object.freeze([
-  { key: PRODUCT_LIST_TABS.SECURITY, label: "주식" },
+  { key: PRODUCT_LIST_TABS.SECURITY, label: "증권" },
   { key: PRODUCT_LIST_TABS.DEPOSIT, label: "예금" },
   { key: PRODUCT_LIST_TABS.SAVING, label: "적금" },
 ]);
@@ -302,6 +304,8 @@ function getSecurityErrorMessage(error) {
 }
 
 async function loadProducts() {
+  stopQuotePolling();
+
   if (isGoalRecommendationActive.value) {
     const recommendation = await fetchFinancialGoalRecommendations({
       productType: activeTab.value,
@@ -407,6 +411,23 @@ function handlePersonaImageError() {
   isPersonaImageAvailable.value = false;
 }
 
+let quotePollingTimer = null;
+
+function stopQuotePolling() {
+  if (quotePollingTimer !== null) {
+    clearInterval(quotePollingTimer);
+    quotePollingTimer = null;
+  }
+}
+
+function startQuotePolling() {
+  stopQuotePolling();
+  quotePollingTimer = setInterval(
+    () => loadSecurityQuotes(securities.value),
+    SECURITY_QUOTE_POLL_INTERVAL_MS,
+  );
+}
+
 async function loadSecurityQuotes(items) {
   const tickers = items
     .filter((item) => item.kisSupported)
@@ -446,6 +467,7 @@ async function loadSecurities() {
   totalPages.value = response.totalPages;
 
   await loadSecurityQuotes(response.content);
+  startQuotePolling();
 }
 
 async function loadList() {
@@ -677,7 +699,12 @@ onActivated(() => {
   if (!props.standalone) syncActiveTabFromRoute();
 });
 
+onDeactivated(() => {
+  stopQuotePolling();
+});
+
 onBeforeUnmount(() => {
+  stopQuotePolling();
   applyKeywordDebounced.cancel();
   applySecurityKeywordDebounced.cancel();
 });

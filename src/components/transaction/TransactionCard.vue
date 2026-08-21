@@ -73,7 +73,12 @@ function handleCancel() {
         <div
           v-for="(stat, index) in stats"
           :key="stat.label"
-          :class="['flex flex-1 flex-col gap-2', index === stats.length - 1 ? 'items-end text-right' : '']"
+          :class="[
+            'flex flex-1 flex-col gap-2',
+            index === 0 ? 'items-start text-left' :
+            index === stats.length - 1 ? 'items-end text-right' :
+            'items-center text-center',
+          ]"
         >
           <span class="text-caption text-muted tracking-tight">{{ stat.label }}</span>
           <span class="text-body font-semibold text-ink tabular-nums tracking-tight">{{ stat.value }}</span>

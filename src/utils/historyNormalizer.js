@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, formatInterestRate } from '@/utils/format'
 import {
   PRODUCT_TRANSACTION_TYPES,
   getProductTransactionLabel,
@@ -57,14 +57,12 @@ function stockStatusColor(status) {
 }
 
 function buildStockStats(order) {
-  const stats = [
-    { label: '수량', value: order.quantity != null ? `${order.quantity}주` : '--' },
-    { label: '주문 방식', value: order.orderMethod === 'MARKET' ? '시장가' : '지정가' },
+  const pricePerShare = order.executedPrice ?? order.orderPrice
+  return [
+    { label: '주문 수량', value: order.quantity != null ? `${order.quantity}주` : '--' },
+    { label: '주문 가격', value: pricePerShare != null ? formatCurrency(pricePerShare) : '--' },
+    { label: '거래 금액', value: order.executedAmount != null ? formatCurrency(order.executedAmount) : '--' },
   ]
-  if (order.price != null) stats.push({ label: '주문 단가', value: formatCurrency(order.price) })
-  if (order.filledPrice != null) stats.push({ label: '체결 단가', value: formatCurrency(order.filledPrice) })
-  if (order.totalAmount != null) stats.push({ label: '거래 금액', value: formatCurrency(order.totalAmount) })
-  return stats
 }
 
 export function normalizeStockOrder(order) {
@@ -103,6 +101,7 @@ export function normalizeProductHistory(item) {
     stats: [
       { label: '상품 유형', value: getProductTypeLabel(item.productType) },
       { label: '처리 금액', value: item.amount != null ? formatCurrency(Number(item.amount)) : '--' },
+      { label: '금리', value: formatInterestRate(item.appliedRate) },
     ],
   }
 }
