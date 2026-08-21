@@ -3,6 +3,7 @@ import {
   computed,
   onActivated,
   onBeforeUnmount,
+  onDeactivated,
   onMounted,
   ref,
   watch,
@@ -46,6 +47,7 @@ import {
 import {
   SECURITY_FILTER_TYPE_OPTIONS,
   SECURITY_LIST_DEFAULTS,
+  SECURITY_QUOTE_POLL_INTERVAL_MS,
   SECURITY_SORT_OPTIONS,
 } from "@/constants/security";
 import {
@@ -278,6 +280,7 @@ function getSecurityErrorMessage(error) {
 }
 
 async function loadProducts() {
+  stopQuotePolling();
   const response = await fetchProductList(activeTab.value, {
     keyword: appliedKeyword.value,
     savingTerms: selectedSavingTerms.value.length
@@ -347,6 +350,23 @@ function handlePersonaImageError() {
   isPersonaImageAvailable.value = false;
 }
 
+let quotePollingTimer = null;
+
+function stopQuotePolling() {
+  if (quotePollingTimer !== null) {
+    clearInterval(quotePollingTimer);
+    quotePollingTimer = null;
+  }
+}
+
+function startQuotePolling() {
+  stopQuotePolling();
+  quotePollingTimer = setInterval(
+    () => loadSecurityQuotes(securities.value),
+    SECURITY_QUOTE_POLL_INTERVAL_MS,
+  );
+}
+
 async function loadSecurityQuotes(items) {
   const tickers = items
     .filter((item) => item.kisSupported)
@@ -386,6 +406,7 @@ async function loadSecurities() {
   totalPages.value = response.totalPages;
 
   await loadSecurityQuotes(response.content);
+  startQuotePolling();
 }
 
 async function loadList() {
@@ -613,7 +634,12 @@ onActivated(() => {
   if (!props.standalone) syncActiveTabFromRoute();
 });
 
+onDeactivated(() => {
+  stopQuotePolling();
+});
+
 onBeforeUnmount(() => {
+  stopQuotePolling();
   applyKeywordDebounced.cancel();
   applySecurityKeywordDebounced.cancel();
 });

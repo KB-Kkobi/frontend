@@ -69,6 +69,7 @@ function createChartInstance(container) {
     localization: {
       locale: "ko-KR",
       priceFormatter: formatKoreanPrice,
+      dateFormat: "yyyy/MM/dd",
     },
     autoSize: false,
     width: container.clientWidth,
