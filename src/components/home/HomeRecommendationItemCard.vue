@@ -3,12 +3,13 @@ import { computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
 import {
+  SECURITY_TYPES,
   getSecurityCategoryPill,
   getSecurityTypeLabel,
+  normalizeSecurityType,
 } from "@/constants/security";
 import {
   formatCurrency,
-  formatInterestRate,
   formatRate,
 } from "@/utils/format";
 
@@ -30,13 +31,27 @@ const props = defineProps({
 
 const emit = defineEmits(["select"]);
 
+const HOME_CATEGORY_COLORS = {
+  [SECURITY_TYPES.STOCK]: "pink",
+  [SECURITY_TYPES.EQUITY_ETF]: "pink",
+  [SECURITY_TYPES.BOND_ETF]: "blue",
+};
+
 const typeLabel = computed(() => getSecurityTypeLabel(props.security.type));
-const categoryPill = computed(() =>
-  getSecurityCategoryPill(props.security.type),
-);
-const matchScoreLabel = computed(() =>
-  props.matchScore === null ? null : `매칭 ${formatInterestRate(props.matchScore)}`,
-);
+const categoryPill = computed(() => {
+  const category = getSecurityCategoryPill(props.security.type);
+  const categoryColor = HOME_CATEGORY_COLORS[normalizeSecurityType(props.security.type)];
+
+  return category && categoryColor ? { ...category, color: categoryColor } : category;
+});
+const matchScoreLabel = computed(() => {
+  if (props.matchScore === null) return null;
+
+  const matchScore = Number(props.matchScore);
+  if (!Number.isFinite(matchScore)) return null;
+
+  return `적합도 ${matchScore.toFixed(1)}%`;
+});
 
 const showQuote = computed(() => props.security.kisSupported);
 
@@ -65,43 +80,47 @@ function handleSelect() {
 </script>
 
 <template>
-  <article class="relative w-40 shrink-0">
-    <BaseCard color="white" elevation="flat">
-      <div class="flex flex-col gap-2">
-        <BasePill
-          v-if="categoryPill"
-          as="span"
-          class="self-start"
-          :label="categoryPill.label"
-          :color="categoryPill.color"
-          variant="filled"
-        />
+  <article class="relative flex w-40 shrink-0 snap-start self-stretch">
+    <BaseCard class="flex w-full" color="white" elevation="flat">
+      <div class="flex h-full w-full flex-col gap-2">
+        <div class="flex flex-col gap-2">
+          <BasePill
+            v-if="categoryPill"
+            as="span"
+            class="self-start"
+            :label="categoryPill.label"
+            :color="categoryPill.color"
+            variant="filled"
+          />
 
-        <div class="flex flex-col gap-1">
-          <h3 class="truncate text-body font-semibold text-ink">
-            {{ security.name }}
-          </h3>
-          <p class="truncate text-caption text-muted">{{ typeLabel }}</p>
+          <div class="flex flex-col gap-1">
+            <h3 class="truncate text-h2 font-semibold text-ink">
+              {{ security.name }}
+            </h3>
+            <p class="truncate text-caption text-muted">{{ typeLabel }}</p>
+          </div>
         </div>
 
-        <template v-if="showQuote">
-          <p class="text-body font-semibold text-ink tabular-nums">
+        <div class="border-t border-line-soft" aria-hidden="true" />
+
+        <div v-if="showQuote" class="flex flex-col gap-2">
+          <p class="text-h2 font-semibold text-ink tabular-nums">
             {{ priceLabel }}
           </p>
           <p :class="[changeColorClass, 'text-caption tabular-nums']">
             {{ changeRateLabel }}
           </p>
-        </template>
+        </div>
         <p v-else class="text-caption text-muted">시세 미지원</p>
 
-        <BasePill
-          v-if="matchScoreLabel"
-          as="span"
-          class="self-start"
-          :label="matchScoreLabel"
-          color="lavender"
-          variant="outline"
-        />
+        <div v-if="matchScoreLabel" class="flex items-end">
+          <BasePill
+            as="span"
+            :label="matchScoreLabel"
+            color="lavender"
+            variant="outline"
+          />
+        </div>
       </div>
     </BaseCard>
     <button

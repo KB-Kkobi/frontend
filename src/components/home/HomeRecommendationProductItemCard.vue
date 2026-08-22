@@ -2,7 +2,11 @@
 import { computed } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import BasePill from "@/components/common/BasePill.vue";
-import { getProductCategoryPill } from "@/constants/product";
+import {
+  PRODUCT_TYPES,
+  getProductCategoryPill,
+  normalizeProductType,
+} from "@/constants/product";
 import { formatInterestRate, formatNullableText } from "@/utils/format";
 
 const props = defineProps({
@@ -14,7 +18,17 @@ const props = defineProps({
 
 const emit = defineEmits(["select"]);
 
-const categoryPill = computed(() => getProductCategoryPill(props.product.productType));
+const HOME_CATEGORY_COLORS = {
+  [PRODUCT_TYPES.DEPOSIT]: "green",
+  [PRODUCT_TYPES.SAVING]: "green",
+};
+
+const categoryPill = computed(() => {
+  const category = getProductCategoryPill(props.product.productType);
+  const categoryColor = HOME_CATEGORY_COLORS[normalizeProductType(props.product.productType)];
+
+  return category && categoryColor ? { ...category, color: categoryColor } : category;
+});
 
 function handleSelect() {
   emit("select", props.product);
@@ -22,31 +36,38 @@ function handleSelect() {
 </script>
 
 <template>
-  <article class="relative w-40 shrink-0">
-    <BaseCard color="white" elevation="flat">
-      <div class="flex flex-col gap-2">
-        <BasePill
-          v-if="categoryPill"
-          as="span"
-          class="self-start"
-          :label="categoryPill.label"
-          :color="categoryPill.color"
-          variant="filled"
-        />
+  <article class="relative flex w-40 shrink-0 snap-start self-stretch">
+    <BaseCard class="flex w-full" color="white" elevation="flat">
+      <div class="flex h-full w-full flex-col gap-2">
+        <div class="flex flex-col gap-2">
+          <BasePill
+            v-if="categoryPill"
+            as="span"
+            class="self-start"
+            :label="categoryPill.label"
+            :color="categoryPill.color"
+            variant="filled"
+          />
 
-        <div class="flex flex-col gap-1">
-          <h3 class="truncate text-body font-semibold text-ink">
-            {{ formatNullableText(product.productName) }}
-          </h3>
-          <p class="truncate text-caption text-muted">
-            {{ formatNullableText(product.financialCompanyName) }}
-          </p>
+          <div class="flex flex-col gap-1">
+            <h3 class="truncate text-h2 font-semibold text-ink">
+              {{ formatNullableText(product.productName) }}
+            </h3>
+            <p class="truncate text-caption text-muted">
+              {{ formatNullableText(product.financialCompanyName) }}
+            </p>
+          </div>
         </div>
 
-        <p class="text-body font-semibold text-profit tabular-nums">
-          연 {{ formatInterestRate(product.maximumInterestRate) }}
-        </p>
-        <p class="text-caption text-muted">최고 우대 금리</p>
+        <div class="border-t border-line-soft" aria-hidden="true" />
+
+        <div class="flex flex-col gap-2">
+          <p class="text-h2 font-semibold text-profit tabular-nums">
+            연 {{ formatInterestRate(product.maximumInterestRate) }}
+          </p>
+          <p class="text-caption text-muted">최고 우대 금리</p>
+        </div>
+
       </div>
     </BaseCard>
     <button
