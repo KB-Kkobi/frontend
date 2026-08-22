@@ -89,7 +89,9 @@ function handleViewDetail() {
           <p class="text-caption text-muted">{{ summarySentence }}</p>
         </div>
 
-        <h2 class="text-h2 text-ink">추천 포트폴리오 비율</h2>
+        <div class="pt-4">
+          <h2 class="text-h2 text-ink">추천 포트폴리오 비율</h2>
+        </div>
       </div>
 
       <ul class="flex flex-wrap gap-4">
