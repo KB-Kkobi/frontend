@@ -102,7 +102,7 @@ function handleFindPassword() {
         <img
           :src="naruLogoImage"
           alt="나루 로고"
-          class="w-1/2 object-contain"
+          class="w-2/3 object-contain"
         />
       </div>
 

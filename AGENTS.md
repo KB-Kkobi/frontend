@@ -23,6 +23,7 @@
 | 용도                     | 클래스                                                               |
 | ------------------------ | -------------------------------------------------------------------- |
 | 주색 버튼·강조           | `bg-pink` · `text-pink`                                              |
+| 스플래시 문구 배경       | `bg-splash-soft`                                                     |
 | 카테고리 강조 텍스트     | `text-blue` · `text-green` · `text-yellow` · `text-lavender` · `text-cream` |
 | 컨테이너 배경(옅은 틴트) | `bg-pink-soft` · `bg-blue-soft` · `bg-green-soft` · `bg-yellow-soft` · `bg-lavender-soft` · `bg-cream-soft` |
 | 수익 / 상승              | `text-profit` (핑크)                                                 |
