@@ -25,6 +25,10 @@ export const GAME_INTRO_STEPS = [
     title: '투자 성향을 확인해요',
     description: '선택한 행동을 분석해 8가지 성향 중 하나를 알려드려요.',
   },
+  {
+    title: '시장종합지수',
+    description: '종목 A 가격은 이 지수를 그대로 따라가요.',
+  },
 ];
 
 export const GAME_SEED_MONEY = 10_000_000;
