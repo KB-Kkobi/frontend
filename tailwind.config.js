@@ -22,6 +22,7 @@ export default {
 
       // ── 브랜드 4색 (DEFAULT = 버튼·강조, soft = 컨테이너 배경) ──
       pink: { DEFAULT: "#FF6B9D", soft: "#FEF2F6" }, // 핑크 (주색)
+      splash: { soft: "#FFF2EF" },
       blue: { DEFAULT: "#5B8BF7", soft: "#F0F5FE" },
       green: { DEFAULT: "#55C770", soft: "#EFFAF7" },
       yellow: { DEFAULT: "#FED063", soft: "#FEF7E0" },
