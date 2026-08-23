@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
@@ -19,6 +19,10 @@ const nickname = ref("");
 const assessmentResult = ref(null);
 const isLoading = ref(true);
 const errorMessage = ref("");
+
+const isPreAssessmentHome = computed(
+  () => !isLoading.value && !errorMessage.value && !assessmentResult.value,
+);
 
 async function loadHomeData() {
   isLoading.value = true;
@@ -48,9 +52,11 @@ onMounted(loadHomeData);
           <NotificationBellButton />
         </template>
         <h1 class="text-h1 text-ink">
-          안녕하세요<span v-if="nickname">, {{ nickname }}님</span>!
+          <template v-if="isPreAssessmentHome">
+            안녕하세요<span v-if="nickname">, {{ nickname }}님</span>!
+          </template>
+          <template v-else>홈</template>
         </h1>
-        <p class="text-caption text-muted">오늘도 현명한 투자를 응원해요!</p>
       </PageHeader>
 
       <BaseCard v-if="isLoading" color="white">
@@ -86,7 +92,9 @@ onMounted(loadHomeData);
 
       <HomeRecommendationCard v-if="assessmentResult" />
 
-      <HomeDailyQuizCard v-if="!isLoading && !errorMessage" />
+      <HomeDailyQuizCard
+        v-if="!isLoading && !errorMessage && assessmentResult"
+      />
     </div>
   </PageContainer>
 </template>
