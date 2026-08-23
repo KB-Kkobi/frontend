@@ -36,9 +36,9 @@ export const GAME_ALLOCATION_STEP = 100_000;
 export const GAME_EVENT_RESUME_DELAY_MS = 2_500;
 
 export const GAME_INITIAL_ALLOCATION = {
-  cash: 3_000_000,
-  deposit: 3_000_000,
-  stock: 4_000_000,
+  cash: 0,
+  deposit: 0,
+  stock: 0,
 };
 
 export const GAME_ALLOCATION_ADJUSTMENT_PRIORITY = {
