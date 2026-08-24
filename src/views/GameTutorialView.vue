@@ -328,7 +328,7 @@ const overlayContent = computed(() => {
         expression: 'celebrate',
         message: GAME_TUTORIAL_MESSAGES.complete,
         showPrev: true,
-        confirmLabel: '튜토리얼 완료',
+        confirmLabel: '완료',
       };
     default:
       return null;
