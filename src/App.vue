@@ -6,6 +6,7 @@ import BottomTabBar from "@/components/common/BottomTabBar.vue";
 import { useAssessmentStore } from "@/stores/assessment";
 import { useAuthStore } from "@/stores/auth";
 import { useNotificationStore } from "@/stores/notification";
+import { useProfileStore } from "@/stores/profile";
 
 const route = useRoute();
 const hasBottomTabBar = computed(() => !route.meta.hideBottomTabBar);
@@ -14,6 +15,7 @@ const hasBottomTabBar = computed(() => !route.meta.hideBottomTabBar);
 // 그래야 화면을 이동해도 timer가 중복 생성되거나 끊기지 않는다.
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
+const profileStore = useProfileStore();
 const assessmentStore = useAssessmentStore();
 const SPLASH_DURATION_MS = 1200;
 const hasSplashDurationElapsed = ref(false);
@@ -32,6 +34,7 @@ watch(
     } else {
       notificationStore.stopPolling();
       notificationStore.resetUnread();
+      profileStore.reset();
       assessmentStore.reset();
     }
   },

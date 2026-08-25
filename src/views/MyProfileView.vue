@@ -1,6 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { fetchMyProfile, updateMyProfile } from "@/api/authApi";
+import { computed, onMounted, ref } from "vue";
 import { ApiError } from "@/api/http";
 import BackButton from "@/components/common/BackButton.vue";
 import BaseCard from "@/components/common/BaseCard.vue";
@@ -8,11 +7,16 @@ import BaseTextField from "@/components/common/BaseTextField.vue";
 import BaseToast from "@/components/common/BaseToast.vue";
 import BottomButton from "@/components/common/BottomButton.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
+import ProfileImagePicker from "@/components/mypage/ProfileImagePicker.vue";
+import { DEFAULT_PROFILE_IMAGE_ID, getProfileImageOption } from "@/constants/profileImages";
+import { useProfileStore } from "@/stores/profile";
 import { formatLocalDate } from "@/utils/date";
 
+const profileStore = useProfileStore();
 const member = ref(null);
 const nickname = ref("");
 const birthDate = ref("");
+const profileImage = ref(DEFAULT_PROFILE_IMAGE_ID);
 const nicknameError = ref("");
 const birthDateError = ref("");
 const formError = ref("");
@@ -21,6 +25,10 @@ const isLoading = ref(true);
 const isEditing = ref(false);
 const isSubmitting = ref(false);
 const isToastVisible = ref(false);
+
+const selectedProfileImage = computed(() => getProfileImageOption(
+  isEditing.value ? profileImage.value : member.value?.profileImage,
+));
 
 function formatBirthDateInput(value) {
   const digits = String(value ?? "").replace(/\D/g, "").slice(0, 8);
@@ -32,6 +40,7 @@ function formatBirthDateInput(value) {
 function syncForm(profile) {
   nickname.value = profile?.nickname ?? "";
   birthDate.value = formatBirthDateInput(profile?.birthDate);
+  profileImage.value = profile?.profileImage ?? DEFAULT_PROFILE_IMAGE_ID;
 }
 
 function clearFormErrors() {
@@ -69,6 +78,7 @@ function validateForm() {
     isValid: !nicknameError.value && !birthDateError.value,
     nickname: normalizedNickname,
     birthDate: normalizedBirthDate,
+    profileImage: profileImage.value,
   };
 }
 
@@ -77,7 +87,7 @@ async function loadMember() {
   errorMessage.value = "";
 
   try {
-    member.value = await fetchMyProfile();
+    member.value = await profileStore.loadProfile();
     syncForm(member.value);
   } catch (error) {
     errorMessage.value = error instanceof ApiError
@@ -110,7 +120,7 @@ async function handleSubmit() {
   isSubmitting.value = true;
 
   try {
-    member.value = await updateMyProfile(profile);
+    member.value = await profileStore.saveProfile(profile);
     syncForm(member.value);
     isEditing.value = false;
     isToastVisible.value = true;
@@ -165,6 +175,8 @@ onMounted(loadMember);
 
       <BaseCard v-else color="white">
         <form v-if="isEditing" class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+          <ProfileImagePicker v-model="profileImage" />
+
           <div class="flex flex-col gap-2 border-b border-line-soft py-4">
             <span class="text-caption text-muted">이메일</span>
             <span class="break-all text-h2 text-ink">{{ member?.email || "-" }}</span>
@@ -210,6 +222,19 @@ onMounted(loadMember);
         </form>
 
         <div v-else class="flex flex-col gap-4">
+          <div class="flex flex-col items-center gap-2 border-b border-line-soft py-4">
+            <span class="flex h-40 w-40 items-center justify-center overflow-hidden rounded-full border border-line-soft bg-white">
+              <img
+                :src="selectedProfileImage.imageUrl"
+                :alt="selectedProfileImage.label"
+                :class="[
+                  'h-full w-full',
+                  selectedProfileImage.fit === 'contain' ? 'object-contain' : 'object-cover',
+                ]"
+              />
+            </span>
+          </div>
+
           <dl class="flex flex-col">
             <div class="flex flex-col gap-2 border-b border-line-soft py-4">
               <dt class="text-caption text-muted">이메일</dt>

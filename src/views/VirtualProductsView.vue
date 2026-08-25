@@ -11,6 +11,17 @@ const cashBalance = ref(null);
 const isCashBalanceLoading = ref(false);
 const hasCashBalanceError = ref(false);
 
+function handleCashBalanceFailure(error, isInitialLoad) {
+  if (!isInitialLoad) {
+    // 백그라운드 재조회 실패는 화면에 이미 떠 있는 값을 그대로 유지한다.
+    console.error("[VirtualProductsView] 잔액 재조회 실패", error);
+    return;
+  }
+
+  cashBalance.value = null;
+  hasCashBalanceError.value = true;
+}
+
 async function loadCashBalance() {
   // 최초 조회일 때만 "불러오는 중" 문구를 보여준다. 재진입 시 재조회까지 매번
   // 문구가 깜빡이며 나타났다 사라지는 것을 막기 위함.
@@ -29,18 +40,16 @@ async function loadCashBalance() {
         : Number(rawCashBalance);
 
     if (!Number.isFinite(nextCashBalance)) {
-      throw new Error("Invalid cash balance");
+      handleCashBalanceFailure(
+        new TypeError("Invalid cash balance response"),
+        isInitialLoad,
+      );
+      return;
     }
 
     cashBalance.value = nextCashBalance;
   } catch (error) {
-    if (!isInitialLoad) {
-      // 백그라운드 재조회 실패는 화면에 이미 떠 있는 값을 그대로 유지한다.
-      console.error("[VirtualProductsView] 잔액 재조회 실패", error);
-      return;
-    }
-    cashBalance.value = null;
-    hasCashBalanceError.value = true;
+    handleCashBalanceFailure(error, isInitialLoad);
   } finally {
     isCashBalanceLoading.value = false;
   }
@@ -54,10 +63,10 @@ onActivated(() => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <BaseCard color="blue">
+    <BaseCard color="white" elevation="highlight">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <p class="text-caption font-semibold text-blue">가상투자 계좌</p>
+          <p class="text-caption font-semibold text-pink">가상투자 계좌</p>
           <h2 class="text-h2 text-ink">가상 자산으로 투자해보세요</h2>
           <p class="text-caption text-muted tracking-tight">
             상품을 선택하면 가상 계좌의 자산으로 투자할 수 있어요.

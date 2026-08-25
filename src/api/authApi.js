@@ -32,6 +32,6 @@ export function fetchMyProfile() {
   return get("/api/my/profile");
 }
 
-export function updateMyProfile({ nickname, birthDate }) {
-  return patch("/api/my/profile", { nickname, birthDate });
+export function updateMyProfile({ nickname, birthDate, profileImage }) {
+  return patch("/api/my/profile", { nickname, birthDate, profileImage });
 }
