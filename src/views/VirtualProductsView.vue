@@ -54,10 +54,10 @@ onActivated(() => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <BaseCard color="blue">
+    <BaseCard color="white" elevation="highlight">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <p class="text-caption font-semibold text-blue">가상투자 계좌</p>
+          <p class="text-caption font-semibold text-pink">가상투자 계좌</p>
           <h2 class="text-h2 text-ink">가상 자산으로 투자해보세요</h2>
           <p class="text-caption text-muted tracking-tight">
             상품을 선택하면 가상 계좌의 자산으로 투자할 수 있어요.

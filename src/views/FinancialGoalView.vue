@@ -46,6 +46,13 @@ const isDeleteConfirmOpen = ref(false);
 const errorMessage = ref("");
 
 const isOtherGoal = computed(() => form.goalType === "OTHER");
+const isCurrentAmountAboveTarget = computed(() => {
+  const targetAmount = parseCurrencyInput(form.targetAmount);
+  const currentAmount = parseCurrencyInput(form.currentAmount);
+  return targetAmount !== null
+    && currentAmount !== null
+    && currentAmount > targetAmount;
+});
 const recommendedProductSummary = computed(() => {
   if (!savedGoal.value) return "";
   if (!savedGoal.value.goalMatched) {
@@ -299,6 +306,16 @@ onMounted(loadGoal);
               :error-message="errors.currentAmount"
               @update:model-value="handleCurrentAmountInput"
             />
+
+            <BaseCard
+              v-if="isCurrentAmountAboveTarget"
+              color="yellow"
+              density="tight"
+            >
+              <p class="text-caption text-ink" role="status" aria-live="polite">
+                현재 마련한 금액이 필요한 금액보다 많아요. 두 금액을 한 번 확인해 주세요.
+              </p>
+            </BaseCard>
 
             <div class="flex flex-col gap-4">
               <BaseTextField

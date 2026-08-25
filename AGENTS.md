@@ -65,7 +65,7 @@
 | 컴포넌트        | 용도                                                                                                      |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
 | `PageContainer` | 페이지 폭 고정 + 좌우 여백. 모든 View의 최상단 래퍼. `color` prop(`page` 기본값 / `page-warm` / `base` / `white`)으로 배경 선택 |
-| `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop. `#actions` named slot으로 우측 상단 아이콘(알림 벨 등) 배치 가능 |
+| `PageHeader`    | 최상위 탭 화면의 중앙 제목과 선택 설명. `title` 필수, `description` 선택 prop. `#actions` 사용 시 `#title`·`#description` named slot으로 커스텀 문구를 배치 가능 |
 | `BaseCard`      | 둥근 컨테이너. `color`로 배경, `elevation`(`flat`/`default`/`highlight`/`float`)으로 흰 카드 깊이 선택. `density="tutorial"`은 튜토리얼 카드 전용 컴팩트 여백, `float`는 튜토리얼 딤 위 안내 카드 전용 |
 | `BaseModal`     | 확인·취소 이중확인 모달. `v-model` + `message`/`confirmText`/`cancelText`/`cancelDisabled` + `tone`(`default`/`neutral`/`tutorial-confirm`) prop, `@confirm`/`@cancel` emit |
 | `BaseBottomSheet` | 화면 하단에 고정되어 아래에서 위로 열리는 모바일 시트. `v-model`로 열림 상태를 관리하며 overlay 클릭·Escape·핸들 드래그로 닫기 지원. 최대 높이 `max-h-sheet`, 내부 스크롤 적용 |
@@ -95,6 +95,7 @@
 | `PriceChart`          | `security/PriceChart.vue`          | 캔들스틱 차트(lightweight-charts). `code`(6자리) + `period`(D/W/M) props, 기간에 따라 자동 재조회 |
 | `TransactionCard`     | `transaction/TransactionCard.vue`  | 거래 내역·대기 주문 공통 카드. `name`/`subLabel`/`pill`/`datetime`/`stats`/`isCancelable`/`cancelText`/`highlighted`(알림에서 진입 시 잠깐 강조, `color="pink"`+`elevation="highlight"`) props, `@cancel` emit |
 | `MyPageMenuCard`      | `mypage/MyPageMenuCard.vue`         | 마이페이지의 아이콘·라벨 메뉴 목록. `items` prop, `@select` emit                                |
+| `ProfileImagePicker`  | `mypage/ProfileImagePicker.vue`     | 프로필 수정 화면의 이미지 선택기. `constants/profileImages.js` 목록을 사용하고 `v-model` 지원    |
 | `TradeSideToggle`     | `trade/TradeSideToggle.vue`         | 매수/매도 전체 폭 세그먼트 토글. `side`('buy'\|'sell') prop, `@update:side` emit. 매수=bg-pink, 매도=bg-surface |
 | `TradeStockHeader`    | `trade/TradeStockHeader.vue`        | 종목 헤더 카드(BaseCard). `name`/`code`/`currentPrice`/`changeRate` props. name=종목명(text-h2), code=종목코드(text-caption text-muted, 선택). 등락률 양수=text-profit, 음수=text-loss |
 | `TradeMethodToggle`   | `trade/TradeMethodToggle.vue`       | 시장가/지정가 세그먼트 토글. `method`('market'\|'limit') prop, `@update:method` emit. 선택=bg-yellow |

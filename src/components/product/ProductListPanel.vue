@@ -716,10 +716,14 @@ onBeforeUnmount(() => {
       <template #actions>
         <NotificationBellButton />
       </template>
-      <h1 class="text-h1 text-ink">{{ pageTitle }}</h1>
-      <p class="text-caption text-muted tracking-tight">
-        {{ pageDescription }}
-      </p>
+      <template #title>
+        <h1 class="text-h1 text-ink">{{ pageTitle }}</h1>
+      </template>
+      <template #description>
+        <p class="text-caption text-muted tracking-tight">
+          {{ pageDescription }}
+        </p>
+      </template>
     </PageHeader>
 
     <BaseCard

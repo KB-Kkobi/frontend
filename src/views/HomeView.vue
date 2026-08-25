@@ -51,12 +51,14 @@ onMounted(loadHomeData);
         <template #actions>
           <NotificationBellButton />
         </template>
-        <h1 class="text-h1 text-ink">
-          <template v-if="isPreAssessmentHome">
-            안녕하세요<span v-if="nickname">, {{ nickname }}님</span>!
-          </template>
-          <template v-else>홈</template>
-        </h1>
+        <template #title>
+          <h1 class="text-h1 text-ink">
+            <template v-if="isPreAssessmentHome">
+              안녕하세요<span v-if="nickname">, {{ nickname }}님</span>!
+            </template>
+            <template v-else>홈</template>
+          </h1>
+        </template>
       </PageHeader>
 
       <BaseCard v-if="isLoading" color="white">

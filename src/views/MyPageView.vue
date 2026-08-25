@@ -1,23 +1,31 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import { fetchMyProfile, logoutUser } from "@/api/authApi";
+import { logoutUser } from "@/api/authApi";
 import { fetchFinancialGoal } from "@/api/financialGoalApi";
 import BaseCard from "@/components/common/BaseCard.vue";
 import PageContainer from "@/components/common/PageContainer.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import MyPageMenuCard from "@/components/mypage/MyPageMenuCard.vue";
 import NotificationBellButton from "@/components/notification/NotificationBellButton.vue";
+import { DEFAULT_PROFILE_IMAGE_ID, getProfileImageOption } from "@/constants/profileImages";
 import { useAuthStore } from "@/stores/auth";
+import { useProfileStore } from "@/stores/profile";
 import { clearGameSession } from "@/utils/gameStorage";
 import { formatKoreanShortAmount } from "@/utils/format";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const nickname = ref("");
-const isProfileLoading = ref(true);
+const profileStore = useProfileStore();
 const financialGoal = ref(null);
 const isFinancialGoalLoading = ref(true);
+
+const nickname = computed(() => profileStore.profile?.nickname ?? "");
+const profileImage = computed(
+  () => profileStore.profile?.profileImage ?? DEFAULT_PROFILE_IMAGE_ID,
+);
+const selectedProfileImage = computed(() => getProfileImageOption(profileImage.value));
+const isProfileLoading = computed(() => profileStore.isLoading);
 
 const REPORT_ITEMS = [
   { id: "assessment-report", label: "내 성향 리포트 보기", icon: "report" },
@@ -42,16 +50,9 @@ function handleProfile() {
 }
 
 async function loadProfile() {
-  isProfileLoading.value = true;
-
   try {
-    const profile = await fetchMyProfile();
-    nickname.value = profile?.nickname ?? "";
-  } catch {
-    nickname.value = "";
-  } finally {
-    isProfileLoading.value = false;
-  }
+    await profileStore.loadProfile();
+  } catch {}
 }
 
 async function loadFinancialGoal() {
@@ -94,6 +95,7 @@ async function handleLogout() {
     await logoutUser();
   } finally {
     clearGameSession();
+    profileStore.reset();
     authStore.logout();
     await router.replace({ name: "login" });
   }
@@ -121,11 +123,15 @@ onMounted(() => {
             class="flex w-full items-center gap-4 text-left"
             @click="handleProfile"
           >
-            <span class="rounded-full bg-white p-4 text-muted" aria-hidden="true">
-              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" fill="currentColor" />
-                <path d="M5 21C5 17.1 8.1 14 12 14C15.9 14 19 17.1 19 21V21H5Z" fill="currentColor" />
-              </svg>
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line-soft bg-white" aria-hidden="true">
+              <img
+                :src="selectedProfileImage.imageUrl"
+                alt=""
+                :class="[
+                  'h-full w-full',
+                  selectedProfileImage.fit === 'contain' ? 'object-contain' : 'object-cover',
+                ]"
+              />
             </span>
 
             <span class="flex min-w-0 flex-1 flex-col gap-2">
@@ -173,9 +179,20 @@ onMounted(() => {
                 <template v-else>필요한 금액과 시기를 정해둘 수 있어요.</template>
               </span>
             </span>
-            <span class="shrink-0 text-caption font-semibold text-pink">
-              {{ financialGoal ? "수정" : "정하기" }}
-            </span>
+            <svg
+              class="h-5 w-5 shrink-0 text-muted"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 6L15 12L9 18"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </button>
         </BaseCard>
       </section>
