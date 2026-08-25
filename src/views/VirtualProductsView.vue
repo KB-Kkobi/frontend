@@ -11,6 +11,17 @@ const cashBalance = ref(null);
 const isCashBalanceLoading = ref(false);
 const hasCashBalanceError = ref(false);
 
+function handleCashBalanceFailure(error, isInitialLoad) {
+  if (!isInitialLoad) {
+    // 백그라운드 재조회 실패는 화면에 이미 떠 있는 값을 그대로 유지한다.
+    console.error("[VirtualProductsView] 잔액 재조회 실패", error);
+    return;
+  }
+
+  cashBalance.value = null;
+  hasCashBalanceError.value = true;
+}
+
 async function loadCashBalance() {
   // 최초 조회일 때만 "불러오는 중" 문구를 보여준다. 재진입 시 재조회까지 매번
   // 문구가 깜빡이며 나타났다 사라지는 것을 막기 위함.
@@ -29,18 +40,16 @@ async function loadCashBalance() {
         : Number(rawCashBalance);
 
     if (!Number.isFinite(nextCashBalance)) {
-      throw new Error("Invalid cash balance");
+      handleCashBalanceFailure(
+        new TypeError("Invalid cash balance response"),
+        isInitialLoad,
+      );
+      return;
     }
 
     cashBalance.value = nextCashBalance;
   } catch (error) {
-    if (!isInitialLoad) {
-      // 백그라운드 재조회 실패는 화면에 이미 떠 있는 값을 그대로 유지한다.
-      console.error("[VirtualProductsView] 잔액 재조회 실패", error);
-      return;
-    }
-    cashBalance.value = null;
-    hasCashBalanceError.value = true;
+    handleCashBalanceFailure(error, isInitialLoad);
   } finally {
     isCashBalanceLoading.value = false;
   }
